@@ -174,18 +174,19 @@
     {
       "id": "pub03",
       "year": "2025",
-      "title": "Linking perceptions of ecosystem services, human well-being and sustainable development goals impacted by ecological restoration project: A case study from Dongting Lake area",
+      "title": "Linking perceptions of ecological restoration projects’ impacts on ecosystem services and human well-being for achieving regional sustainability",
       "title_short": "",
       "authors": "<strong>Xia P.</strong>, Zheng H., Hu T., Xu Z., Peng J.",
       "venue": "Applied Geography, 178, 103570",
-      "url": "",
+      "url": "https://doi.org/10.1016/j.apgeog.2025.103570",
       "first_author": true,
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 33,
       "abstract": "",
-      "featured": true
+      "featured": true,
+      "doi": "10.1016/j.apgeog.2025.103570"
     },
     {
       "id": "pub07",
