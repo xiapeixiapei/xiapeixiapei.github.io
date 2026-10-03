@@ -42,7 +42,7 @@ jobs:
           CONTENT = 'content.json'
           UA_BROWSER = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                         '(KHTML, like Gecko) Chrome/126.0 Safari/537.36')
-          UA_API = 'academic-homepage cover fetcher (https://github.com/' + os.environ.get('GITHUB_REPOSITORY', '') + ')'
+          UA_API = 'tanghuii.github.io cover fetcher (https://github.com/' + os.environ.get('GITHUB_REPOSITORY', '') + ')'
           S = requests.Session()
           S.headers.update({'User-Agent': UA_BROWSER, 'Accept-Language': 'en'})
           STOP = {'of', 'and', 'the', 'in', 'for', 'on', 'a', 'an', '&'}
@@ -143,6 +143,46 @@ jobs:
                       break
               return out
 
+          def candidates_mdpi(doi, meta):
+              # MDPI (DOI 10.3390/...): the issue page shows that issue's cover, the journal page the latest one
+              if not doi.lower().startswith('10.3390/'):
+                  return []
+              out, pages = [], []
+              art = (meta.get('resource') or {}).get('primary', {}).get('URL') or ''
+              m = re.match(r'(https?://www\.mdpi\.com/[\d-]+/\d+/\d+)/\d+', art)
+              if m:
+                  pages.append(m.group(1))
+              pages.append('https://doi.org/' + doi)
+              journal_pages = []
+              for page in pages:
+                  try:
+                      r = S.get(page, timeout=25, allow_redirects=True)
+                  except Exception as e:
+                      log('  mdpi page error', page, e)
+                      continue
+                  if not r.ok:
+                      log(f'  mdpi page {r.status_code}', r.url)
+                      continue
+                  html = r.text
+                  for u in [unescape(u) for u in IMG_RE.findall(html)] + [unescape(u) for u in META_RE.findall(html)]:
+                      if re.search(r'cover', u, re.I) and not re.search(r'logo|icon|sprite|banner', u, re.I):
+                          out.append(('mdpi', urljoin(r.url, u), r.url))
+                  jm = re.search(r'href=["\'](/journal/[a-z0-9-]+)["\']', html, re.I)
+                  if jm:
+                      journal_pages.append(urljoin(r.url, jm.group(1)))
+                  if out:
+                      return out
+              for page in journal_pages[:1]:
+                  try:
+                      r = S.get(page, timeout=25)
+                      if r.ok:
+                          for u in [unescape(u) for u in IMG_RE.findall(r.text)]:
+                              if re.search(r'cover', u, re.I) and not re.search(r'logo|icon|sprite|banner', u, re.I):
+                                  out.append(('mdpi', urljoin(r.url, u), r.url))
+                  except Exception as e:
+                      log('  mdpi journal page error', e)
+              return out
+
           def candidates_wikipedia(journal):
               try:
                   r = requests.get('https://en.wikipedia.org/w/api.php', timeout=20, headers={'User-Agent': UA_API}, params={
@@ -198,7 +238,7 @@ jobs:
               journal = journal or ((meta.get('container-title') or [''])[0])
               found = None
               # Sources are tried in order and only fetched when the previous one found nothing
-              sources = (lambda: candidates_direct(doi, meta), lambda: candidates_page(doi, meta), lambda: candidates_wikipedia(journal))
+              sources = (lambda: candidates_direct(doi, meta), lambda: candidates_mdpi(doi, meta), lambda: candidates_page(doi, meta), lambda: candidates_wikipedia(journal))
               for c in (c for src in sources for c in src()):
                   src, url = c[0], c[1]
                   im = get_image(url, referer=c[2] if len(c) > 2 else None)
