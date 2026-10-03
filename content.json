@@ -16,7 +16,8 @@
       "en": "Photo by Pei Xia",
       "zh": "夏沛 摄"
     },
-    "me_author": "Xia P."
+    "me_author": "Xia P.",
+    "last_refresh": "2026-10-03T08:58:30.155Z"
   },
   "profile": {
     "name_en": "Pei Xia",
@@ -132,9 +133,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 3,
       "abstract": "",
-      "featured": true
+      "featured": true,
+      "doi": "10.1016/j.ecoser.2025.101790"
     },
     {
       "id": "pub06",
@@ -164,9 +166,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 15,
       "abstract": "",
-      "featured": true
+      "featured": true,
+      "doi": "10.1002/pan3.70015"
     },
     {
       "id": "pub03",
@@ -196,9 +199,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 2,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.scib.2025.06.019"
     },
     {
       "id": "pub08",
@@ -212,9 +216,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 8,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.eiar.2025.107962"
     },
     {
       "id": "pub09",
@@ -228,9 +233,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 9,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.envint.2024.109194"
     },
     {
       "id": "pub10",
@@ -244,9 +250,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 21,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1038/s43247-024-01641-y"
     },
     {
       "id": "pub11",
@@ -260,9 +267,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 23,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.envres.2023.118040"
     },
     {
       "id": "pub04",
@@ -276,9 +284,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 71,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1177/2754124x231165935"
     },
     {
       "id": "pub12",
@@ -292,9 +301,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 21,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.ecoser.2023.101557"
     },
     {
       "id": "pub13",
@@ -308,9 +318,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 15,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.scitotenv.2023.165641"
     },
     {
       "id": "pub05",
@@ -324,9 +335,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 16,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1007/s10980-022-01455-3"
     },
     {
       "id": "pub14",
@@ -340,9 +352,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 10,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.3390/rs14225755"
     },
     {
       "id": "pub15",
@@ -356,9 +369,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 108,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.jenvman.2022.115206"
     },
     {
       "id": "pub16",
@@ -372,9 +386,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 45,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.1016/j.geosus.2020.08.004"
     },
     {
       "id": "pub17",
@@ -388,9 +403,10 @@
       "corresponding": false,
       "status": "",
       "cover": "",
-      "cited": null,
+      "cited": 20,
       "abstract": "",
-      "featured": false
+      "featured": false,
+      "doi": "10.3390/w12102878"
     }
   ],
   "awards": [],
