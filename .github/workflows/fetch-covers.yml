@@ -1,4 +1,5 @@
-# Fetches journal cover images for publications that have a DOI but no cover.
+# Fetches journal cover images for publications that have a DOI but no cover,
+# and abstracts for published papers that have a DOI but no abstract.
 # Runs after every change to content.json (e.g. "Publish changes" in admin.html),
 # or manually from the Actions tab. Covers are saved as cover-*.jpg in the repo root.
 name: Fetch journal covers
@@ -30,7 +31,9 @@ jobs:
       - name: Install dependencies
         run: pip install --quiet requests pillow
 
-      - name: Find and download covers
+      - name: Find and download covers and abstracts
+        env:
+          ELSEVIER_API_KEY: ${{ secrets.ELSEVIER_API_KEY }}
         run: |
           cat > /tmp/fetch_covers.py <<'PY'
           import io, json, os, re, sys, time
@@ -42,7 +45,7 @@ jobs:
           CONTENT = 'content.json'
           UA_BROWSER = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                         '(KHTML, like Gecko) Chrome/126.0 Safari/537.36')
-          UA_API = 'tanghuii.github.io cover fetcher (https://github.com/' + os.environ.get('GITHUB_REPOSITORY', '') + ')'
+          UA_API = 'academic-homepage cover fetcher (https://github.com/' + os.environ.get('GITHUB_REPOSITORY', '') + ')'
           S = requests.Session()
           S.headers.update({'User-Agent': UA_BROWSER, 'Accept-Language': 'en'})
           STOP = {'of', 'and', 'the', 'in', 'for', 'on', 'a', 'an', '&'}
@@ -198,6 +201,122 @@ jobs:
               except Exception:
                   return []
 
+          # ── Abstracts for published papers that have a DOI but none yet ──
+          # Open APIs first (Crossref, OpenAlex, Semantic Scholar, Europe PMC), then the optional Elsevier API
+          # (repository secret ELSEVIER_API_KEY, free at dev.elsevier.com), then the publisher's article page
+          # (citation_abstract / dc.description meta tags, JSON-LD, or an element with class/id "abstract").
+          ELS_KEY = os.environ.get('ELSEVIER_API_KEY', '').strip()
+          _CR = {}
+
+          def crossref_cached(doi):
+              if doi not in _CR:
+                  _CR[doi] = crossref(doi)
+              return _CR[doi]
+
+          def clean_abs(s):
+              s = re.sub(r'<[^>]+>', ' ', s or '')
+              s = unescape(re.sub(r'\s+', ' ', s)).strip()
+              return re.sub(r'^(abstract|summary)\s*[:.\-\u2013]?\s*', '', s, flags=re.I).strip()
+
+          def good_abs(a):
+              return len(a) >= 150 and not re.search(r'(\.\.\.|\u2026)$', a)
+
+          def abstract_apis(doi, meta):
+              yield 'crossref', meta.get('abstract') or ''
+              try:
+                  j = requests.get('https://api.openalex.org/works/doi:' + quote(doi), timeout=20,
+                                   params={'select': 'abstract_inverted_index'}, headers={'User-Agent': UA_API}).json()
+                  idx = j.get('abstract_inverted_index') or {}
+                  words = {}
+                  for w, pos in idx.items():
+                      for i in pos:
+                          words[i] = w
+                  yield 'openalex', ' '.join(words[i] for i in sorted(words))
+              except Exception:
+                  pass
+              try:
+                  r = requests.get('https://api.semanticscholar.org/graph/v1/paper/DOI:' + quote(doi), timeout=20,
+                                   params={'fields': 'abstract'}, headers={'User-Agent': UA_API})
+                  if r.ok:
+                      yield 'semanticscholar', r.json().get('abstract') or ''
+              except Exception:
+                  pass
+              try:
+                  r = requests.get('https://www.ebi.ac.uk/europepmc/webservices/rest/search', timeout=20, headers={'User-Agent': UA_API},
+                                   params={'query': f'DOI:"{doi}"', 'resultType': 'core', 'format': 'json', 'pageSize': 1})
+                  res = (r.json().get('resultList') or {}).get('result') or []
+                  if res:
+                      yield 'europepmc', res[0].get('abstractText') or ''
+              except Exception:
+                  pass
+
+          def abstract_elsevier(doi):
+              if not ELS_KEY or not doi.startswith('10.1016/'):
+                  return ''
+              try:
+                  r = requests.get('https://api.elsevier.com/content/article/doi/' + quote(doi), timeout=25,
+                                   params={'view': 'META_ABS'}, headers={'X-ELS-APIKey': ELS_KEY, 'Accept': 'application/json'})
+                  if not r.ok:
+                      log(f'  elsevier api {r.status_code}')
+                      return ''
+                  core = (r.json().get('full-text-retrieval-response') or {}).get('coredata') or {}
+                  return core.get('dc:description') or ''
+              except Exception as e:
+                  log('  elsevier api error', e)
+                  return ''
+
+          META_TAG_RE = re.compile(r'<meta\b[^>]*>', re.I)
+          ATTR_RE = re.compile(r'([\w:.-]+)\s*=\s*("([^"]*)"|\'([^\']*)\')', re.S)
+          ABS_BLOCK_RE = re.compile(r'<(section|div|p)\b[^>]*(?:class|id)\s*=\s*["\'][^"\']*\babstract\b[^"\']*["\'][^>]*>(.*?)</\1>', re.I | re.S)
+          LD_RE = re.compile(r'<script[^>]+application/ld\+json[^>]*>(.*?)</script>', re.I | re.S)
+
+          def abstract_page(doi, meta):
+              pages = []
+              res = (meta.get('resource') or {}).get('primary', {}).get('URL')
+              if res:
+                  pages.append(res)
+              pages.append('https://doi.org/' + doi)
+              for page in pages:
+                  try:
+                      r = S.get(page, timeout=25, allow_redirects=True)
+                  except Exception as e:
+                      log('  abstract page error', page, e)
+                      continue
+                  if not r.ok:
+                      log(f'  abstract page {r.status_code}', r.url)
+                      continue
+                  html, found = r.text, []
+                  for tag in META_TAG_RE.findall(html):
+                      at = {m[0].lower(): (m[2] or m[3]) for m in ATTR_RE.findall(tag)}
+                      name = (at.get('name') or at.get('property') or '').lower()
+                      if name in ('citation_abstract', 'dc.description', 'dcterms.abstract', 'dcterms.description', 'description', 'og:description', 'twitter:description', 'eprints.abstract'):
+                          found.append(at.get('content') or '')
+                  for block in LD_RE.findall(html):
+                      try:
+                          j = json.loads(block)
+                          for it in (j if isinstance(j, list) else [j]):
+                              if isinstance(it, dict):
+                                  found += [it.get('abstract') or '', it.get('description') or '']
+                      except Exception:
+                          pass
+                  found += [m[1] for m in ABS_BLOCK_RE.findall(html)]
+                  best = max((clean_abs(x) for x in found if isinstance(x, str)), key=len, default='')
+                  if good_abs(best) and len(best) < 6000:
+                      return best
+              return ''
+
+          def find_abstract(doi, meta):
+              for src, a in abstract_apis(doi, meta):
+                  a = clean_abs(a)
+                  if good_abs(a):
+                      return src, a
+              a = clean_abs(abstract_elsevier(doi))
+              if good_abs(a):
+                  return 'elsevier', a
+              a = abstract_page(doi, meta)
+              return ('page', a) if a else (None, '')
+
+
           def save_cover(im, journal, taken):
               base = 'cover-' + slug_for(journal)
               name, n = base + '.jpg', 2
@@ -220,6 +339,25 @@ jobs:
                   by_journal.setdefault(norm(journal_of(p)), p['cover'])
 
           changed, taken, failed = 0, set(), []
+          abs_failed = []
+          for p in pubs:
+              if p.get('year') == 'book' or p.get('status') or len(clean_abs(p.get('abstract') or '')) >= 80:
+                  continue
+              doi = doi_of(p)
+              if not doi:
+                  continue
+              log(f"~ abstract: {(p.get('title') or doi)[:70]}  ({doi})")
+              src, a = find_abstract(doi, crossref_cached(doi))
+              if a:
+                  p['abstract'] = a
+                  if not p.get('doi'):
+                      p['doi'] = doi
+                  changed += 1
+                  log(f'  abstract from {src} ({len(a)} characters)')
+              else:
+                  abs_failed.append(p.get('title_short') or p.get('title') or doi)
+                  log('  no abstract found')
+
           for p in pubs:
               if p.get('cover') or p.get('year') == 'book':
                   continue
@@ -234,7 +372,7 @@ jobs:
               if not doi:
                   continue
               log(f'* {journal or doi}  ({doi})')
-              meta = crossref(doi)
+              meta = crossref_cached(doi)
               journal = journal or ((meta.get('container-title') or [''])[0])
               found = None
               # Sources are tried in order and only fetched when the previous one found nothing
@@ -265,6 +403,9 @@ jobs:
           log(f'\nUpdated {changed} publication(s).')
           if failed:
               log('No cover found for: ' + '; '.join(failed) + '. Paste one in the admin page instead.')
+          if abs_failed:
+              log('No abstract found for: ' + '; '.join(abs_failed) + '. Paste it in the admin page'
+                  + ('' if ELS_KEY else ' (for Elsevier papers, an ELSEVIER_API_KEY repository secret usually helps)') + '.')
           PY
           python /tmp/fetch_covers.py
 
@@ -274,7 +415,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git add content.json cover-*.jpg
-          git commit -m "Add journal covers"
+          git commit -m "Add journal covers and abstracts"
           # Retry in case content.json was published again meanwhile
           for i in 1 2 3; do git pull --rebase --quiet && git push && break; sleep 3; done
           # Ask GitHub Pages to rebuild (pushes made by Actions may not trigger it on their own)
