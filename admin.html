@@ -93,7 +93,21 @@
   .topbar { position: sticky; top: 0; z-index: 5; background: rgba(var(--paper-rgb), 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--subtle); padding: 0.7rem 1.6rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
   .topbar .status { font-size: 15.625px; color: var(--muted); display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
   .topbar .actions { display: flex; gap: 0.5rem; }
-  .content { padding: 1.6rem; max-width: 1000px; }
+  .content { padding: 1.6rem 2rem; max-width: none; }
+  @media (min-width: 1500px) {
+    .tv-country-body, .tv-prov-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.8rem; align-items: start; }
+    .tv-country-body > .tv-prov, .tv-country-body > .hint, .tv-prov-body > .hint { grid-column: 1 / -1; }
+    .tv-country-body > .item.place.open, .tv-prov-body > .item.place.open { grid-column: 1 / -1; }
+    .tv-country-body > .item, .tv-prov-body > .item { margin-bottom: 0.6rem; }
+  }
+  @media (min-width: 2100px) { .tv-country-body, .tv-prov-body { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  /* Place editor: pairs side by side on wide screens (city | country, public | private note, sights | photos) */
+  @media (min-width: 1100px) {
+    .item.place .pbody:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 1.4rem; align-items: start; }
+    .item.place .pbody > * { grid-column: 1 / -1; min-width: 0; }
+    .item.place .pbody > .w-half { grid-column: auto; }
+  }
+  @media (min-width: 1100px) and (max-width: 1599px) { .item.place .pbody > .w-half-xl { grid-column: 1 / -1; } }
   h2 { font-family: var(--serif); font-weight: 400; font-size: 1.68rem; margin-bottom: 0.3rem; }
   .lead { color: var(--muted); margin-bottom: 1.4rem; font-size: 16.875px; }
   .card { background: var(--card); border: 1px solid var(--subtle); border-radius: 10px; padding: 1.2rem 1.4rem; margin-bottom: 1rem; }
@@ -163,7 +177,7 @@
   .tv-res .m { color: var(--muted); font-size: 15px; white-space: nowrap; }
   .tv-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
   .tv-flag { font-size: 1.4rem; line-height: 1; }
-  .flag-img { height: 16px; width: auto; border-radius: 2px; box-shadow: 0 0 0 1px rgba(13, 27, 42, 0.12); vertical-align: -3px; }
+  .flag-img { height: 16px; width: 24px; aspect-ratio: 3 / 2; object-fit: cover; object-position: center; border-radius: 2px; box-shadow: 0 0 0 1px rgba(13, 27, 42, 0.12); vertical-align: -3px; flex: none; background: var(--subtle); }
   .tv-acad { background: var(--highlight); border-radius: 8px; padding: 0.9rem 1rem 0.1rem; margin-bottom: 0.9rem; }
   .thumb.tv .ph { aspect-ratio: 4/3; background: var(--highlight); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
   .thumb.tv .ph img { aspect-ratio: 4/3; }
@@ -202,6 +216,41 @@
   .tv-icon.big svg { width: 22px; height: 22px; }
   .icon-pick { display: flex; gap: 0.5rem; align-items: center; }
   .icon-pick select { flex: 1; min-width: 0; }
+  .tv-filter { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin: 0 0 0.8rem; }
+  .tv-filter input { flex: 1 1 260px; min-width: 0; }
+  .tv-filter .hint { margin: 0; white-space: nowrap; }
+  .tv-country { border: 1px solid var(--subtle); border-radius: 12px; margin-bottom: 0.7rem; background: var(--card); overflow: hidden; }
+  .tv-country-head { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.75rem 1rem; border: none; background: none; color: var(--ink); font: inherit; font-size: 1.02rem; text-align: left; cursor: pointer; }
+  .tv-country-head:hover { background: var(--highlight); }
+  .tv-country-head .chev { color: var(--muted); width: 1em; }
+  .tv-country-zh { color: var(--muted); font-size: 0.92rem; }
+  .tv-country-n { margin-left: auto; color: var(--muted); font-size: 0.88rem; white-space: nowrap; }
+  .tv-country-body { padding: 0 0.8rem 0.4rem; }
+  .tv-country-body > .item { margin-bottom: 0.6rem; }
+  .sort-seg { display: inline-flex; border: 1px solid var(--subtle); border-radius: 999px; overflow: hidden; }
+  .sort-seg button { border: none; background: none; color: var(--muted); font: inherit; font-size: 0.82rem; padding: 0.28rem 0.75rem; cursor: pointer; }
+  .sort-seg button.on { background: var(--accent); color: var(--on-accent, #fff); }
+  .tv-drafts { margin: 0.9rem 0 1.2rem; }
+  .draft-card { border: 2px solid var(--accent); border-radius: 12px; background: var(--card); margin-bottom: 0.8rem; overflow: hidden; }
+  .draft-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.6rem; padding: 0.6rem 0.9rem; background: var(--highlight); border-bottom: 1px solid var(--subtle); }
+  .draft-tag { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--on-accent, #fff); background: var(--accent); border-radius: 999px; padding: 0.1rem 0.6rem; }
+  .draft-name { font-weight: 600; }
+  .draft-hint { color: var(--muted); font-size: 0.86rem; margin-right: auto; }
+  .draft-card > .item.place { border: none; margin: 0; border-radius: 0; box-shadow: none; }
+  .draft-card .item-head .tools { display: none; }
+  .draft-foot { display: flex; justify-content: flex-end; padding: 0.6rem 0.9rem 0.8rem; border-top: 1px solid var(--subtle); background: var(--highlight); }
+  .drop-on { position: relative; outline: 2px dashed var(--accent) !important; outline-offset: 3px; border-radius: 10px; }
+  .drop-on::after { content: attr(data-drop-label); position: absolute; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(var(--accent-rgb, 27, 79, 138), 0.10); color: var(--accent); font-weight: 700; font-size: 1.05rem; border-radius: inherit; pointer-events: none; backdrop-filter: blur(1px); }
+  .drop-hint { display: inline; margin: 0 0 0 0.5rem; font-size: 0.82rem; }
+  .tv-prov { margin: 0 0 0.45rem 0.2rem; border-left: 2px solid var(--subtle); }
+  .tv-prov.open { border-left-color: var(--accent-light, var(--accent)); }
+  .tv-prov-head { display: flex; align-items: center; gap: 0.5rem; width: 100%; padding: 0.5rem 0.7rem; border: none; background: none; color: var(--ink); font: inherit; font-size: 0.96rem; text-align: left; cursor: pointer; border-radius: 0 8px 8px 0; }
+  .tv-prov-head:hover { background: var(--highlight); }
+  .tv-prov-head .chev { color: var(--muted); width: 1em; }
+  .tv-prov-body { padding: 0.1rem 0 0.3rem 0.7rem; }
+  .tv-prov-body > .item { margin-bottom: 0.6rem; }
+  @media (max-width: 760px) { .tv-prov { margin-left: 0; } .tv-prov-head { padding: 0.45rem 0.5rem; } .tv-prov-body { padding-left: 0.4rem; } }
+  @media (max-width: 760px) { .tv-country-head { padding: 0.65rem 0.75rem; } .tv-country-body { padding: 0 0.4rem 0.3rem; } .tv-filter .btn { flex: 1 1 auto; } }
   .wh-part.a5-part { color: var(--warn); background: var(--warn-bg); }
   .wh-part { font-size: 12.5px; color: var(--accent); background: var(--highlight); border-radius: 4px; padding: 0.05rem 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
   .sg-open a { font-size: 12.5px; padding: 0.05rem 0.45rem; border: 1px solid var(--subtle); border-radius: 4px; text-decoration: none; white-space: nowrap; }
@@ -468,19 +517,39 @@ function lsSet(k, v) { try { v === null ? localStorage.removeItem(k) : localStor
 // ─────────────────────────────────────────────────────────────────────────────
 // GitHub API helpers (Contents API, base64 UTF-8 safe)
 // ─────────────────────────────────────────────────────────────────────────────
-const b64enc = str => btoa(String.fromCharCode(...new TextEncoder().encode(str)));
+const b64enc = str => { const bytes = new TextEncoder().encode(str); let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); };
 const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g, '')), c => c.charCodeAt(0)));
+// fetch with a time limit: a stalled connection fails instead of hanging the page
+async function fetchT(url, opts = {}, ms = 30000) {
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
+  try { return await fetch(url, { ...opts, signal: ctl.signal }); }
+  catch (e) { if (e.name === 'AbortError') throw new Error('GitHub did not answer in time (slow network or GitHub busy). Please try again.'); throw e; }
+  finally { clearTimeout(timer); }
+}
+const ghSleep = ms => new Promise(r => setTimeout(r, ms));
 async function gh(path, opts = {}) {
-  const res = await fetch(`https://api.github.com${path}`, {
-    ...opts,
-    headers: { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28', ...(opts.headers || {}) }
-  });
-  if (!res.ok) {
-    let msg = res.statusText;
-    try { msg = (await res.json()).message || msg; } catch (e) {}
-    throw new Error(`GitHub ${res.status}: ${msg}`);
+  const isWrite = /^(PUT|POST|PATCH|DELETE)$/i.test(opts.method || 'GET');
+  for (let attempt = 0; ; attempt++) {
+    const { timeout, ...fo } = opts;
+    const res = await fetchT(`https://api.github.com${path}`, {
+      ...fo,
+      headers: { 'Accept': 'application/vnd.github+json', 'Authorization': `Bearer ${TOKEN}`, 'X-GitHub-Api-Version': '2022-11-28', ...(opts.headers || {}) }
+    }, timeout || (isWrite ? 120000 : 30000));
+    if (!res.ok) {
+      let msg = res.statusText;
+      try { msg = (await res.json()).message || msg; } catch (e) {}
+      // Rate limit (secondary limits come from many writes in a row): wait as GitHub asks, then retry
+      if ((res.status === 403 || res.status === 429) && /rate limit|abuse/i.test(msg)) {
+        const ra = Number(res.headers.get('retry-after')), reset = Number(res.headers.get('x-ratelimit-reset'));
+        const wait = ra > 0 ? ra : reset > 0 ? Math.max(5, reset - Math.floor(Date.now() / 1000)) : 60;
+        if (attempt < 2 && wait <= 90) { toast(`GitHub asked to slow down: waiting ${wait} s, then continuing…`); await ghSleep(wait * 1000 + 500); continue; }
+        const at = new Date(Date.now() + wait * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        throw new Error(`GitHub ${res.status}: rate limit reached. Please wait until about ${at} and try again.`);
+      }
+      throw new Error(`GitHub ${res.status}: ${msg}`);
+    }
+    return res.status === 204 ? null : res.json();
   }
-  return res.status === 204 ? null : res.json();
 }
 // GitHub may serve a cached GET for up to a minute after a write, so sha lookups add a timestamp.
 // No extra request headers here: GitHub's CORS preflight rejects e.g. Cache-Control and the fetch fails.
@@ -493,6 +562,8 @@ async function ghPutFile(path, base64Content, message, sha) {
   for (let attempt = 0; ; attempt++) {
     const body = { message, content: base64Content, branch: REPO.branch };
     if (sha) body.sha = sha;
+    const gap = 1000 - (Date.now() - (ghPutFile.last || 0)); if (gap > 0) await ghSleep(gap);
+    ghPutFile.last = Date.now();
     try { return await gh(url, { method: 'PUT', body: JSON.stringify(body) }); }
     catch (e) {
       // 409: our sha is stale; 422 "sha wasn't supplied": the file exists but we did not know it. Both: re-read and retry.
@@ -710,13 +781,16 @@ async function decryptBundle(file, password) {
   return { bundle: JSON.parse(new TextDecoder().decode(pt)), key, salt, iter: file.iter || AUTH_ITER };
 }
 // Read admin-auth.json fresh from the public GitHub API; fall back to the Pages copy
+let AUTH_FETCH_FAILED = false;
 async function fetchAuthFile() {
+  AUTH_FETCH_FAILED = false; let sure404 = false;
   try {
-    const r = await fetch(`https://api.github.com/repos/${REPO.owner}/${REPO.name}/contents/${AUTH_PATH}?ref=${REPO.branch}`, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+    const r = await fetchT(`https://api.github.com/repos/${REPO.owner}/${REPO.name}/contents/${AUTH_PATH}?ref=${REPO.branch}`, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' }, 12000);
     if (r.status === 404) return null;
     if (r.ok) { const j = await r.json(); return JSON.parse(b64dec(j.content)); }
   } catch (e) {}
-  try { const r = await fetch(AUTH_PATH + '?t=' + Date.now(), { cache: 'no-store' }); if (r.ok) return await r.json(); } catch (e) {}
+  try { const r = await fetchT(AUTH_PATH + '?t=' + Date.now(), { cache: 'no-store' }, 12000); if (r.ok) return await r.json(); if (r.status === 404) sure404 = true; } catch (e) {}
+  AUTH_FETCH_FAILED = !sure404;
   return null;
 }
 async function writeAuthFile(file, message) {
@@ -807,6 +881,12 @@ function showLogin(opts = {}) {
 
     const file = await fetchAuthFile();
     AUTH_INFO = { exists: !!file, updated: file?.updated };
+    if (!file && AUTH_FETCH_FAILED) {   // could not reach GitHub: do not guess, offer a retry
+      root.innerHTML = frame(`<h2>Can't reach GitHub</h2><p class="hint" style="margin:0.4rem 0 1rem">The sign-in settings could not be loaded (slow network, GitHub busy, or too many requests in a short time). Wait a minute and try again.</p>
+        <button class="btn primary block" id="lg-retry" type="button">Try again</button>`);
+      $('#lg-retry').onclick = () => { root.innerHTML = ''; showLogin(opts).then(resolve); };
+      return;
+    }
 
     const viewPassword = (msg = '') => {
       root.innerHTML = frame(`<h2>Sign in</h2>
@@ -916,7 +996,19 @@ async function ensureSignedIn() {
       if (lsGet(LS.token)) { lsSet(LS.token, null); lsSet(LS.gcToken, null); saveSession(true); } // finish migration
       fetchAuthFile().then(f => { AUTH_INFO = { exists: !!f, updated: f?.updated }; });
       setAuthState(); return;
-    } catch (e) { clearSession(); return showLogin({ message: 'Your session expired. Please sign in again.' }); }
+    } catch (e) {
+      if (/rejected this token|no access to|cannot write/i.test(e.message)) { clearSession(); return showLogin({ message: 'Your session expired. Please sign in again.' }); }
+      return new Promise(resolve => {   // network trouble or rate limit: keep the session, offer a retry
+        const root = $('#modal-root');
+        root.innerHTML = `<div class="login"><div class="login-card"><div class="login-brand"><span class="login-name">${esc(SITE_NAME || 'Site Manager')}</span><span class="login-sub">Site Manager · ${esc(REPO.owner ? REPO.owner + '/' + REPO.name : location.host)}</span></div>
+          <h2>Can't reach GitHub</h2><p class="hint" style="margin:0.4rem 0 1rem">${esc(e.message)}</p>
+          <button class="btn primary block" id="lg-retry" type="button">Try again</button>
+          <p class="hint" style="text-align:center;margin-top:0.8rem"><a href="#" id="lg-fresh">Sign in again instead</a></p></div>
+          <p class="login-foot"><a href="index.html">← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}</p></div>`;
+        $('#lg-retry').onclick = () => { root.innerHTML = ''; ensureSignedIn().then(resolve); };
+        $('#lg-fresh').onclick = ev => { ev.preventDefault(); root.innerHTML = ''; clearSession(); showLogin().then(resolve); };
+      });
+    }
   }
   return showLogin();
 }
@@ -1592,10 +1684,13 @@ function renderAppearance() {
 }
 async function publishFontsIfChanged() {
   let before = {}; try { const o = JSON.parse(C_ORIG).site || {}; before = { fonts: o.fonts || null, palette: o.palette || null }; } catch (e) {}
-  if (JSON.stringify(C.site?.fonts || null) === JSON.stringify(before.fonts) && (C.site?.palette || null) === before.palette) return;
+  // Compare with the live file, not with content.json: they can disagree (an old copy uploaded by hand)
   const now = siteFonts(), pal = sitePalette();
+  let live = null; try { live = await ghGetFile('site-fonts.js'); } catch (e) {}
+  const liveTxt = live?.content ? new TextDecoder().decode(Uint8Array.from(atob(live.content.replace(/\s/g, '')), c => c.charCodeAt(0))) : '';
   const js = `// Font pairing for the whole site. Written by the Site Manager (CV & site settings → Fonts).\n// en: A–F, zh: 1–4 (see site-theme.js for the catalog); size: text size in percent.\nwindow.SITE_FONTS = ${JSON.stringify({ en: now.en, zh: now.zh, size: now.size || 100 })};\n// palette: see SiteTheme.PALETTES (ocean, glacier, lagoon, forest, graphite, walnut, pku).\nwindow.SITE_PALETTE = ${JSON.stringify(pal)};\n`;
-  await ghPutFile('site-fonts.js', b64enc(js), `Set site fonts to ${now.en} + ${now.zh} at ${now.size || 100}%, palette ${pal}, via Site Manager`);
+  if (liveTxt === js) return;
+  await ghPutFile('site-fonts.js', b64enc(js), `Set site fonts to ${now.en} + ${now.zh} at ${now.size || 100}%, palette ${pal}, via Site Manager`, live?.sha);
 }
 // The visitor map draws with computed colours: redraw it when the theme changes
 window.addEventListener('themechange', () => { if (C && $('#gc-map')) render(); });
@@ -1708,6 +1803,72 @@ function normalizeFP(d) {
     p.sights ||= []; p.sights.forEach(g => { g.name ||= { en: '', zh: '' }; g.tags ||= []; });
     p.pnote ||= { en: '', zh: '' }; });
   return d;
+}
+// Footprints editor: places grouped by country, with a filter
+const OPEN_COUNTRIES = new Set(); let COUNTRIES_TOUCHED = false, PLACE_FILTER = '';
+const fold = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+function placeMatches(p, q) {
+  const hay = fold([p.city?.en, p.city?.zh, p.country?.en, p.country?.zh, p.cc, p.when, p.event?.en, p.event?.zh, p.talk, p.note?.en, p.note?.zh, p.pnote?.en, p.pnote?.zh,
+    ...(p.sights || []).flatMap(g => [g.name?.en, g.name?.zh])].join(' '));
+  return fold(q).split(/\s+/).filter(Boolean).every(t => hay.includes(t));
+}
+// China: provinces inside the country group (needs cn-provinces.json, loaded with the 5A list)
+const OPEN_PROVS = new Set();
+let PLACE_SORT = 'name'; try { PLACE_SORT = localStorage.getItem('sm_place_sort') === 'date' ? 'date' : 'name'; } catch (e) {}
+// Latest visit of a place as a sortable string ("2018-09", "present" sorts last = newest)
+const lastVisit = p => String(p.when || '').split(/\s*[;,，、|；]\s*/).filter(Boolean).map(v => { const m = v.split(/\s*(?:[-–—~]|to|至)\s*(?=\d{4}|present|now|至今)/i); return (m[m.length - 1] || '').replace(/^(now|至今|现在|today)$/i, 'present').replace(/[./]/g, '-').replace(/-(\d)(?!\d)/, '-0$1'); }).sort().pop() || '';
+const newestIdx = (list, idx) => idx.reduce((m, i) => { const k = lastVisit(list[i]); return k > m ? k : m; }, '');
+const sortIdx = (list, idx) => idx.sort((a, b) => PLACE_SORT === 'date' ? lastVisit(list[b]).localeCompare(lastVisit(list[a])) || String(list[a].city?.en || '').localeCompare(String(list[b].city?.en || '')) : String(list[a].city?.en || list[a].city?.zh || '').localeCompare(String(list[b].city?.en || list[b].city?.zh || '')));
+const groupCC = x => { const c = String(x.cc || '').toUpperCase(); return ({ TW: 'CN', HK: 'CN', MO: 'CN' })[c] || c || '—'; };
+function provOfPlace(p) {
+  if (!CN_PROV?.features?.length || typeof p.lat !== 'number' || typeof p.lon !== 'number') return null;
+  const feats = CN_PROV.features;
+  let f = sarFeature(p, feats, inFeature) || feats.find(x => inFeature(p.lon, p.lat, x));
+  if (!f) { let bd = 1;   // coastal points just outside the simplified outlines: nearest vertex within ~1 degree
+    for (const x of feats) for (const poly of (x.geometry.type === 'MultiPolygon' ? x.geometry.coordinates : [x.geometry.coordinates])) for (const [lo, la] of poly[0]) { const d = (lo - p.lon) ** 2 + (la - p.lat) ** 2; if (d < bd) { bd = d; f = x; } } }
+  return f ? f.properties : null;
+}
+function provGroupsHtml(list, idx, fn, q, openAll) {
+  const m = new Map();
+  for (const i of idx) { const pr = provOfPlace(list[i]), k = pr ? pr.zh : '—';
+    if (!m.has(k)) m.set(k, { k, en: pr ? pr.en : 'No province (no coordinates)', zh: pr ? pr.zh : '', idx: [] }); m.get(k).idx.push(i); }
+  m.forEach(g => sortIdx(list, g.idx));
+  return [...m.values()].sort((a, b) => (a.k === '—') - (b.k === '—') || (PLACE_SORT === 'date' ? newestIdx(list, b.idx).localeCompare(newestIdx(list, a.idx)) : 0) || a.en.localeCompare(b.en)).map(g => {
+    const open = !!q || openAll || OPEN_PROVS.has(g.k) || g.idx.some(i => OPEN_PLACES.has(list[i].id));
+    return `<div class="tv-prov${open ? ' open' : ''}" data-prov="${esc(g.k)}"><button type="button" class="tv-prov-head" data-ptoggle="${esc(g.k)}" aria-expanded="${open}"><span class="chev">${open ? '▾' : '▸'}</span><b>${esc(g.en)}</b>${g.zh ? `<span class="tv-country-zh">${esc(g.zh)}</span>` : ''}<span class="tv-country-n">${g.idx.length} place${g.idx.length === 1 ? '' : 's'}</span></button>
+      <div class="tv-prov-body"${open ? '' : ' hidden'}>${g.idx.map(i => fn(list[i], i)).join('')}</div></div>`;
+  }).join('');
+}
+// Drafts (places just added) are drawn first and moved under the search box by renderPlaces
+function draftCard(p, i, fn) {
+  const name = p.city?.en || p.city?.zh || 'New place';
+  return `<div class="draft-card" data-di="${i}"><div class="draft-bar"><span class="draft-tag">New place</span><span class="draft-name">${esc(name)}${p.country?.en ? ', ' + esc(p.country.en) : ''}</span>
+    <span class="draft-hint">Fill in the details, then add it to the list below.</span>
+    <button type="button" class="btn sm primary" data-draft-done="${i}">✓ Done, add to the list</button><button type="button" class="btn sm" data-draft-drop="${i}">Discard</button></div>${fn(p, i)}
+    <div class="draft-foot"><button type="button" class="btn primary" data-draft-done="${i}">✓ Done, add to the list</button></div></div>`;
+}
+function placeGroups(list, fn) {
+  const d = list.map((p, i) => p._draft ? draftCard(p, i, fn) : '').join('');
+  return (d ? `<div id="tv-draft-tmp">${d}</div>` : '') + placeGroups0(list, fn);
+}
+function placeGroups0(list, fn) {
+  const q = PLACE_FILTER.trim(), groups = new Map();
+  list.forEach((p, i) => {
+    if (p._draft) return;
+    if (q && !placeMatches(p, q)) return;
+    const key = groupCC(p);
+    if (!groups.has(key)) groups.set(key, key === 'CN' ? { key, name: 'China', zh: '中国', idx: [] } : { key, name: p.country?.en || (key === '—' ? 'No country yet' : key), zh: p.country?.zh || '', idx: [] });
+    groups.get(key).idx.push(i);
+  });
+  if (!groups.size) return q ? `<p class="hint">No place matches “${esc(q)}”.</p>` : '';
+  const openAll = !COUNTRIES_TOUCHED && list.length <= 8;
+  groups.forEach(g => sortIdx(list, g.idx));
+  return [...groups.values()].sort((a, b) => (a.key === '—') - (b.key === '—') || (PLACE_SORT === 'date' ? newestIdx(list, b.idx).localeCompare(newestIdx(list, a.idx)) : 0) || a.name.localeCompare(b.name)).map(g => {
+    const open = !!q || openAll || OPEN_COUNTRIES.has(g.key) || g.idx.some(i => OPEN_PLACES.has(list[i].id));
+    const nA = g.idx.filter(i => list[i].academic).length;
+    return `<div class="tv-country${open ? ' open' : ''}" data-cc="${esc(g.key)}"><button type="button" class="tv-country-head" data-ctoggle="${esc(g.key)}" aria-expanded="${open}"><span class="chev">${open ? '▾' : '▸'}</span><span class="tv-flag">${g.key === '—' ? '' : tvFlag(g.key)}</span><b>${esc(g.name)}</b>${g.zh && g.zh !== g.name ? `<span class="tv-country-zh">${esc(g.zh)}</span>` : ''}<span class="tv-country-n">${g.idx.length} place${g.idx.length === 1 ? '' : 's'}${g.key === 'CN' && CN_PROV?.features?.length ? ` · ${new Set(g.idx.map(i => provOfPlace(list[i])?.zh || '—')).size} provinces` : ''}${nA ? ` · ${nA} academic` : ''}</span></button>
+      <div class="tv-country-body"${open ? '' : ' hidden'}>${g.key === 'CN' && CN_PROV?.features?.length ? provGroupsHtml(list, g.idx, fn, q, openAll) : g.idx.map(i => fn(list[i], i)).join('')}</div></div>`;
+  }).join('');
 }
 // The public file: academic entries only, public fields only, plain photos only
 function derivePublic(d) {
@@ -2067,7 +2228,8 @@ function autoGroupA5(p) {
     if (g.a5 || g.a5Manual) continue;
     const hit = a5Match(g.name, typeof g.lat === 'number' ? g.lat : p.lat, typeof g.lon === 'number' ? g.lon : p.lon);
     if (!hit) continue;
-    g.a5 = a5Ref(hit.area); g.a5root = hit.root; if (!g.tags.includes('5a')) g.tags.push('5a'); changed = true;
+    g.a5 = a5Ref(hit.area); g.a5root = hit.root; changed = true;
+    if (FIVE_A_OFF?.items?.length) fixFiveA(g, p.cc, typeof g.lat === 'number' ? g.lat : p.lat, typeof g.lon === 'number' ? g.lon : p.lon); else if (!g.tags.includes('5a')) g.tags.push('5a');
   }
   return changed;
 }
@@ -2085,7 +2247,21 @@ function inFeature(lon, lat, f) {
     if (inside) return true; }
   return false;
 }
-const provinceAt = (lat, lon) => typeof lat === 'number' && CN_PROV ? (CN_PROV.features.find(f => inFeature(lon, lat, f))?.properties.zh || '') : '';
+// Hong Kong and Macau are tiny next to Guangdong: match them first, by name or within ~1.5 km of their outline
+const SAR_NAMES = { '澳门': /澳门|澳門|macau|macao/i, '香港': /香港|hong\s*kong/i };
+function sarFeature(p, feats, inF) {
+  const name = [p.city?.en, p.city?.zh, p.country?.en, p.country?.zh, p.admin].join(' ');
+  for (const f of feats) {
+    const re = SAR_NAMES[f.properties.zh]; if (!re) continue;
+    if (re.test(name)) return f;
+    if (typeof p.lat !== 'number' || /珠海|深圳|横琴|zhuhai|shenzhen|hengqin/i.test(name)) continue;
+    if (inF(p.lon, p.lat, f)) return f;
+    const polys = f.geometry.type === 'MultiPolygon' ? f.geometry.coordinates : [f.geometry.coordinates];
+    for (const poly of polys) for (const [x, y] of poly[0]) if ((x - p.lon) ** 2 + (y - p.lat) ** 2 < 0.00025) return f;
+  }
+  return null;
+}
+const provinceAt = (lat, lon) => typeof lat === 'number' && CN_PROV ? ((sarFeature({ lat, lon }, CN_PROV.features, inFeature) || CN_PROV.features.find(f => inFeature(lon, lat, f)))?.properties.zh || '') : '';
 // Candidate name → match key: no city / county prefix, no generic suffix, no separators
 const FA_PREFIX = /^(?:[一-鿿]{2,8}?(?:自治州|地区|市|盟|县|区))(?=[一-鿿]{2})/;
 const FA_SUFFIX = /(国家级?)?(生态旅游风景区|风景名胜旅游区|风景名胜区|生态文化旅游区|文化生态旅游区|文化旅游景区|文化旅游区|生态旅游区|风景旅游区|旅游风景区|旅游景区|旅游度假区|休闲旅游区|游览区|风景区|旅游区|景区|风光带|景点)$/;
@@ -2105,11 +2281,26 @@ function officialFiveA(name, lat, lon) {
   return null;
 }
 // Set / remove the 5A tag of a sight in China by the official list (a bundled-area part keeps it via sight.a5)
+// Mainland China only (the official list has no Hong Kong, Macau or Taiwan); no country code: by coordinates
+function isMainland(cc, lat, lon) {
+  const c = String(cc || '').toUpperCase(), pr = provinceAt(lat, lon);
+  if (c && c !== 'CN') return false;
+  if (['香港', '澳门', '台湾'].includes(pr)) return false;
+  return c === 'CN' || !!pr;
+}
+// The official entry a sight counts as: its own name, else the name of its 5A area (both must be on the list)
+function fiveAOf(g, lat, lon) {
+  return officialFiveA(g.name, lat, lon) || (g.a5?.name?.zh ? officialFiveA({ zh: g.a5.name.zh, en: '' }, lat, lon) : null);
+}
 function fixFiveA(g, cc, lat = g.lat, lon = g.lon) {
-  if (String(cc || '').toUpperCase() !== 'CN' || !FIVE_A_OFF) return false;
-  const it = officialFiveA(g.name, lat, lon), want = !!it || !!g.a5, had = g.tags.includes('5a');
+  if (!FIVE_A_OFF || !FIVE_A_OFF.items?.length) return false;
+  const main = isMainland(cc, lat, lon);
+  let changed = false;
+  if (!main && g.a5) { delete g.a5; delete g.a5root; delete g.a5Manual; changed = true; }
+  const it = main ? fiveAOf(g, lat, lon) : null, want = !!it, had = g.tags.includes('5a');
+  if (!it && g.a5) { delete g.a5; delete g.a5root; delete g.a5Manual; changed = true; }   // an area that is not on the official list
   if (it) g.fiveA = it.n; else delete g.fiveA;
-  if (want === had) return false;
+  if (want === had) return changed;
   g.tags = want ? g.tags.concat('5a') : g.tags.filter(t => t !== '5a'); return true;
 }
 
@@ -2703,10 +2894,15 @@ function viewFootprints(v) {
       <div class="field" style="margin:0"><label for="tv-q">City or town</label><input id="tv-q" type="text" placeholder="e.g. Guangzhou, Oslo, Kyoto" autocomplete="off"></div>
       <button class="btn primary" id="tv-search">Search</button><button class="btn" id="tv-manual">Add manually</button></div>
     <div class="tv-results" id="tv-results"></div><p class="hint" id="tv-smsg"></p></div>
+  <div id="tv-drafts" class="tv-drafts" hidden></div>
   <div class="card tag-check"><div class="toolbar" style="margin:0"><button class="btn sm primary" id="tv-check">✓ Check all tags</button>
     <span class="hint" style="margin:0">Re-checks every saved sight: 5A against the official list (358, May 2025), national parks against the official rule, and World Heritage / 5A-area grouping. Tags you set by hand are checked too.</span></div>
     <div id="tv-check-out"></div></div>
-  <h3 class="yearhead">Places</h3><div id="tv-places"></div>
+  <h3 class="yearhead">Places</h3>
+  <div class="tv-filter"><input type="search" id="tv-filter" placeholder="Find a place: city, country, conference, sight … (中文 or English)" autocomplete="off" value="${esc(PLACE_FILTER)}"><span class="hint" id="tv-filter-n"></span>
+    <span class="sort-seg" id="tv-sort" role="group" aria-label="Sort"><button type="button" data-psort="name" class="${PLACE_SORT === 'name' ? 'on' : ''}">A–Z</button><button type="button" data-psort="date" class="${PLACE_SORT === 'date' ? 'on' : ''}">Newest first</button></span>
+    <button class="btn sm" type="button" id="tv-open-all">Expand all</button><button class="btn sm" type="button" id="tv-close-all">Collapse all</button></div>
+  <div id="tv-places"></div>
   <div class="card"><h3>Map services (optional)</h3>
     <p class="hint" style="margin-bottom:0.8rem">Landmark search uses Wikidata and the built-in UNESCO list. Wikidata is blocked in mainland China, so for Chinese places add a free <b>Amap (高德) Web-service key</b>: open <a href="https://console.amap.com/dev/key/app" target="_blank">console.amap.com</a> → 应用管理 → 创建新应用 → 添加 Key → 服务平台 <b>Web服务</b>. The key is stored inside your encrypted sign-in.</p>
     <div class="row" style="grid-template-columns:1fr auto;align-items:end"><div class="field" style="margin:0"><label for="tv-amap">Amap Web-service key</label><input id="tv-amap" type="password" class="mono" value="${esc(amapKey())}" autocomplete="off" placeholder="32 hex characters"></div><button class="btn sm" id="tv-amap-save">Save</button></div>
@@ -2734,15 +2930,16 @@ function viewFootprints(v) {
   $('#tv-manual').onclick = () => addPlace({ city: { en: '', zh: '' }, country: { en: '', zh: '' }, cc: '', lat: null, lon: null });
   const addPlace = r => {
     const np = normalizeFP({ places: [{ id: 'pl-' + rid(), cc: r.cc, country: r.country, city: r.city, lat: r.lat, lon: r.lon }] }).places[0];
-    T.places.unshift(np); OPEN_PLACES.add(np.id);
+    np._draft = true; T.places.unshift(np); OPEN_PLACES.add(np.id);
     markDirty(); renderPlaces();
+    requestAnimationFrame(() => { const d = $('#tv-drafts'); if (d && !d.hidden) d.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
     if (needsEn(np.city) && hasCJK(np.city.zh)) translateName(np.city.zh, np.lat, np.lon).then(({ en }) => { if (en && needsEn(np.city)) { np.city.en = en; markDirty(); renderPlaces(); } }).catch(() => {});
   };
 
   // Places
   const renderPlaces = () => {
-    const box = $('#tv-places');
-    box.innerHTML = T.places.map((p, i) => { const open = OPEN_PLACES.has(p.id); return `<div class="item place ${open ? 'open' : ''}" data-i="${i}"><div class="item-head" data-toggle="${esc(p.id)}" title="${open ? 'Collapse' : 'Expand to edit'}"><div class="title"><span class="chev">${open ? '▾' : '▸'}</span><span class="tv-flag">${tvFlag(p.cc)}</span><span class="tv-icon" title="${esc(window.CityIcons ? CityIcons.label(CityIcons.iconKey(p), 'en') : '')}">${window.CityIcons ? CityIcons.svg(CityIcons.iconKey(p)) : ''}</span> ${esc(p.city.en || 'New place')}${p.country.en ? `, ${esc(p.country.en)}` : ''}${p.when ? ` <span class="hint" style="display:inline">· ${esc(p.when)}${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length > 1 ? ` (${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length} visits)` : ''}</span>` : ''}${p.academic ? ` <span class="pill acad">${esc(KIND_OPTIONS.find(k => k[0] === p.kind)?.[1] || 'Academic')}</span>` : (p.trip ? ` <span class="pill muted">${esc(TRIP_OPTIONS.find(k => k[0] === p.trip)?.[1] || p.trip)}</span>` : '')}${!open ? ` <span class="hint" style="display:inline;font-weight:400">· ${p.photos.length} photo${p.photos.length === 1 ? '' : 's'}${p.sights.length ? `, ${p.sights.length} sight${p.sights.length === 1 ? '' : 's'}` : ''}</span>` : ''}</div>${itemTools(T.places, i)}</div><div class="pbody" ${open ? '' : 'hidden'}>
+    const box = $('#tv-places'); { const s0 = $('#tv-drafts'); if (s0) s0.innerHTML = ''; }
+    box.innerHTML = placeGroups(T.places, (p, i) => { const open = OPEN_PLACES.has(p.id); return `<div class="item place ${open ? 'open' : ''}" data-i="${i}"><div class="item-head" data-toggle="${esc(p.id)}" title="${open ? 'Collapse' : 'Expand to edit'}"><div class="title"><span class="chev">${open ? '▾' : '▸'}</span><span class="tv-icon" title="${esc(window.CityIcons ? CityIcons.label(CityIcons.iconKey(p), 'en') : '')}">${window.CityIcons ? CityIcons.svg(CityIcons.iconKey(p)) : ''}</span> ${esc(p.city.en || 'New place')}${!p.cc && p.country.en ? `, ${esc(p.country.en)}` : ''}${p.when ? ` <span class="hint" style="display:inline">· ${esc(p.when)}${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length > 1 ? ` (${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length} visits)` : ''}</span>` : ''}${p.academic ? ` <span class="pill acad">${esc(KIND_OPTIONS.find(k => k[0] === p.kind)?.[1] || 'Academic')}</span>` : (p.trip ? ` <span class="pill muted">${esc(TRIP_OPTIONS.find(k => k[0] === p.trip)?.[1] || p.trip)}</span>` : '')}${!open ? ` <span class="hint" style="display:inline;font-weight:400">· ${p.photos.length} photo${p.photos.length === 1 ? '' : 's'}${p.sights.length ? `, ${p.sights.length} sight${p.sights.length === 1 ? '' : 's'}` : ''}</span>` : ''}</div>${itemTools(T.places, i)}</div><div class="pbody" ${open ? '' : 'hidden'}>
       ${biField('City', p, 'city')}${biField('Country', p, 'country')}
       <div class="row" style="grid-template-columns:90px 1fr 1fr 1fr">
         <div class="field"><label>Code</label>${bind(p, 'cc', 'text', 'placeholder="NL" maxlength="2" style="text-transform:uppercase"')}</div>
@@ -2767,21 +2964,56 @@ function viewFootprints(v) {
       <div class="field"><label>Photos (${p.photos.length})</label><div class="thumbs" id="tv-ph-${i}"></div>
         ${p.academic ? `<p class="hint">${p.photos.filter(isPublicPhoto).length} public (academic page) · ${p.photos.filter(x => !isPublicPhoto(x)).length} private (travel page only, encrypted). Use the 🌐 / 🔒 button on a photo to switch.</p>` : ''}
         ${!p.academic && p.photos.some(isPublicPhoto) ? `<p class="hint">${p.photos.filter(isPublicPhoto).length} photo(s) are stored unencrypted (uploaded while this entry was academic). Use 🔒 to make them private.</p>` : ''}
-        <div class="toolbar"><input type="file" id="tv-up-${i}" accept="image/*" multiple style="display:none"><button class="btn sm" data-up="${i}">Upload photos…</button>${p.academic ? `<label class="hint" style="margin:0;display:inline-flex;gap:0.4rem;align-items:center;text-transform:none;letter-spacing:0;font-weight:500">as <select data-up-vis="${i}" style="width:auto;padding:0.2rem 0.4rem"><option value="pub">🌐 public (academic)</option><option value="priv">🔒 private (travel only)</option></select></label>` : ''}<span id="tv-upsg-${i}"></span><span class="tv-prog" id="tv-prog-${i}"></span></div></div></div></div>`; }).join('') || `<p class="hint">Nothing yet. Search for a city above.</p>`;
+        <div class="toolbar"><input type="file" id="tv-up-${i}" accept="image/*" multiple style="display:none"><button class="btn sm" data-up="${i}">Upload photos…</button><span class="hint drop-hint">or drag photos onto this place</span>${p.academic ? `<label class="hint" style="margin:0;display:inline-flex;gap:0.4rem;align-items:center;text-transform:none;letter-spacing:0;font-weight:500">as <select data-up-vis="${i}" style="width:auto;padding:0.2rem 0.4rem"><option value="pub">🌐 public (academic)</option><option value="priv">🔒 private (travel only)</option></select></label>` : ''}<span id="tv-upsg-${i}"></span><span class="tv-prog" id="tv-prog-${i}"></span></div></div></div></div>`; }) || `<p class="hint">Nothing yet. Search for a city above.</p>`;
+    const nShown = box.querySelectorAll('.item.place').length, cnt = $('#tv-filter-n');
+    if (cnt) cnt.textContent = PLACE_FILTER.trim() ? `${nShown} of ${T.places.length} places` : `${T.places.length} places in ${new Set(T.places.map(groupCC)).size} countries`;
+    if (!CN_PROV && T.places.some(x => groupCC(x) === 'CN')) loadFiveA().then(() => { if (CN_PROV?.features?.length) renderPlaces(); });
+    box.querySelectorAll('[data-ptoggle]').forEach(b => b.onclick = () => {
+      const sec = b.closest('.tv-prov'), k = b.dataset.ptoggle, open = !sec.classList.contains('open');
+      if (!COUNTRIES_TOUCHED) { COUNTRIES_TOUCHED = true; box.querySelectorAll('.tv-country.open').forEach(x => OPEN_COUNTRIES.add(x.dataset.cc)); box.querySelectorAll('.tv-prov.open').forEach(x => OPEN_PROVS.add(x.dataset.prov)); }
+      if (open) OPEN_PROVS.add(k); else { OPEN_PROVS.delete(k); sec.querySelectorAll('.item.place').forEach(it => OPEN_PLACES.delete(T.places[Number(it.dataset.i)]?.id)); }
+      sec.classList.toggle('open', open); sec.querySelector('.tv-prov-body').hidden = !open; b.querySelector('.chev').textContent = open ? '▾' : '▸'; b.setAttribute('aria-expanded', open);
+    });
+    box.querySelectorAll('[data-ctoggle]').forEach(b => b.onclick = () => {
+      const sec = b.closest('.tv-country'), k = b.dataset.ctoggle, open = !sec.classList.contains('open');
+      if (!COUNTRIES_TOUCHED) { COUNTRIES_TOUCHED = true; box.querySelectorAll('.tv-country.open').forEach(x => OPEN_COUNTRIES.add(x.dataset.cc)); box.querySelectorAll('.tv-prov.open').forEach(x => OPEN_PROVS.add(x.dataset.prov)); }
+      if (open) OPEN_COUNTRIES.add(k); else { OPEN_COUNTRIES.delete(k); sec.querySelectorAll('.item.place').forEach(it => OPEN_PLACES.delete(T.places[Number(it.dataset.i)]?.id)); }
+      sec.classList.toggle('open', open); sec.querySelector('.tv-country-body').hidden = !open; b.querySelector('.chev').textContent = open ? '▾' : '▸'; b.setAttribute('aria-expanded', open);
+    });
     box.querySelectorAll('[data-toggle]').forEach(h => h.addEventListener('click', e => { if (e.target.closest('.tools')) return; const id = h.dataset.toggle; OPEN_PLACES.has(id) ? OPEN_PLACES.delete(id) : OPEN_PLACES.add(id); renderPlaces(); }));
-    box.querySelectorAll('select[data-kind]').forEach((sel, k) => { const p = T.places.filter(x => x.academic)[k]; sel.innerHTML = KIND_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.kind === val ? 'selected' : ''}>${lab}</option>`).join(''); });
+    box.querySelectorAll('select[data-kind]').forEach(sel => { const p = T.places[Number(sel.closest('.item').dataset.i)]; sel.innerHTML = KIND_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.kind === val ? 'selected' : ''}>${lab}</option>`).join(''); });
     box.querySelectorAll('select[data-icon]').forEach(sel => { const p = T.places[Number(sel.closest('.item').dataset.i)]; if (!window.CityIcons) return;
       const auto = CityIcons.autoIcon(p);
       sel.innerHTML = `<option value="">Automatic · ${esc(CityIcons.label(auto, 'en'))} ${esc(CityIcons.label(auto, 'zh'))}</option>` + CityIcons.KEYS.filter(k => k !== 'lived' || p.trip === 'lived').map(k => `<option value="${k}" ${p.icon === k ? 'selected' : ''}>${esc(CityIcons.label(k, 'en'))} · ${esc(CityIcons.label(k, 'zh'))}</option>`).join('');
       sel.addEventListener('change', () => { const item = sel.closest('.item'); const k = CityIcons.iconKey(p); item.querySelectorAll('.tv-icon').forEach(el => { el.innerHTML = CityIcons.svg(k); el.title = CityIcons.label(k, 'en'); }); }); });
     box.querySelectorAll('select[data-trip]').forEach(sel => { const p = T.places[Number(sel.closest('.item').dataset.i)]; sel.innerHTML = TRIP_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.trip === val ? 'selected' : ''}>${lab}</option>`).join(''); });
-    box.querySelectorAll('select[data-talk]').forEach((sel, k) => { const p = T.places.filter(x => x.academic)[k]; sel.innerHTML = TALK_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.talk_type === val ? 'selected' : ''}>${lab}</option>`).join(''); });
+    box.querySelectorAll('select[data-talk]').forEach(sel => { const p = T.places[Number(sel.closest('.item').dataset.i)]; sel.innerHTML = TALK_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.talk_type === val ? 'selected' : ''}>${lab}</option>`).join(''); });
+    // pairs that can sit side by side on wide screens
+    box.querySelectorAll('.item.place .pbody').forEach(b => { const kids = [...b.children], lab = c => (c.querySelector(':scope > label')?.textContent || '').trim();
+      const pair = re => { const hit = kids.filter(c => re.test(lab(c))); return hit.length === 2 ? hit : []; };
+      [...pair(/^(City|Country)$/i), ...pair(/note/i)].forEach(c => c.classList.add('w-half'));
+      pair(/^(Sights|Photos)/i).forEach(c => c.classList.add('w-half', 'w-half-xl')); });
     wireBindings(box); wireItemTools(box, T.places, renderPlaces);
     // Re-render when the academic flag or the type changes (labels and fields depend on them)
     box.querySelectorAll('[data-acad], select[data-kind], select[data-talk]').forEach(el => el.addEventListener('change', () => setTimeout(renderPlaces, 0)));
     box.querySelectorAll('[data-addvisit]').forEach(a => a.onclick = e => { e.preventDefault(); const inp = box.querySelector(`[data-when="${a.dataset.addvisit}"]`); if (!inp) return; inp.value = inp.value.trim() ? inp.value.trim().replace(/;?\s*$/, '; ') : ''; inp.dispatchEvent(new Event('input')); inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); });
     box.querySelectorAll('input[maxlength="2"]').forEach(inp => inp.addEventListener('change', () => { inp.value = inp.value.toUpperCase(); inp.dispatchEvent(new Event('input')); }));
-    T.places.forEach((p, i) => { renderThumbs(p, i); wireUpload(p, i); renderSights(p, i); wireSights(p, i); });
+    T.places.forEach((p, i) => { if (!box.querySelector(`.item[data-i="${i}"]`)) return; renderThumbs(p, i); wireUpload(p, i); renderSights(p, i); wireSights(p, i); });
+    const slot = $('#tv-drafts'), tmp = $('#tv-draft-tmp');
+    if (slot) { slot.innerHTML = ''; slot.hidden = !tmp;
+      if (tmp) { slot.append(...tmp.children); tmp.remove();
+        slot.querySelectorAll('[data-draft-done]').forEach(b => b.onclick = () => {
+          const pl = T.places[Number(b.dataset.draftDone)]; if (!pl) return;
+          if (!pl.city?.en && !pl.city?.zh) { toast('Give the place a name first'); return; }
+          delete pl._draft; OPEN_PLACES.delete(pl.id); markDirty(); renderPlaces();
+          const k = String(pl.cc || '').toUpperCase(), where = (['TW', 'HK', 'MO'].includes(k) ? 'China' : pl.country?.en) || 'the list';
+          toast(`${pl.city.en || pl.city.zh} added to ${where}. Publish to save.`);
+        });
+        slot.querySelectorAll('[data-draft-drop]').forEach(b => b.onclick = () => {
+          const k = Number(b.dataset.draftDrop), pl = T.places[k]; if (!pl) return;
+          if ((pl.photos.length || pl.sights.length) && !confirm(`Discard ${pl.city.en || pl.city.zh || 'this place'} with ${pl.photos.length} photo(s) and ${pl.sights.length} sight(s)?`)) return;
+          T.places.splice(k, 1); OPEN_PLACES.delete(pl.id); markDirty(); renderPlaces();
+        }); } }
   };
   // Saved sights of a place: name EN/ZH, tag toggles, untick to remove
   const renderUploadSight = (p, i) => {
@@ -2982,6 +3214,15 @@ function viewFootprints(v) {
   };
   renderPlaces();
 
+  // Filter and expand / collapse all
+  let filterTimer = 0;
+  $('#tv-filter').addEventListener('input', e => { clearTimeout(filterTimer); filterTimer = setTimeout(() => { PLACE_FILTER = e.target.value; renderPlaces(); }, 150); });
+  $('#tv-filter').addEventListener('keydown', e => { if (e.key === 'Escape') { e.target.value = ''; PLACE_FILTER = ''; renderPlaces(); } });
+  document.querySelectorAll('[data-psort]').forEach(b => b.onclick = () => { PLACE_SORT = b.dataset.psort; try { localStorage.setItem('sm_place_sort', PLACE_SORT); } catch (e) {}
+    document.querySelectorAll('[data-psort]').forEach(x => x.classList.toggle('on', x.dataset.psort === PLACE_SORT)); renderPlaces(); });
+  $('#tv-open-all').onclick = () => { COUNTRIES_TOUCHED = true; T.places.forEach(x => { OPEN_COUNTRIES.add(groupCC(x)); if (groupCC(x) === 'CN') OPEN_PROVS.add(provOfPlace(x)?.zh || '—'); }); renderPlaces(); };
+  $('#tv-close-all').onclick = () => { COUNTRIES_TOUCHED = true; OPEN_COUNTRIES.clear(); OPEN_PROVS.clear(); OPEN_PLACES.clear(); renderPlaces(); };
+
   // One-click tag check
   $('#tv-check').onclick = async () => {
     const btn = $('#tv-check'), out = $('#tv-check-out'); btn.disabled = true; out.innerHTML = '<p class="hint">Loading the official lists…</p>';
@@ -2997,6 +3238,13 @@ function viewFootprints(v) {
         // Grouping first (a part of a bundled 5A area keeps its 5A), then the official checks
         const now0 = new Map(pl.sights.map(g => [g, JSON.stringify(snap(g))]));
         const before = new Map(pl.sights.map(g => [g, snap(PUB.get(pl.id + '|' + g.id) || g)]));
+        for (const g of pl.sights) {
+          const la = typeof g.lat === 'number' ? g.lat : pl.lat, lo = typeof g.lon === 'number' ? g.lon : pl.lon;
+          if (g.whsite && !(WH_SITES || []).some(w => w.id === g.whsite.id)) { delete g.whsite; delete g.whroot; g.tags = g.tags.filter(t => !WH_GROUP.has(t)); }
+          if (g.a5) { const hit = isMainland(pl.cc, la, lo) ? a5Match(g.name, la, lo) : null;
+            if (!hit || hit.area.id !== g.a5.id) { delete g.a5; delete g.a5root; } else g.a5root = hit.root; }
+          delete g.a5Manual;
+        }
         autoGroupWH(pl, WH_SITES); autoGroupA5(pl);
         for (const g of pl.sights) {
           const la = typeof g.lat === 'number' ? g.lat : pl.lat, lo = typeof g.lon === 'number' ? g.lon : pl.lon;
@@ -3011,6 +3259,9 @@ function viewFootprints(v) {
           }
           if (!b.wh && g.whsite) { rows.push([where, nm, `grouped under World Heritage: ${g.whsite.name.zh || g.whsite.name.en}`, 'add']); n++; }
           if (!b.a5 && g.a5) { rows.push([where, nm, `grouped under 5A area: ${g.a5.name.zh}`, 'add']); n++; }
+          else if (b.a5 && !g.a5) { rows.push([where, nm, 'removed from a 5A area it does not belong to', 'rm']); n++; }
+          else if (b.a5 && g.a5 && b.a5 !== g.a5.id) { rows.push([where, nm, `moved to 5A area: ${g.a5.name.zh}`, 'add']); n++; }
+          if (b.wh && !g.whsite) { rows.push([where, nm, 'removed from a World Heritage property not on the UNESCO list', 'rm']); n++; }
           if (now0.get(g) !== JSON.stringify(snap(g))) fixed = true;
         }
       }
@@ -3295,6 +3546,49 @@ $('#btn-save').onclick = saveContent;
 $('#btn-signout').onclick = () => (TOKEN ? signOut() : showLogin().then(loadContent));
 $('#btn-reload').onclick = async () => { if (isDirty() && !$('#btn-reload').dataset.confirm) { $('#btn-reload').dataset.confirm = '1'; $('#btn-reload').textContent = 'Discard changes & reload?'; setTimeout(() => { $('#btn-reload').dataset.confirm = ''; $('#btn-reload').textContent = 'Reload from GitHub'; }, 3000); return; } $('#btn-reload').dataset.confirm = ''; $('#btn-reload').textContent = 'Reload from GitHub'; await loadContent(); };
 window.addEventListener('beforeunload', e => { if (isDirty()) { e.preventDefault(); e.returnValue = ''; } });
+// Drag and drop: the smallest container holding exactly one file input is the drop zone for that input
+(() => {
+  let zoneEl = null, depth = 0;
+  const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  const zoneOf = target => {
+    // climb while the container still holds exactly one file input; the largest such container is the zone
+    let best = null;
+    for (let el = target instanceof Element ? target : target?.parentElement; el && el !== document.body && !el.matches('main, .content, aside'); el = el.parentElement) {
+      const ins = [...el.querySelectorAll('input[type="file"]')].filter(x => !x.disabled);
+      if (ins.length === 1) best = { el, input: ins[0] };
+      else if (ins.length > 1) break;
+      if (best && el.matches('.item, .card, .draft-card')) break;   // a place editor or a settings card is the largest zone
+    }
+    return best;
+  };
+  const accepts = (input, f) => {
+    const acc = (input.accept || '').split(',').map(x => x.trim().toLowerCase()).filter(Boolean); if (!acc.length) return true;
+    const name = f.name.toLowerCase(), type = (f.type || '').toLowerCase();
+    return acc.some(a => a.startsWith('.') ? name.endsWith(a) : a.endsWith('/*') ? type.startsWith(a.slice(0, -1)) : type === a);
+  };
+  const label = input => /pdf/.test(input.accept) ? 'Drop the PDF to upload' : input.multiple ? 'Drop photos to upload' : 'Drop the image to upload';
+  const setZone = z => {
+    if (zoneEl && (!z || z.el !== zoneEl)) { zoneEl.classList.remove('drop-on'); zoneEl.removeAttribute('data-drop-label'); zoneEl = null; }
+    if (z && z.el !== zoneEl) { zoneEl = z.el; zoneEl.classList.add('drop-on'); zoneEl.setAttribute('data-drop-label', label(z.input)); }
+  };
+  window.addEventListener('dragenter', e => { if (!hasFiles(e)) return; depth++; });
+  window.addEventListener('dragleave', e => { if (!hasFiles(e)) return; depth = Math.max(0, depth - 1); if (!depth) setZone(null); });
+  window.addEventListener('dragover', e => {
+    if (!hasFiles(e)) return; e.preventDefault();
+    const z = zoneOf(e.target); setZone(z); e.dataTransfer.dropEffect = z ? 'copy' : 'none';
+  });
+  window.addEventListener('drop', e => {
+    if (!hasFiles(e)) return; e.preventDefault(); depth = 0;
+    const z = zoneOf(e.target); setZone(null); if (!z) return;
+    let files = [...e.dataTransfer.files].filter(f => accepts(z.input, f));
+    const skipped = e.dataTransfer.files.length - files.length;
+    if (!files.length) { toast(/pdf/.test(z.input.accept) ? 'Only a PDF can be uploaded here.' : 'Only image files can be uploaded here.', true); return; }
+    if (!z.input.multiple) files = files.slice(0, 1);
+    const dt = new DataTransfer(); files.forEach(f => dt.items.add(f));
+    z.input.files = dt.files; z.input.dispatchEvent(new Event('change', { bubbles: true }));
+    if (skipped) toast(`${skipped} file${skipped === 1 ? ' was' : 's were'} skipped (not ${/pdf/.test(z.input.accept) ? 'a PDF' : 'an image'}).`);
+  });
+})();
 (async () => {
   TAB = lsGet(LS.tab) || 'overview';
   await ensureSignedIn();

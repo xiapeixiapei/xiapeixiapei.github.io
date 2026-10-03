@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="site-fonts.js"></script>
   <script src="site-theme.js"></script>
+  <script src="site-search.js" defer></script>
   <title>Publications</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" rel="stylesheet">
@@ -377,7 +378,7 @@
     const abstract = hasAbstract ? `<div class="pub-abstract"><div class="abstract-label">Abstract</div><p>${esc(p.abstract || 'Coming soon.')}</p></div>` : '';
     const hint = hasAbstract ? '<div class="expand-hint" data-en="Click to view abstract" data-zh="点击查看摘要">Click to view abstract</div>' : '';
     const style = isBook ? ' style="background: linear-gradient(135deg, var(--highlight) 0%, var(--highlight-2) 100%); border: 1px solid var(--subtle);"' : '';
-    return `<div class="pub-card"${style}>${cover}
+    return `<div class="pub-card" data-id="${attr(p.id)}"${style}>${cover}
       <div class="pub-info">
         <div class="pub-title">${title}</div>
         <div class="pub-authors">${p.authors}</div>

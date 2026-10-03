@@ -205,8 +205,24 @@
 
   // Run now, before the page's own CSS is parsed
   applyTheme(current());
-  applyFonts(window.SITE_FONTS || DEFAULT_FONTS);
-  applyPalette(window.SITE_PALETTE || DEFAULT_PALETTE);
+  // content.json (written by the Site Manager on every Publish) is the source of truth for fonts and colours;
+  // site-fonts.js can be stale (an old copy uploaded by hand, a browser cache). The value last seen in content.json
+  // is remembered and used before the first paint; the Site Manager previews its own choice, so it is skipped there.
+  var IS_ADMIN = /admin\.html$/.test(location.pathname);
+  var look = null; try { look = JSON.parse(localStorage.getItem('site-look') || 'null'); } catch (e) {}
+  var lookFonts = (!IS_ADMIN && look && look.fonts) || window.SITE_FONTS || DEFAULT_FONTS;
+  var lookPal = (!IS_ADMIN && look && PALETTES[look.palette] && look.palette) || window.SITE_PALETTE || DEFAULT_PALETTE;
+  applyFonts(lookFonts);
+  applyPalette(lookPal);
+  if (!IS_ADMIN && window.fetch) {
+    fetch('content.json', { cache: 'no-cache' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (c) {
+      var site = c && c.site; if (!site) return;
+      var f = site.fonts || window.SITE_FONTS || DEFAULT_FONTS, pal = PALETTES[site.palette] ? site.palette : (window.SITE_PALETTE || DEFAULT_PALETTE);
+      try { localStorage.setItem('site-look', JSON.stringify({ fonts: f, palette: pal })); } catch (e) {}
+      if (JSON.stringify(f) !== JSON.stringify(lookFonts)) { lookFonts = f; applyFonts(f); }
+      if (pal !== lookPal) { lookPal = pal; applyPalette(pal); }
+    }).catch(function () {});
+  }
   var st = document.createElement('style');
   st.id = 'site-theme-css';
   st.textContent =

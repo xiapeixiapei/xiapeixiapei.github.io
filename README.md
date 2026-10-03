@@ -84,6 +84,7 @@ Notes:
 | `index.html`, `publications.html`, `academic.html`, `travel.html` | The public pages |
 | `admin.html` | Site Manager |
 | `site-theme.js`, `site-fonts.js` | Fonts, colour palette, dark mode (`site-fonts.js` is written on publish) |
+| `site-search.js` | Search on the public pages (button next to the theme toggle, or press / or Ctrl+K): papers, places, sights |
 | `city-icons.js` | Icons for the footprint maps (chosen automatically per city, editable per place) |
 | `pinyin-lite.json` | Pinyin table used to give Chinese place names an English form |
 | `photo.jpg`, `logo-*.png` | Profile photo and school logos. The included ones are placeholders. |
@@ -170,6 +171,7 @@ The Site Manager creates `admin-auth.json`, `travel/` and `academic/` itself. Ne
 | `index.html`、`publications.html`、`academic.html`、`travel.html` | 公开页面 |
 | `admin.html` | 管理后台 |
 | `site-theme.js`、`site-fonts.js` | 字体、配色、深色模式（`site-fonts.js` 在发布时由后台写入） |
+| `site-search.js` | 公开页面的搜索（主题按钮旁的放大镜，或按 / 、Ctrl+K）：论文、地点、景点 |
 | `city-icons.js` | 足迹地图的城市图标（按城市自动选择，每个地点可在后台改） |
 | `pinyin-lite.json` | 给中文地名生成英文名用的拼音表 |
 | `photo.jpg`、`logo-*.png` | 头像和学校 logo，目前是占位图，请替换 |
