@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
+<script src="city-icons.js"></script>
 <meta name="description" content="Conferences and academic visits, shown on a map.">
 <title>Academic footprint</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,7 +162,16 @@
   .country-head .n { color: var(--muted); font-size: 0.88rem; margin-left: auto; white-space: nowrap; }
   .city { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 0.9rem 1.5rem; padding: 1.1rem 1.3rem 1.1rem 1.5rem; margin-top: 0.8rem; align-items: center; background: linear-gradient(135deg, var(--card-2) 0%, var(--card-bg) 60%); border: 1px solid var(--subtle); border-radius: 10px; transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
   .city-ic { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; background: var(--highlight); color: var(--accent); flex-shrink: 0; transition: transform 0.35s cubic-bezier(.34,1.56,.64,1), background 0.25s, color 0.25s; }
-  .city-ic svg { width: 17px; height: 17px; }
+  .city-ic svg { width: 18px; height: 18px; }
+  /* Map markers: round pin with the city icon */
+  .fp-pin-wrap { background: none; border: none; }
+  .fp-pin { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: var(--map-dot); color: var(--on-accent, #fff); border: 2px solid var(--map-ring); box-shadow: 0 2px 6px rgba(13, 27, 42, 0.25); transition: transform 0.15s ease, background 0.2s; cursor: pointer; }
+  .fp-pin svg { width: 18px; height: 18px; }
+  .fp-pin:hover, .leaflet-marker-icon:hover .fp-pin { transform: scale(1.15); background: var(--accent-light); }
+  .fp-pin.hl { box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.25), 0 2px 6px rgba(13, 27, 42, 0.25); }
+  /* Zoomed out: smaller pins so neighbouring cities overlap less */
+  .z-low .fp-pin { width: 22px; height: 22px; margin: 4px; }
+  .z-low .fp-pin svg { width: 13px; height: 13px; }
   .city-ic-lived { background: var(--ok-bg); color: var(--ok); }
   .visits-n { font-weight: 700; font-size: 0.78rem; color: var(--on-accent); background: var(--accent-light); padding: 0.05rem 0.45rem; border-radius: 100px; letter-spacing: 0.02em; }
   /* Scroll reveal: cards rise in as they enter the viewport */
@@ -486,8 +496,9 @@ const CITY_ICONS = {
   city: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V8l5-3v16"/><path d="M10 21V11h9v10"/><path d="M13 14h3M13 17h3M7 10v.01M7 13v.01M7 16v.01"/></svg>',
 };
 function cityIcon(p) {
-  const k = p.trip === 'lived' && !p.academic ? 'lived' : p.academic ? 'academic' : 'city';
-  return `<span class="city-ic city-ic-${k}" aria-hidden="true">${CITY_ICONS[k]}</span>`;
+  const k = window.CityIcons ? CityIcons.iconKey(p) : (p.trip === 'lived' && !p.academic ? 'lived' : p.academic ? 'academic' : 'city');
+  const svg = window.CityIcons ? CityIcons.svg(k) : CITY_ICONS[k];
+  return `<span class="city-ic city-ic-${k}" aria-hidden="true" title="${esc(window.CityIcons ? CityIcons.label(k, LANG) : '')}">${svg}</span>`;
 }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 // One date: "2024-09" -> "Sep 2024" / "2024年9月"; "2024" stays; "present"/"now"/"至今" -> present / 至今
@@ -830,12 +841,13 @@ async function renderMap() {
   for (const p of places) {
     if (typeof p.lat !== 'number' || typeof p.lon !== 'number') continue;
     const n = (p.photos || []).length;
-    const m = L.circleMarker([p.lat, p.lon], { radius: 7, weight: 2, fillOpacity: 1, className: 'fp-city' }).addTo(MAP);
+    const k = window.CityIcons ? CityIcons.iconKey(p) : 'city';
+    const m = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: 'fp-pin-wrap', html: `<span class="fp-pin fp-city${p.highlight ? ' hl' : ''}" data-icon="${k}">${window.CityIcons ? CityIcons.svg(k) : ''}</span>`, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] }), riseOnHover: true, keyboard: false }).addTo(MAP);
     m.bindPopup(`<div class="pop-city">${esc(t(p.city))}</div><div class="pop-meta">${esc(t(p.country))}${p.when ? ' · ' + esc(fmtWhen(p.when)) : ''}</div>${p.academic && t(p.event) ? `<div style="color:var(--accent);font-weight:500;margin-top:0.2rem">${esc(kindLabel(p.kind || 'conference'))} · ${esc(t(p.event))}</div>` : ''}${PRIVATE && p.trip ? `<div class="pop-meta">${esc(tripLabel(p.trip))}</div>` : ''}${p.academic && (p.talk || p.talk_type) ? `<div class="pop-meta">${esc(talkLabel(p.talk_type))}${p.talk ? (p.talk_type ? ': ' : '') + esc(p.talk) : ''}</div>` : ''}
       ${n ? `<button class="pop-btn" onclick="openLightbox('${esc(p.id)}',0)">${LANG === 'zh' ? `查看 ${n} 张照片` : `${n} photo${n === 1 ? '' : 's'}`} ↗</button>` : ''}`);
-    m.on('mouseover', () => m.setStyle({ radius: 9 })).on('mouseout', () => m.setStyle({ radius: 7 }));
     MARKERS.set(p.id, m); bounds.push([p.lat, p.lon]);
   }
+  if (!MAP._pinZoomBound) { MAP._pinZoomBound = true; const syncPins = () => MAP.getContainer().classList.toggle('z-low', MAP.getZoom() < 4); MAP.on('zoomend', syncPins); syncPins(); }
   // Sights: small markers, visible once zoomed in a little
   if (SIGHTS_LAYER) { SIGHTS_LAYER.remove(); SIGHTS_LAYER = null; }
   const sightMarkers = [];

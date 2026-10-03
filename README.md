@@ -49,7 +49,7 @@ What you get:
 | Name, photo, affiliation, bio, email, Scholar / ORCID / ResearchGate links | Profile |
 | Research interests, education (with school logos and supervisors) | Research interests, Education |
 | Papers: add from DOI, mark first / corresponding author, feature on the homepage | Publications |
-| Citation counts, missing DOIs and journal covers | Publications → **↻ Refresh citations & covers** |
+| Citation counts, missing DOIs, abstracts and journal covers | Publications → **↻ Refresh citations, abstracts & covers** |
 | Awards, photo strips | Awards, Photos |
 | CV PDF, footer year, analytics, fonts, colours, text size | CV & site settings |
 | Conference map, private travel map | Footprints |
@@ -84,6 +84,8 @@ Notes:
 | `index.html`, `publications.html`, `academic.html`, `travel.html` | The public pages |
 | `admin.html` | Site Manager |
 | `site-theme.js`, `site-fonts.js` | Fonts, colour palette, dark mode (`site-fonts.js` is written on publish) |
+| `city-icons.js` | Icons for the footprint maps (chosen automatically per city, editable per place) |
+| `pinyin-lite.json` | Pinyin table used to give Chinese place names an English form |
 | `photo.jpg`, `logo-*.png` | Profile photo and school logos. The included ones are placeholders. |
 | `wh-sites.json`, `wh-components.json`, `cn-5a-official.json`, `cn-5a-areas.json`, `national-parks.json`, `cn-provinces.json` | Offline data for the footprint maps |
 | `.github/workflows/fetch-covers.yml` | Fetches journal covers |
@@ -133,7 +135,7 @@ The Site Manager creates `admin-auth.json`, `travel/` and `academic/` itself. Ne
 | 姓名、照片、单位、简介、邮箱、Google Scholar / ORCID / ResearchGate 链接 | Profile |
 | 研究方向、教育经历（学校 logo、导师） | Research interests、Education |
 | 论文：用 DOI 导入，标注第一 / 通讯作者，设为主页代表作 | Publications |
-| 引用数、补全 DOI、期刊封面 | Publications → **↻ Refresh citations & covers** |
+| 引用数、补全 DOI、摘要、期刊封面 | Publications → **↻ Refresh citations, abstracts & covers** |
 | 获奖、照片轮播 | Awards、Photos |
 | 简历 PDF、页脚年份、访问统计、字体、配色、字号 | CV & site settings |
 | 学术足迹地图、私密旅行地图 | Footprints |
@@ -168,6 +170,8 @@ The Site Manager creates `admin-auth.json`, `travel/` and `academic/` itself. Ne
 | `index.html`、`publications.html`、`academic.html`、`travel.html` | 公开页面 |
 | `admin.html` | 管理后台 |
 | `site-theme.js`、`site-fonts.js` | 字体、配色、深色模式（`site-fonts.js` 在发布时由后台写入） |
+| `city-icons.js` | 足迹地图的城市图标（按城市自动选择，每个地点可在后台改） |
+| `pinyin-lite.json` | 给中文地名生成英文名用的拼音表 |
 | `photo.jpg`、`logo-*.png` | 头像和学校 logo，目前是占位图，请替换 |
 | `wh-sites.json`、`wh-components.json`、`cn-5a-official.json`、`cn-5a-areas.json`、`national-parks.json`、`cn-provinces.json` | 足迹地图用到的离线数据 |
 | `.github/workflows/fetch-covers.yml` | 自动抓取期刊封面 |

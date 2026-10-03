@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
+<script src="city-icons.js"></script>
 <meta name="robots" content="noindex, nofollow">
 <title>Site Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -195,6 +196,12 @@
   .check-row.rm .what { color: var(--err); }
   .check-row.add .what { color: var(--ok); }
   @media (max-width: 760px) { .check-row { grid-template-columns: 1fr; gap: 0; padding: 0.3rem 0; border-top: 1px dashed var(--subtle); } }
+  .tv-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 7px; background: var(--highlight); color: var(--accent); vertical-align: middle; margin: 0 0.15rem 0 0.3rem; }
+  .tv-icon svg { width: 15px; height: 15px; }
+  .tv-icon.big { width: 38px; height: 38px; border-radius: 9px; margin: 0; flex: none; }
+  .tv-icon.big svg { width: 22px; height: 22px; }
+  .icon-pick { display: flex; gap: 0.5rem; align-items: center; }
+  .icon-pick select { flex: 1; min-width: 0; }
   .wh-part.a5-part { color: var(--warn); background: var(--warn-bg); }
   .wh-part { font-size: 12.5px; color: var(--accent); background: var(--highlight); border-radius: 4px; padding: 0.05rem 0.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
   .sg-open a { font-size: 12.5px; padding: 0.05rem 0.45rem; border: 1px solid var(--subtle); border-radius: 4px; text-decoration: none; white-space: nowrap; }
@@ -629,8 +636,11 @@ function coverlessWithDoi(pubs = C?.publications || []) {
 }
 // Copy cover values from a remote content.json into the working copy (and the saved baseline)
 function mergeRemoteCovers(remote) {
-  const rmap = new Map((remote.publications || []).map(p => [p.id, p.cover]));
-  const apply = obj => { let n = 0; (obj.publications || []).forEach(p => { const rc = rmap.get(p.id); if (!p.cover && rc) { p.cover = rc; n++; } }); return n; };
+  const rmap = new Map((remote.publications || []).map(p => [p.id, p]));
+  const apply = obj => { let n = 0; (obj.publications || []).forEach(p => { const r = rmap.get(p.id); if (!r) return;
+    if (!p.cover && r.cover) { p.cover = r.cover; n++; }
+    if (!p.abstract && r.abstract) p.abstract = r.abstract;
+    if (!p.doi && r.doi) p.doi = r.doi; }); return n; };
   const added = apply(C);
   try { const base = JSON.parse(C_ORIG); apply(base); C_ORIG = JSON.stringify(base); } catch (e) {}
   return added;
@@ -723,7 +733,7 @@ async function deleteAuthFile() {
 // Re-encrypt the current tokens with the unlocked key (used when the GoatCounter token changes)
 async function syncAuthBundle() {
   if (!SESSION_KEY || !TOKEN) return false;
-  const file = await encryptBundle({ gh: TOKEN, gc: SESSION?.gc || '', tp: SESSION?.tp || '', amap: SESSION?.amap || '' }, SESSION_KEY.key, SESSION_KEY.salt, SESSION_KEY.iter);
+  const file = await encryptBundle({ gh: TOKEN, gc: SESSION?.gc || '', tp: SESSION?.tp || '', amap: SESSION?.amap || '', els: SESSION?.els || '' }, SESSION_KEY.key, SESSION_KEY.salt, SESSION_KEY.iter);
   await writeAuthFile(file, 'Update encrypted sign-in via Site Manager');
   return true;
 }
@@ -817,7 +827,7 @@ function showLogin(opts = {}) {
           m.textContent = 'Checking GitHub access…';
           try { await verifyGitHubToken(bundle.gh); }
           catch (err) { btn.disabled = false; return viewSetup('Your password is correct, but the saved GitHub token no longer works: ' + err.message + ' Create a new token and set up sign-in again.'); }
-          TOKEN = bundle.gh; SESSION = { gh: bundle.gh, gc: bundle.gc || '', tp: bundle.tp || '', amap: bundle.amap || '' }; SESSION_KEY = { key, salt, iter };
+          TOKEN = bundle.gh; SESSION = { gh: bundle.gh, gc: bundle.gc || '', tp: bundle.tp || '', amap: bundle.amap || '', els: bundle.els || '' }; SESSION_KEY = { key, salt, iter };
           saveSession($('#keep').checked); done();
         } catch (err) { m.textContent = err.message; btn.disabled = false; $('#pw').select(); }
       };
@@ -1144,6 +1154,33 @@ function invertedToText(idx) {
   return words.join(' ').trim();
 }
 async function fetchJson(url, headers = {}) { const r = await fetch(url, { headers }); if (!r.ok) throw new Error(`${new URL(url).host} ${r.status}`); return r.json(); }
+// ── Abstracts: Crossref → OpenAlex → Semantic Scholar → Europe PMC (all open, no key) ──
+function cleanAbstract(s) { return String(s || '').replace(/\s+/g, ' ').replace(/^\s*(abstract|summary)\s*[:.\-–]?\s*/i, '').trim(); }
+const goodAbstract = a => a.length >= 80 && !/^(no abstract|abstract not available)/i.test(a);
+const elsKey = () => SESSION?.els || '';
+// Elsevier Article Retrieval API (needs a free key; works from the browser, the API sends CORS headers)
+async function elsevierAbstract(doi) {
+  if (!elsKey() || !/^10\.1016\//i.test(doi)) return '';
+  try {
+    const j = await fetchJson(`https://api.elsevier.com/content/article/doi/${encodeURIComponent(doi)}?view=META_ABS&httpAccept=application/json&apiKey=${encodeURIComponent(elsKey())}`);
+    return cleanAbstract(stripTags(j?.['full-text-retrieval-response']?.coredata?.['dc:description']));
+  } catch (e) { return ''; }
+}
+async function europePmcAbstract(doi) {
+  try {
+    const j = await fetchJson(`https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(`DOI:"${doi}"`)}&resultType=core&format=json&pageSize=1`);
+    return cleanAbstract(stripTags(j?.resultList?.result?.[0]?.abstractText));
+  } catch (e) { return ''; }
+}
+async function findAbstract(doi) {
+  const tries = [
+    async () => stripTags((await fetchJson(`https://api.crossref.org/works/${encodeURIComponent(doi)}`)).message?.abstract),
+    async () => invertedToText((await fetchJson(`https://api.openalex.org/works/doi:${encodeURIComponent(doi)}?select=abstract_inverted_index`)).abstract_inverted_index),
+    async () => (await fetchJson(`https://api.semanticscholar.org/graph/v1/paper/DOI:${encodeURIComponent(doi)}?fields=abstract`)).abstract,
+    () => europePmcAbstract(doi), () => elsevierAbstract(doi)];
+  for (const t of tries) { try { const a = cleanAbstract(await t()); if (goodAbstract(a)) return a; } catch (e) {} }
+  return '';
+}
 // Returns a partial publication record built from public metadata APIs
 async function lookupDoi(doiInput, status = () => {}) {
   const doi = parseDoi(doiInput); if (!doi) throw new Error('That does not look like a DOI (expected 10.xxxx/…).');
@@ -1181,11 +1218,14 @@ async function lookupDoi(doiInput, status = () => {}) {
   // Citations (OpenAlex; differs from Google Scholar)
   if (oa && typeof oa.cited_by_count === 'number') out.cited = oa.cited_by_count;
   // Abstract
-  out.abstract = stripTags(cr?.abstract) || invertedToText(oa?.abstract_inverted_index);
+  out.abstract = cleanAbstract(stripTags(cr?.abstract) || invertedToText(oa?.abstract_inverted_index));
   if (!out.abstract) {
     status('Semantic Scholar…');
     try { const ss = await fetchJson(`https://api.semanticscholar.org/graph/v1/paper/DOI:${encodeURIComponent(doi)}?fields=abstract,citationCount`); out.abstract = ss.abstract || ''; if (out.cited == null && typeof ss.citationCount === 'number') out.cited = ss.citationCount; } catch (e) {}
   }
+  out.abstract = cleanAbstract(out.abstract);
+  if (!goodAbstract(out.abstract)) { status('Europe PMC…'); out.abstract = (await europePmcAbstract(doi)) || out.abstract; }
+  if (!goodAbstract(out.abstract) && elsKey()) { status('Elsevier…'); out.abstract = (await elsevierAbstract(doi)) || out.abstract; }
   // Reuse an existing journal cover for the same journal
   if (journal) { const same = C.publications.find(p => p.cover && normName(p.venue).startsWith(normName(journal).slice(0, 12))); if (same) out.cover = same.cover; }
   return out;
@@ -1212,7 +1252,7 @@ async function refreshAll(btn) {
   const label = btn.textContent;
   const pubs = C.publications.filter(p => p.year !== 'book');
   btn.disabled = true;
-  let n = 0, changed = 0, doisAdded = 0, notFound = [];
+  let n = 0, changed = 0, doisAdded = 0, notFound = [], absAdded = 0, absMissing = 0, absMissingNames = [];
   for (const p of pubs) {
     btn.textContent = `Updating citations… ${++n}/${pubs.length}`;
     let doi = p.doi || parseDoi(p.url) || parseDoi(p.venue);
@@ -1229,6 +1269,11 @@ async function refreshAll(btn) {
         if (!p.doi) { p.doi = doi; doisAdded++; }
       }
     } catch (e) {}
+    if (doi && !p.status && !goodAbstract(cleanAbstract(p.abstract))) {
+      btn.textContent = `Looking for abstracts… ${n}/${pubs.length}`;
+      const a = await findAbstract(doi);
+      if (a) { p.abstract = a; absAdded++; } else { absMissing++; absMissingNames.push(p.title_short || p.title); }
+    }
     if (typeof cited === 'number') { if (cited !== p.cited) { p.cited = cited; changed++; } }
     else if (!p.status) notFound.push(p.title_short || p.title);
     await sleep(120);
@@ -1236,7 +1281,8 @@ async function refreshAll(btn) {
   C.site.last_refresh = new Date().toISOString(); // always changes, so publishing always triggers the cover search
   markDirty(); render();
   CITE_SUMMARY = '';
-  const summary = `Citations: ${changed} updated` + (doisAdded ? `, ${doisAdded} DOI${doisAdded > 1 ? 's' : ''} filled in` : '') + (notFound.length ? `, ${notFound.length} not found on OpenAlex` : '') + '.';
+  const summary = `Citations: ${changed} updated` + (doisAdded ? `, ${doisAdded} DOI${doisAdded > 1 ? 's' : ''} filled in` : '') + (notFound.length ? `, ${notFound.length} not found on OpenAlex` : '') + '.' + (absAdded ? ` Abstracts: ${absAdded} added.` : '') + (absMissing ? ` ${absMissing} abstract${absMissing > 1 ? 's' : ''} not in the open databases${elsKey() ? '' : ' (an Elsevier API key often helps, see the card below)'}: GitHub will try the publisher pages next.` : '');
+  if (absMissingNames.length) console.info('No abstract found for:', absMissingNames);
   if (!TOKEN) { toast(summary + ' Sign in to publish.'); btn.disabled = false; btn.textContent = label; return; }
   btn.textContent = 'Publishing…';
   CITE_SUMMARY = summary;
@@ -1257,10 +1303,22 @@ function viewPublications(v) {
       <div class="hint" id="doi-msg">Title, authors, journal, volume/pages, year, abstract and citation count are filled in from Crossref, OpenAlex and Semantic Scholar. Check the author list (corresponding author *) and the status badge afterwards.</div></div>
     <div class="toolbar"><button class="btn sm" id="add-pub">+ Add manually</button>
       <input type="file" id="up-cover" accept="image/*" style="display:none"><button class="btn sm" id="btn-up-cover">Upload journal cover…</button>
-      <button class="btn sm" id="btn-cites" title="Update citation counts from OpenAlex, publish, and fetch missing journal covers">↻ Refresh citations &amp; covers</button><span class="hint" id="up-cover-msg"></span></div>
+      <button class="btn sm" id="btn-cites" title="Update citation counts, fill in missing DOIs and abstracts, publish, and fetch missing journal covers">↻ Refresh citations, abstracts &amp; covers</button><span class="hint" id="up-cover-msg"></span></div>
     ${C.site.last_refresh ? `<p class="hint" style="margin:-0.4rem 0 0.6rem">Citations last refreshed ${esc(new Date(C.site.last_refresh).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }))} (source: OpenAlex)</p>` : ''}
     <p class="hint cover-status" id="cover-status" ${COVER_STATUS ? '' : 'hidden'}>${esc(COVER_STATUS)}</p>
+    <details class="card" style="padding:0.7rem 1.2rem"><summary style="cursor:pointer;font-weight:600">Abstract sources (optional Elsevier key)</summary>
+      <p class="hint" style="margin:0.6rem 0 0.7rem">Abstracts come from Crossref, OpenAlex, Semantic Scholar and Europe PMC, which are free but do not carry the abstracts of most Elsevier journals (Applied Geography, Landscape and Urban Planning, Ecosystem Services …). A free <b>Elsevier API key</b> fixes that: register at <a href="https://dev.elsevier.com/" target="_blank">dev.elsevier.com</a> → <b>Create API Key</b>, paste it here. It is stored in your encrypted sign-in, so it works on every device. For the GitHub cover-and-abstract workflow, also add it as the repository secret <code>ELSEVIER_API_KEY</code>.</p>
+      <div class="row" style="grid-template-columns:1fr auto;align-items:end"><div class="field" style="margin:0"><label for="els-key">Elsevier API key</label><input id="els-key" type="password" class="mono" value="${esc(elsKey())}" autocomplete="off" placeholder="32 characters"></div>
+        <div class="toolbar" style="margin:0"><button class="btn sm" id="els-save" type="button">Save</button></div></div>
+      <p class="hint" id="els-msg" style="margin-top:0.4rem"></p></details>
     <div id="pubs"></div>`;
+  $('#els-save').onclick = async () => {
+    const k = $('#els-key').value.trim(), m = $('#els-msg');
+    SESSION ||= { gh: TOKEN, gc: '' }; SESSION.els = k; saveSession();
+    m.textContent = 'Saving…';
+    try { const ok = await syncAuthBundle(); m.textContent = k ? (ok ? 'Saved into your encrypted sign-in.' : 'Saved for this session (turn on password sign-in to keep it on every device).') : 'Key removed.'; }
+    catch (e) { m.textContent = 'Could not save: ' + e.message; }
+  };
   $('#doi-go').onclick = async () => {
     const val = $('#doi-in').value.trim(); if (!val) return;
     const msg = $('#doi-msg'), b = $('#doi-go'); b.disabled = true;
@@ -1288,7 +1346,7 @@ function viewPublications(v) {
         <div class="pub-row" data-toggle>
           ${p.cover ? `<img src="${esc(p.cover)}" alt="" onerror="imgFallback(this)">` : `<div class="nocover">📝</div>`}
           <div><div class="t">${esc(p.title_short || p.title || 'Untitled')}</div>
-            <div class="m">${p.first_author ? '<span class="pill first">First author</span>' : ''}${p.corresponding ? '<span class="pill corr">Corresponding</span>' : ''}${p.status ? `<span class="pill status">${esc(p.status)}</span>` : ''}${p.featured ? '<span class="pill ok">Featured</span>' : ''}<span>${esc(p.venue)}</span>${p.cited != null && p.cited !== '' ? `<span>· Cited ${esc(p.cited)}</span>` : ''}</div></div>
+            <div class="m">${p.first_author ? '<span class="pill first">First author</span>' : ''}${p.corresponding ? '<span class="pill corr">Corresponding</span>' : ''}${p.status ? `<span class="pill status">${esc(p.status)}</span>` : ''}${p.featured ? '<span class="pill ok">Featured</span>' : ''}${!p.status && p.year !== 'book' && !goodAbstract(cleanAbstract(p.abstract)) ? '<span class="pill warn" title="No abstract yet: click Refresh, or open the paper and paste one">No abstract</span>' : ''}<span>${esc(p.venue)}</span>${p.cited != null && p.cited !== '' ? `<span>· Cited ${esc(p.cited)}</span>` : ''}</div></div>
           ${itemTools(pubs, i)}
         </div>
         ${open ? `<div class="pub-edit">
@@ -1646,7 +1704,7 @@ function normalizeFP(d) {
   d.title ||= { en: 'Places I have *been*', zh: '我的旅行足迹' }; d.intro ||= { en: '', zh: '' };
   d.pub_title ||= { en: 'Academic *footprint*', zh: '学术足迹' }; d.pub_intro ||= { en: 'Conferences, workshops and research visits.', zh: '参加过的学术会议、研讨会与学术访问。' };
   d.places.forEach(p => { p.id ||= 'pl-' + rid(); p.photos ||= []; p.note ||= { en: '', zh: '' }; p.city ||= { en: '', zh: '' }; p.country ||= { en: '', zh: '' }; p.when ||= '';
-    p.academic = !!p.academic; p.trip ||= ''; p.kind ||= 'conference'; p.event ||= { en: '', zh: '' }; p.talk ||= ''; p.talk_type ||= '';
+    p.academic = !!p.academic; p.trip ||= ''; p.icon ||= ''; p.kind ||= 'conference'; p.event ||= { en: '', zh: '' }; p.talk ||= ''; p.talk_type ||= '';
     p.sights ||= []; p.sights.forEach(g => { g.name ||= { en: '', zh: '' }; g.tags ||= []; });
     p.pnote ||= { en: '', zh: '' }; });
   return d;
@@ -1654,7 +1712,7 @@ function normalizeFP(d) {
 // The public file: academic entries only, public fields only, plain photos only
 function derivePublic(d) {
   return { v: 1, title: d.pub_title, intro: d.pub_intro, updated: new Date().toISOString().slice(0, 10),
-    places: d.places.filter(p => p.academic).map(p => ({ id: p.id, highlight: !!p.highlight, cc: p.cc, country: p.country, city: p.city, lat: p.lat, lon: p.lon, when: p.when, academic: true, kind: p.kind, event: p.event, talk: p.talk, talk_type: p.talk_type, note: p.note, sights: p.sights.filter(g => g.pub !== false), photos: p.photos.filter(isPublicPhoto).map(ph => ({ ...ph, sights: (ph.sights || []).filter(id => p.sights.some(g => g.id === id && g.pub !== false)) })) })) };
+    places: d.places.filter(p => p.academic).map(p => ({ id: p.id, highlight: !!p.highlight, icon: p.icon || '', cc: p.cc, country: p.country, city: p.city, lat: p.lat, lon: p.lon, when: p.when, academic: true, kind: p.kind, event: p.event, talk: p.talk, talk_type: p.talk_type, note: p.note, sights: p.sights.filter(g => g.pub !== false), photos: p.photos.filter(isPublicPhoto).map(ph => ({ ...ph, sights: (ph.sights || []).filter(id => p.sights.some(g => g.id === id && g.pub !== false)) })) })) };
 }
 async function loadFootprints() {
   if (FP.loading) return; FP.loading = true;
@@ -1687,7 +1745,7 @@ async function rememberTravelPassword(pw) {
   try { return await syncAuthBundle(); } catch (e) { toast('Travel password set, but it could not be saved into your sign-in: ' + e.message, true); return false; }
 }
 // Open-Meteo geocoding: free, no key, English and Chinese names
-async function geocode(q) {
+async function geocodeOpenMeteo(q) {
   const base = 'https://geocoding-api.open-meteo.com/v1/search?count=6&format=json&name=' + encodeURIComponent(q);
   const [en, zh] = await Promise.all([fetchJson(base + '&language=en'), fetchJson(base + '&language=zh').catch(() => null)]);
   return (en.results || []).map(r => {
@@ -1695,8 +1753,74 @@ async function geocode(q) {
     let cc = (r.country_code || '').toUpperCase(), country = { en: r.country || '', zh: z?.country || r.country || '' }, admin = r.admin1 || '';
     // One China on the map: Taiwan, Hong Kong and Macau entries are filed under China (the region name stays visible here)
     if (['TW', 'HK', 'MO'].includes(cc)) { admin = admin || country.en; cc = 'CN'; country = { en: 'China', zh: '中国' }; }
-    return { city: { en: r.name, zh: z?.name || r.name }, country, cc, admin, lat: Math.round(r.latitude * 1e4) / 1e4, lon: Math.round(r.longitude * 1e4) / 1e4 };
+    return { city: { en: r.name, zh: z?.name || r.name }, country, cc, admin, lat: Math.round(r.latitude * 1e4) / 1e4, lon: Math.round(r.longitude * 1e4) / 1e4, src: 'geonames' };
   });
+}
+// Wikidata: Chinese query → places (items with coordinates whose description reads like a settlement or administrative area)
+const PLACE_DESC = /城市|地级市|县级市|自治州|自治县|自治区|地区|行政区|直辖市|特别行政区|省会|首府|首都|市辖区|\b(city|town|prefecture|county|district|municipality|capital|region|province|autonomous|borough|village|commune|settlement|metropolis)\b/i;
+const NOT_PLACE = /车站|地铁站|火车站|机场|站$|大学|学院|公司|景区|公园|博物馆|\b(station|airport|university|company|museum|park|school|hospital|stadium|river|lake|mountain)\b/i;
+async function geocodeWikidata(q) {
+  const sr = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(q)}&language=zh&uselang=zh&type=item&limit=10&format=json&origin=*`);
+  const ids = (sr.search || []).map(x => x.id); if (!ids.length) return [];
+  const ent = (await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join('|')}&props=labels|descriptions|claims&languages=en|zh&format=json&origin=*`)).entities || {};
+  const picked = [];
+  for (const id of ids) {
+    const e = ent[id]; if (!e) continue;
+    const c = e.claims?.P625?.[0]?.mainsnak?.datavalue?.value; if (!c) continue;
+    const zh = e.labels?.zh?.value || '', en = e.labels?.en?.value || '';
+    const desc = (e.descriptions?.zh?.value || '') + ' ' + (e.descriptions?.en?.value || '');
+    if (!PLACE_DESC.test(desc) || NOT_PLACE.test(zh + ' ' + en + ' ' + desc)) continue;
+    const country = e.claims?.P17?.[0]?.mainsnak?.datavalue?.value?.id || '';
+    const admin = e.claims?.P131?.[0]?.mainsnak?.datavalue?.value?.id || '';
+    picked.push({ id, zh, en, lat: c.latitude, lon: c.longitude, country, admin, exact: zh === q || zh.replace(/(市|地区|地级市|自治州|州|盟|县|区|镇)$/, '') === q.replace(/(市|地区|自治州|州|盟|县|区|镇)$/, '') });
+  }
+  if (!picked.length) return [];
+  const extra = [...new Set(picked.flatMap(x => [x.country, x.admin]).filter(Boolean))];
+  const ex = extra.length ? (await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${extra.slice(0, 50).join('|')}&props=labels|claims&languages=en|zh&format=json&origin=*`)).entities || {} : {};
+  return picked.map(x => {
+    const co = ex[x.country], ad = ex[x.admin];
+    let cc = (co?.claims?.P297?.[0]?.mainsnak?.datavalue?.value || '').toUpperCase();
+    let country = { en: co?.labels?.en?.value || '', zh: co?.labels?.zh?.value || co?.labels?.en?.value || '' };
+    if (['TW', 'HK', 'MO'].includes(cc) || /^(Taiwan|Hong Kong|Macau|Macao)$/i.test(country.en)) { cc = 'CN'; country = { en: 'China', zh: '中国' }; }
+    return { city: { en: x.en || x.zh, zh: x.zh || x.en }, country, cc, admin: ad?.labels?.zh?.value || ad?.labels?.en?.value || '', lat: Math.round(x.lat * 1e4) / 1e4, lon: Math.round(x.lon * 1e4) / 1e4, src: 'wikidata', exact: x.exact };
+  });
+}
+// Amap geocoder (needs the key; Chinese places only), GCJ-02 → WGS-84
+async function geocodeAmap(q) {
+  if (!amapKey() || !hasCJK(q)) return [];
+  const d = await jsonp(`https://restapi.amap.com/v3/geocode/geo?address=${encodeURIComponent(q)}&output=JSON&key=${encodeURIComponent(amapKey())}`);
+  if (d.status !== '1') return [];
+  return (d.geocodes || []).filter(g => g.location && /^(省|市|区县|县|乡镇|街道|国家|地区|州)$/.test(g.level || '')).map(g => {
+    const [lng, lat] = g.location.split(',').map(Number), [wl, wa] = gcj02ToWgs84(lng, lat);
+    const name = (typeof g.district === 'string' && g.district) || (typeof g.city === 'string' && g.city) || (typeof g.province === 'string' && g.province) || g.formatted_address || q;
+    const admin = (typeof g.province === 'string' && g.province !== name) ? g.province : '';
+    return { city: { en: name, zh: name }, country: { en: 'China', zh: '中国' }, cc: 'CN', admin: admin + (g.level ? ` · ${g.level}` : ''), lat: Math.round(wa * 1e4) / 1e4, lon: Math.round(wl * 1e4) / 1e4, src: 'amap', exact: name === q || name.replace(/(市|地区|自治州|州|盟|县|区)$/, '') === q };
+  });
+}
+// All sources, merged. Chinese queries are also tried without the 市/州/县 suffix.
+async function geocode(q) {
+  const qs = [q];
+  if (hasCJK(q)) { const bare = q.replace(/(地级市|自治州|自治县|自治区|特别行政区|市|地区|州|盟|县|区)$/, ''); if (bare.length >= 2 && bare !== q) qs.push(bare); }
+  const jobs = [];
+  for (const x of qs) { jobs.push(geocodeOpenMeteo(x).catch(() => [])); if (hasCJK(x)) { jobs.push(geocodeWikidata(x).catch(() => [])); jobs.push(geocodeAmap(x).catch(() => [])); } }
+  const all = (await Promise.all(jobs)).flat();
+  const out = [];
+  for (const r of all) {
+    if (typeof r.lat !== 'number' || typeof r.lon !== 'number') continue;
+    const dup = out.find(o => haversine(o.lat, o.lon, r.lat, r.lon) < 8 && (o.cc === r.cc || !o.cc || !r.cc));
+    if (dup) { // keep both names, prefer the entry that still has an English name
+      if ((!dup.city.en || dup.city.en === dup.city.zh) && r.city.en && r.city.en !== r.city.zh) dup.city.en = r.city.en;
+      if ((!dup.city.zh || dup.city.zh === dup.city.en) && r.city.zh && hasCJK(r.city.zh)) dup.city.zh = r.city.zh;
+      if (!dup.admin && r.admin) dup.admin = r.admin; dup.exact ||= r.exact; continue;
+    }
+    out.push(r);
+  }
+  // Exact name matches first, then GeoNames (usually the better known places), then the rest
+  const rank = r => (r.exact || r.city.zh === q || r.city.en.toLowerCase() === q.toLowerCase() ? 0 : 1) * 10 + (r.src === 'geonames' ? 0 : r.src === 'wikidata' ? 1 : 2);
+  out.sort((a, b) => rank(a) - rank(b));
+  // Chinese-only names from Amap: fill the English name in the background
+  for (const r of out) if (needsEn(r.city)) translateName(r.city.zh, r.lat, r.lon).then(({ en }) => { if (en) r.city.en = en; }).catch(() => {});
+  return out.slice(0, 10);
 }
 const rawUrl = path => `https://raw.githubusercontent.com/${REPO.owner}/${REPO.name}/${REPO.branch}/${path}`;
 async function fpThumbUrl(ph) {
@@ -1938,7 +2062,7 @@ function fixFiveA(g, cc, lat = g.lat, lon = g.lon) {
 // ── English names for Chinese ones ──
 const hasCJK = x => /[㐀-鿿]/.test(String(x || ''));
 const needsEn = n => !n.en || n.en === n.zh || hasCJK(n.en);
-const TR_KEY = 'sm_translations_v1';
+const TR_KEY = 'sm_translations_v2';
 let TR_CACHE = null;
 function trCache() { if (!TR_CACHE) { try { TR_CACHE = JSON.parse(localStorage.getItem(TR_KEY) || '{}'); } catch (e) { TR_CACHE = {}; } } return TR_CACHE; }
 function trRemember(zh, en) { const c = trCache(); c[zh] = en; try { localStorage.setItem(TR_KEY, JSON.stringify(c)); } catch (e) {} }
@@ -1950,26 +2074,134 @@ const EN_RULES = [
   [/梯田$/, 'Terraces'], [/码头$/, 'Pier'], [/广场$/, 'Square'], [/寺$/, 'Temple'], [/[庙宫]$/, 'Temple'], [/塔$/, 'Pagoda'], [/桥$/, 'Bridge'],
   [/[洞岩]$/, 'Cave'], [/峰$/, 'Peak'], [/山$/, 'Mountain'], [/湖$/, 'Lake'], [/[江河]$/, 'River'], [/岛$/, 'Island'], [/街$/, 'Street'], [/园$/, 'Garden'],
 ];
-const PINYIN_URL = 'https://cdn.jsdelivr.net/npm/pinyin-pro@3.29.4/dist/index.js';
-async function pinyinEn(zh) {
-  await loadScriptOnce(PINYIN_URL, () => window.pinyinPro);
-  const py = x => { const s = window.pinyinPro.pinyin(x, { toneType: 'none', type: 'array', nonZh: 'consecutive' }).join(''); return s.charAt(0).toUpperCase() + s.slice(1); };
-  let rest = zh.replace(/[（(][^）)]*[）)]/g, '').replace(/[·•・－—\-、\s]/g, ''); const tail = [];
-  for (let k = 0; k < 2; k++) { const r = EN_RULES.find(([re]) => re.test(rest) && rest.replace(re, '').length >= 1); if (!r) break; tail.unshift(r[1]); rest = rest.replace(r[0], ''); }
-  return [rest ? py(rest) : '', ...tail].filter(Boolean).join(' ');
+// Generic words that are translated rather than transliterated (longest match first, suffix position)
+const EN_WORDS = [
+  ['国家森林公园', 'National Forest Park'], ['国家湿地公园', 'National Wetland Park'], ['国家地质公园', 'National Geopark'], ['国家公园', 'National Park'], ['森林公园', 'Forest Park'],
+  ['湿地公园', 'Wetland Park'], ['地质公园', 'Geopark'], ['海洋公园', 'Ocean Park'], ['水上乐园', 'Water Park'], ['主题公园', 'Theme Park'], ['植物园', 'Botanical Garden'], ['动物园', 'Zoo'],
+  ['风景名胜区', 'Scenic Area'], ['旅游风景区', 'Scenic Area'], ['风景区', 'Scenic Area'], ['旅游景区', 'Scenic Area'], ['旅游区', 'Scenic Area'], ['景区', 'Scenic Area'], ['景点', 'Scenic Spot'],
+  ['旅游度假区', 'Resort'], ['度假区', 'Resort'], ['度假村', 'Resort'], ['自然保护区', 'Nature Reserve'], ['保护区', 'Reserve'], ['生态园', 'Eco Park'], ['公园', 'Park'],
+  ['古城墙', 'Ancient City Wall'], ['城墙', 'City Wall'], ['古镇', 'Ancient Town'], ['古城', 'Ancient City'], ['古村落', 'Ancient Village'], ['古村', 'Ancient Village'], ['古街', 'Old Street'], ['老街', 'Old Street'],
+  ['步行街', 'Pedestrian Street'], ['商业街', 'Shopping Street'], ['美食街', 'Food Street'], ['大街', 'Street'], ['胡同', 'Hutong'], ['巷子', 'Alley'], ['大道', 'Avenue'],
+  ['博物院', 'Museum'], ['博物馆', 'Museum'], ['美术馆', 'Art Museum'], ['纪念馆', 'Memorial Hall'], ['纪念堂', 'Memorial Hall'], ['纪念碑', 'Monument'], ['纪念塔', 'Memorial Tower'], ['纪念园', 'Memorial Park'],
+  ['科技馆', 'Science Museum'], ['展览馆', 'Exhibition Hall'], ['规划馆', 'Planning Exhibition Hall'], ['图书馆', 'Library'], ['大剧院', 'Grand Theatre'], ['剧院', 'Theatre'], ['音乐厅', 'Concert Hall'],
+  ['体育场', 'Stadium'], ['体育馆', 'Gymnasium'], ['会展中心', 'Convention Centre'], ['中心', 'Centre'], ['大厦', 'Tower'], ['大楼', 'Building'], ['电视塔', 'TV Tower'],
+  ['故居', 'Former Residence'], ['旧址', 'Site'], ['遗址公园', 'Ruins Park'], ['遗址', 'Ruins'], ['石窟', 'Grottoes'], ['石刻', 'Rock Carvings'], ['摩崖', 'Cliff Carvings'], ['大佛', 'Giant Buddha'],
+  ['书院', 'Academy'], ['会馆', 'Guild Hall'], ['大教堂', 'Cathedral'], ['教堂', 'Church'], ['清真寺', 'Mosque'], ['道观', 'Taoist Temple'], ['寺庙', 'Temple'], ['禅寺', 'Temple'], ['寺', 'Temple'],
+  ['庙', 'Temple'], ['宫', 'Palace'], ['王府', 'Mansion'], ['府', 'Mansion'], ['陵园', 'Cemetery'], ['陵', 'Mausoleum'], ['墓', 'Tomb'], ['祠', 'Ancestral Hall'], ['牌坊', 'Memorial Archway'],
+  ['钟楼', 'Bell Tower'], ['鼓楼', 'Drum Tower'], ['城楼', 'Gate Tower'], ['阁', 'Pavilion'], ['亭', 'Pavilion'], ['楼', 'Tower'], ['塔', 'Pagoda'], ['殿', 'Hall'], ['坛', 'Altar'], ['门', 'Gate'], ['关', 'Pass'],
+  ['大峡谷', 'Grand Canyon'], ['峡谷', 'Canyon'], ['峡', 'Gorge'], ['瀑布', 'Waterfall'], ['梯田', 'Terraces'], ['草原', 'Grassland'], ['沙漠', 'Desert'], ['冰川', 'Glacier'], ['雪山', 'Snow Mountain'],
+  ['火山', 'Volcano'], ['温泉', 'Hot Spring'], ['天池', 'Heavenly Lake'], ['石林', 'Stone Forest'], ['溶洞', 'Karst Cave'], ['天坑', 'Sinkhole'], ['地缝', 'Fissure'], ['盐湖', 'Salt Lake'], ['水库', 'Reservoir'],
+  ['海滩', 'Beach'], ['沙滩', 'Beach'], ['海湾', 'Bay'], ['湾', 'Bay'], ['半岛', 'Peninsula'], ['群岛', 'Islands'], ['岛', 'Island'], ['港', 'Harbour'], ['码头', 'Pier'], ['大桥', 'Bridge'], ['桥', 'Bridge'],
+  ['广场', 'Square'], ['花园', 'Garden'], ['园林', 'Garden'], ['园', 'Garden'], ['村', 'Village'], ['寨', 'Village'], ['镇', 'Town'], ['大学', 'University'], ['学院', 'College'],
+  ['火车站', 'Railway Station'], ['机场', 'Airport'], ['影视城', 'Film Studios'], ['乐园', 'Amusement Park'], ['水族馆', 'Aquarium'], ['滑雪场', 'Ski Resort'], ['观景台', 'Viewing Platform'], ['索道', 'Cableway'],
+  ['洞', 'Cave'], ['岩', 'Rock'], ['峰', 'Peak'], ['山', 'Mountain'], ['湖', 'Lake'], ['江', 'River'], ['河', 'River'], ['溪', 'Stream'], ['泉', 'Spring'], ['潭', 'Pool'], ['谷', 'Valley'], ['林', 'Forest'],
+  ['滩', 'Beach'], ['海', 'Lake'], ['坝', 'Dam'], ['街', 'Street'], ['路', 'Road'], ['大礼堂', 'Great Hall'], ['礼堂', 'Hall'], ['会堂', 'Hall'], ['大会堂', 'Great Hall'],
+  ['特别行政区', ''], ['自治区', ' Autonomous Region'], ['自治州', ' Autonomous Prefecture'], ['自治县', ' Autonomous County'], ['自治旗', ' Autonomous Banner'], ['旗', ' Banner'], ['地级市', ''], ['地区', ' Prefecture'], ['省', ' Province'], ['市', ''], ['州', ' Prefecture'], ['盟', ' League'], ['县', ' County'], ['区', ' District'],
+];
+// Ethnic groups in the names of autonomous areas
+const ETHNIC = { '蒙古族': 'Mongol', '藏族': 'Tibetan', '回族': 'Hui', '彝族': 'Yi', '苗族': 'Miao', '布依族': 'Bouyei', '侗族': 'Dong', '壮族': 'Zhuang', '土家族': 'Tujia', '哈萨克族': 'Kazakh', '哈萨克': 'Kazakh', '傣族': 'Dai', '白族': 'Bai',
+  '哈尼族': 'Hani', '羌族': 'Qiang', '维吾尔族': 'Uyghur', '维吾尔': 'Uyghur', '朝鲜族': 'Korean', '黎族': 'Li', '畲族': 'She', '瑶族': 'Yao', '傈僳族': 'Lisu', '景颇族': 'Jingpo', '纳西族': 'Naxi', '柯尔克孜族': 'Kyrgyz', '柯尔克孜': 'Kyrgyz', '满族': 'Manchu',
+  '达斡尔族': 'Daur', '仡佬族': 'Gelao', '水族': 'Shui', '怒族': 'Nu', '独龙族': 'Derung', '普米族': 'Pumi', '佤族': 'Va', '拉祜族': 'Lahu', '布朗族': 'Blang', '基诺族': 'Jino', '鄂温克族': 'Ewenki', '鄂伦春族': 'Oroqen', '锡伯族': 'Xibe', '塔吉克族': 'Tajik',
+  '土族': 'Tu', '撒拉族': 'Salar', '保安族': 'Bonan', '裕固族': 'Yugur', '东乡族': 'Dongxiang', '毛南族': 'Maonan', '京族': 'Gin', '仫佬族': 'Mulao', '阿昌族': 'Achang', '德昂族': "De'ang", '门巴族': 'Monpa', '珞巴族': 'Lhoba', '各族': '' };
+for (const [zh, en] of Object.entries(ETHNIC)) EN_WORDS.push([zh, en]);
+EN_WORDS.sort((a, b) => b[0].length - a[0].length);
+// Leading words translated rather than transliterated
+const EN_PREFIX = [['中国', 'China'], ['国家', 'National'], ['中央', 'Central'], ['人民', "People's"], ['世界', 'World'], ['国际', 'International'], ['省', 'Provincial'], ['市', 'Municipal'], ['新', 'New'], ['老', 'Old'], ['古', 'Ancient'], ['大', 'Great']];
+// Well-known names with established English forms
+const EN_KNOWN = { '天坛': 'Temple of Heaven', '故宫': 'Forbidden City', '故宫博物院': 'The Palace Museum', '颐和园': 'Summer Palace', '圆明园': 'Old Summer Palace', '长城': 'Great Wall', '八达岭长城': 'Badaling Great Wall',
+  '慕田峪长城': 'Mutianyu Great Wall', '天安门': 'Tiananmen', '天安门广场': 'Tiananmen Square', '雍和宫': 'Lama Temple', '北海公园': 'Beihai Park', '景山公园': 'Jingshan Park', '什刹海': 'Shichahai', '南锣鼓巷': 'Nanluoguxiang',
+  '王府井': 'Wangfujing', '鸟巢': "Bird's Nest", '水立方': 'Water Cube', '国家博物馆': 'National Museum of China', '中国国家博物馆': 'National Museum of China', '明十三陵': 'Ming Tombs', '外滩': 'The Bund', '东方明珠': 'Oriental Pearl Tower',
+  '东方明珠广播电视塔': 'Oriental Pearl Tower', '豫园': 'Yu Garden', '南京路': 'Nanjing Road', '南京路步行街': 'Nanjing Road Pedestrian Street', '田子坊': 'Tianzifang', '新天地': 'Xintiandi', '城隍庙': 'City God Temple', '上海博物馆': 'Shanghai Museum',
+  '西湖': 'West Lake', '雷峰塔': 'Leifeng Pagoda', '灵隐寺': 'Lingyin Temple', '断桥': 'Broken Bridge', '苏堤': 'Su Causeway', '千岛湖': 'Qiandao Lake', '西溪湿地': 'Xixi Wetland', '拙政园': "Humble Administrator's Garden",
+  '留园': 'Lingering Garden', '虎丘': 'Tiger Hill', '周庄': 'Zhouzhuang', '乌镇': 'Wuzhen', '西塘': 'Xitang', '同里': 'Tongli', '中山陵': 'Sun Yat-sen Mausoleum', '夫子庙': 'Confucius Temple', '秦淮河': 'Qinhuai River', '明孝陵': 'Ming Xiaoling Mausoleum',
+  '黄鹤楼': 'Yellow Crane Tower', '东湖': 'East Lake', '岳阳楼': 'Yueyang Tower', '橘子洲': 'Orange Isle', '岳麓山': 'Yuelu Mountain', '岳麓书院': 'Yuelu Academy', '张家界': 'Zhangjiajie', '天门山': 'Tianmen Mountain', '凤凰古城': 'Fenghuang Ancient Town',
+  '兵马俑': 'Terracotta Army', '秦始皇兵马俑': 'Terracotta Army', '大雁塔': 'Giant Wild Goose Pagoda', '小雁塔': 'Small Wild Goose Pagoda', '西安城墙': "Xi'an City Wall", '回民街': 'Muslim Quarter', '华清池': 'Huaqing Pool', '大唐不夜城': 'Great Tang All Day Mall',
+  '少林寺': 'Shaolin Temple', '龙门石窟': 'Longmen Grottoes', '白马寺': 'White Horse Temple', '二七广场': 'Erqi Square', '二七纪念塔': 'Erqi Memorial Tower', '清明上河园': 'Millennium City Park', '云台山': 'Yuntai Mountain',
+  '莫高窟': 'Mogao Caves', '鸣沙山': 'Mingsha Mountain', '月牙泉': 'Crescent Lake', '鸣沙山月牙泉': 'Mingsha Mountain and Crescent Lake', '嘉峪关': 'Jiayuguan Pass', '玉门关': 'Yumen Pass', '张掖丹霞': 'Zhangye Danxia', '麦积山石窟': 'Maijishan Grottoes',
+  '布达拉宫': 'Potala Palace', '大昭寺': 'Jokhang Temple', '纳木错': 'Namtso', '羊卓雍错': 'Yamdrok Lake', '珠峰大本营': 'Everest Base Camp', '青海湖': 'Qinghai Lake', '茶卡盐湖': 'Chaka Salt Lake', '塔尔寺': "Kumbum Monastery", '三江源': 'Sanjiangyuan',
+  '九寨沟': 'Jiuzhaigou', '黄龙': 'Huanglong', '都江堰': 'Dujiangyan', '青城山': 'Mount Qingcheng', '峨眉山': 'Mount Emei', '乐山大佛': 'Leshan Giant Buddha', '宽窄巷子': 'Kuanzhai Alley', '锦里': 'Jinli Street', '武侯祠': 'Wuhou Shrine',
+  '杜甫草堂': 'Du Fu Thatched Cottage', '大熊猫繁育研究基地': 'Giant Panda Breeding Research Base', '稻城亚丁': 'Yading', '洪崖洞': 'Hongya Cave', '解放碑': 'Jiefangbei', '磁器口': 'Ciqikou', '武隆天生三桥': 'Wulong Three Natural Bridges',
+  '黄山': 'Mount Huangshan', '西递': 'Xidi', '宏村': 'Hongcun', '泰山': 'Mount Tai', '华山': 'Mount Hua', '庐山': 'Mount Lu', '武当山': 'Wudang Mountains', '五台山': 'Mount Wutai', '普陀山': 'Mount Putuo', '衡山': 'Mount Heng', '嵩山': 'Mount Song',
+  '三孔': 'Temple and Cemetery of Confucius and Kong Family Mansion', '孔庙': 'Temple of Confucius', '趵突泉': 'Baotu Spring', '大明湖': 'Daming Lake', '平遥古城': 'Ancient City of Pingyao', '云冈石窟': 'Yungang Grottoes', '壶口瀑布': 'Hukou Waterfall',
+  '漓江': 'Li River', '象鼻山': 'Elephant Trunk Hill', '阳朔西街': 'Yangshuo West Street', '龙脊梯田': 'Longji Rice Terraces', '两江四湖': 'Two Rivers and Four Lakes', '黄果树瀑布': 'Huangguoshu Waterfall', '小七孔': 'Xiaoqikong', '荔波小七孔': 'Xiaoqikong',
+  '丽江古城': 'Old Town of Lijiang', '玉龙雪山': 'Jade Dragon Snow Mountain', '洱海': 'Erhai Lake', '大理古城': 'Dali Ancient Town', '崇圣寺三塔': 'Three Pagodas', '石林': 'Stone Forest', '滇池': 'Dianchi Lake', '梅里雪山': 'Meili Snow Mountain', '元阳梯田': 'Yuanyang Rice Terraces',
+  '鼓浪屿': 'Gulangyu', '武夷山': 'Mount Wuyi', '福建土楼': 'Fujian Tulou', '三坊七巷': 'Three Lanes and Seven Alleys', '天涯海角': 'Tianya Haijiao', '亚龙湾': 'Yalong Bay', '维多利亚港': 'Victoria Harbour', '太平山': 'Victoria Peak', '大三巴牌坊': "Ruins of St. Paul's",
+  '日月潭': 'Sun Moon Lake', '阿里山': 'Alishan', '台北101': 'Taipei 101', '长江三峡': 'Three Gorges', '三峡大坝': 'Three Gorges Dam', '长江': 'Yangtze River', '黄河': 'Yellow River', '珠江': 'Pearl River', '太湖': 'Taihu Lake', '呼伦贝尔草原': 'Hulunbuir Grassland',
+  '喀纳斯': 'Kanas', '天山天池': 'Tianshan Heavenly Lake', '赛里木湖': 'Sayram Lake', '那拉提': 'Nalati', '巴音布鲁克': 'Bayanbulak', '火焰山': 'Flaming Mountains', '长白山': 'Changbai Mountain', '长白山天池': 'Changbai Mountain Heavenly Lake',
+  '中央大街': 'Central Street', '圣索菲亚教堂': 'Saint Sophia Cathedral', '人民广场': "People's Square", '人民公园': "People's Park", '中山公园': 'Zhongshan Park', '中山路': 'Zhongshan Road', '世界之窗': 'Window of the World', '长隆': 'Chimelong',
+  '广州塔': 'Canton Tower', '陈家祠': 'Chen Clan Ancestral Hall', '沙面': 'Shamian Island', '白云山': 'Baiyun Mountain', '承德避暑山庄': 'Chengde Mountain Resort', '避暑山庄': 'Mountain Resort', '山海关': 'Shanhaiguan', '北戴河': 'Beidaihe' };
+const PY_CACHE = {}; let PY_TABLE = null;
+async function loadPinyin() { if (!PY_TABLE) { try { PY_TABLE = await fetchJson('pinyin-lite.json'); } catch (e) { PY_TABLE = { chars: {}, words: {} }; } } return PY_TABLE; }
+// Toneless pinyin of a Chinese string as one capitalised word (word overrides for heteronyms)
+function pinyinWord(zh, T) {
+  const out = []; let i = 0;
+  while (i < zh.length) {
+    let hit = '';
+    for (let L = Math.min(8, zh.length - i); L >= 2; L--) { const w = zh.slice(i, i + L); if (T.words[w]) { out.push(T.words[w].replace(/\s+/g, '')); i += L; hit = w; break; } }
+    if (hit) continue;
+    const ch = zh[i]; out.push(T.chars[ch] || (/[A-Za-z0-9]/.test(ch) ? ch : '')); i++;
+  }
+  let s = ''; for (const syl of out) { if (!syl) continue; s += (s && /^[aoe]/.test(syl) ? "'" : '') + syl; }
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
+// Split a name into [proper part, generic suffix words]; e.g. 二七广场 → ['二七', ['Square']], 龙胜龙脊梯田 → ['龙胜龙脊', ['Terraces']]
+function splitGeneric(zh) {
+  let rest = zh.replace(/[（(][^）)]*[）)]/g, '').replace(/[·•・－—\-、\s]/g, ''); const tail = [];
+  for (let k = 0; k < 6; k++) {
+    if (EN_KNOWN[rest]) break;
+    const hit = EN_WORDS.find(([w]) => rest.endsWith(w) && rest.length - w.length >= 1);
+    if (!hit) break; if (hit[1].trim()) tail.unshift(hit[1].trim()); rest = rest.slice(0, rest.length - hit[0].length);
+  }
+  return [rest, tail];
+}
+async function pinyinEn(zh) {
+  const T = await loadPinyin();
+  let [rest, tail] = splitGeneric(zh);
+  const words = [];
+  // A leading place name (from the heteronym word list, e.g. 重庆 / 长沙) or a translatable prefix word gets its own word
+  for (let k = 0; k < 3 && rest.length >= 2; k++) {
+    const city = (T.cities || []).find(w => rest.startsWith(w) && rest.length - w.length >= 2) || Object.keys(T.words).find(w => w.length >= 2 && w.length <= 3 && rest.startsWith(w) && rest.length - w.length >= 2);
+    if (city) { words.push(pinyinWord(city, T)); rest = rest.slice(city.length); continue; }
+    const pre = EN_PREFIX.find(([w]) => rest.startsWith(w) && (rest.length - w.length >= 2 || (rest === w && (words.length || tail.length))));
+    if (pre) { words.push(pre[1]); rest = rest.slice(pre[0].length); continue; }
+    break;
+  }
+  // The rest is a known name, or pinyin (with the usual apostrophe before syllables starting with a vowel)
+  if (rest) words.push(EN_KNOWN[rest] || pinyinWord(rest, T));
+  return [...words, ...tail].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+}
+function knownEn(zh) {
+  const n = zh.replace(/[（(][^）)]*[）)]/g, '').replace(/[·•・－—\-、\s]/g, '');
+  if (EN_KNOWN[n]) return EN_KNOWN[n];
+  const bare = n.replace(/(风景名胜区|旅游风景区|旅游景区|风景区|旅游区|景区|公园)$/, '');
+  return bare !== n && EN_KNOWN[bare] ? EN_KNOWN[bare] : '';
+}
+// Chinese Wikipedia article → English article title
+async function zhwikiEn(zh) {
+  const j = await fetchJson(`https://zh.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=en&redirects=1&format=json&origin=*&titles=${encodeURIComponent(zh)}`);
+  const pg = Object.values(j.query?.pages || {})[0]; const en = pg?.langlinks?.[0]?.['*'] || '';
+  return en.replace(/\s*\([^)]*\)\s*$/, '').trim();
+}
+const TRANSIT_RE = /\b(station|stop|airport|line|terminal|interchange|depot)\b/i, TRANSIT_ZH = /站|机场|线|航站楼/;
 async function wikidataEn(zh, lat, lon) {
-  const sr = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(zh)}&language=zh&uselang=zh&type=item&limit=7&format=json&origin=*`);
-  const ids = (sr.search || []).map(x => x.id); if (!ids.length) return '';
-  const ent = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join('|')}&props=labels|claims&languages=en|zh&format=json&origin=*`);
+  const bare = zh.replace(/[（(][^）)]*[）)]/g, '').trim();
+  const sr = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(bare)}&language=zh&uselang=zh&type=item&limit=10&format=json&origin=*`);
+  // Only items whose Chinese label is this name (an alias or a description match gives e.g. the metro station of the same name)
+  const strip = x => String(x || '').replace(/[（(][^）)]*[）)]/g, '').replace(/[·•・－—\-、\s]/g, '');
+  const hits = (sr.search || []).filter(x => strip(x.label) === strip(bare) || (x.match?.type === 'label' && strip(x.match.text) === strip(bare)));
+  const ids = hits.map(x => x.id); if (!ids.length) return '';
+  const ent = await fetchJson(`https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join('|')}&props=labels|descriptions|claims&languages=en|zh&format=json&origin=*`);
+  let fallback = '';
   for (const id of ids) {
-    const e = ent.entities?.[id]; const en = e?.labels?.en?.value; if (!en) continue;
+    const e = ent.entities?.[id]; const en = (e?.labels?.en?.value || '').trim(); if (!en) continue;
+    const desc = (e.descriptions?.en?.value || '') + ' ' + (e.descriptions?.zh?.value || '');
+    if (!TRANSIT_ZH.test(bare) && (TRANSIT_RE.test(en) || TRANSIT_RE.test(desc) || TRANSIT_ZH.test(e.descriptions?.zh?.value || ''))) continue;
     const c = e.claims?.P625?.[0]?.mainsnak?.datavalue?.value;
     if (typeof lat === 'number' && c && haversine(lat, lon, c.latitude, c.longitude) > 60) continue;
-    if (typeof lat === 'number' && !c) continue;
+    if (typeof lat === 'number' && !c) { fallback ||= en; continue; }
     return en;
   }
-  return '';
+  return fallback;
 }
 async function machineEn(zh) {
   const d = await fetchJson(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(zh)}&langpair=zh-CN|en`);
@@ -1981,7 +2213,12 @@ async function machineEn(zh) {
 async function translateName(zh, lat, lon) {
   zh = String(zh || '').trim(); if (!zh || !hasCJK(zh)) return { en: zh, via: '' };
   const hit = trCache()[zh]; if (hit) return { en: hit, via: 'cache' };
-  for (const [via, fn] of [['Wikidata', () => wikidataEn(zh, lat, lon)], ['MyMemory', () => machineEn(zh)], ['pinyin', () => pinyinEn(zh)]]) {
+  const known = knownEn(zh); if (known) { trRemember(zh, known); return { en: known, via: 'known' }; }
+  // Rules + pinyin come before machine translation when the proper part is short (a name, not a phrase)
+  const [rest] = splitGeneric(zh); const shortName = rest.length <= 3;
+  const steps = [['Wikidata', () => wikidataEn(zh, lat, lon)], ['Wikipedia', () => zhwikiEn(zh)]];
+  steps.push(...(shortName ? [['pinyin', () => pinyinEn(zh)], ['MyMemory', () => machineEn(zh)]] : [['MyMemory', () => machineEn(zh)], ['pinyin', () => pinyinEn(zh)]]));
+  for (const [via, fn] of steps) {
     try { const en = await fn(); if (en && !hasCJK(en)) { trRemember(zh, en); return { en, via }; } } catch (e) {}
   }
   return { en: '', via: '' };
@@ -2430,7 +2667,7 @@ function viewFootprints(v) {
     const box = $('#tv-results'), m = $('#tv-smsg'); m.textContent = 'Searching…'; box.innerHTML = '';
     try {
       const res = await geocode(q);
-      m.textContent = res.length ? 'Click a result to add it.' : 'Nothing found. Try the English name, or add the place manually.';
+      m.textContent = res.length ? 'Click a result to add it.' : (hasCJK(q) ? 'Nothing found. Try the full official name (e.g. 海东市, 海西州), the English or pinyin name, or add the place manually.' : 'Nothing found. Try the English name, or add the place manually.');
       box.innerHTML = res.map((r, i) => `<button type="button" class="tv-res" data-i="${i}"><span>${tvFlag(r.cc)} <b>${esc(r.city.en)}</b>${r.city.zh !== r.city.en ? ` · ${esc(r.city.zh)}` : ''}${r.admin ? `<span class="m"> — ${esc(r.admin)}</span>` : ''}</span><span class="m">${esc(r.country.en)} · ${r.lat}, ${r.lon}</span></button>`).join('');
       box.querySelectorAll('.tv-res').forEach(b => b.onclick = () => { addPlace(res[Number(b.dataset.i)]); box.innerHTML = ''; $('#tv-q').value = ''; m.textContent = ''; });
     } catch (e) { m.textContent = 'Search failed: ' + e.message; }
@@ -2442,12 +2679,13 @@ function viewFootprints(v) {
     const np = normalizeFP({ places: [{ id: 'pl-' + rid(), cc: r.cc, country: r.country, city: r.city, lat: r.lat, lon: r.lon }] }).places[0];
     T.places.unshift(np); OPEN_PLACES.add(np.id);
     markDirty(); renderPlaces();
+    if (needsEn(np.city) && hasCJK(np.city.zh)) translateName(np.city.zh, np.lat, np.lon).then(({ en }) => { if (en && needsEn(np.city)) { np.city.en = en; markDirty(); renderPlaces(); } }).catch(() => {});
   };
 
   // Places
   const renderPlaces = () => {
     const box = $('#tv-places');
-    box.innerHTML = T.places.map((p, i) => { const open = OPEN_PLACES.has(p.id); return `<div class="item place ${open ? 'open' : ''}" data-i="${i}"><div class="item-head" data-toggle="${esc(p.id)}" title="${open ? 'Collapse' : 'Expand to edit'}"><div class="title"><span class="chev">${open ? '▾' : '▸'}</span><span class="tv-flag">${tvFlag(p.cc)}</span> ${esc(p.city.en || 'New place')}${p.country.en ? `, ${esc(p.country.en)}` : ''}${p.when ? ` <span class="hint" style="display:inline">· ${esc(p.when)}${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length > 1 ? ` (${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length} visits)` : ''}</span>` : ''}${p.academic ? ` <span class="pill acad">${esc(KIND_OPTIONS.find(k => k[0] === p.kind)?.[1] || 'Academic')}</span>` : (p.trip ? ` <span class="pill muted">${esc(TRIP_OPTIONS.find(k => k[0] === p.trip)?.[1] || p.trip)}</span>` : '')}${!open ? ` <span class="hint" style="display:inline;font-weight:400">· ${p.photos.length} photo${p.photos.length === 1 ? '' : 's'}${p.sights.length ? `, ${p.sights.length} sight${p.sights.length === 1 ? '' : 's'}` : ''}</span>` : ''}</div>${itemTools(T.places, i)}</div><div class="pbody" ${open ? '' : 'hidden'}>
+    box.innerHTML = T.places.map((p, i) => { const open = OPEN_PLACES.has(p.id); return `<div class="item place ${open ? 'open' : ''}" data-i="${i}"><div class="item-head" data-toggle="${esc(p.id)}" title="${open ? 'Collapse' : 'Expand to edit'}"><div class="title"><span class="chev">${open ? '▾' : '▸'}</span><span class="tv-flag">${tvFlag(p.cc)}</span><span class="tv-icon" title="${esc(window.CityIcons ? CityIcons.label(CityIcons.iconKey(p), 'en') : '')}">${window.CityIcons ? CityIcons.svg(CityIcons.iconKey(p)) : ''}</span> ${esc(p.city.en || 'New place')}${p.country.en ? `, ${esc(p.country.en)}` : ''}${p.when ? ` <span class="hint" style="display:inline">· ${esc(p.when)}${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length > 1 ? ` (${p.when.split(/\s*[;,，、|；]\s*/).filter(Boolean).length} visits)` : ''}</span>` : ''}${p.academic ? ` <span class="pill acad">${esc(KIND_OPTIONS.find(k => k[0] === p.kind)?.[1] || 'Academic')}</span>` : (p.trip ? ` <span class="pill muted">${esc(TRIP_OPTIONS.find(k => k[0] === p.trip)?.[1] || p.trip)}</span>` : '')}${!open ? ` <span class="hint" style="display:inline;font-weight:400">· ${p.photos.length} photo${p.photos.length === 1 ? '' : 's'}${p.sights.length ? `, ${p.sights.length} sight${p.sights.length === 1 ? '' : 's'}` : ''}</span>` : ''}</div>${itemTools(T.places, i)}</div><div class="pbody" ${open ? '' : 'hidden'}>
       ${biField('City', p, 'city')}${biField('Country', p, 'country')}
       <div class="row" style="grid-template-columns:90px 1fr 1fr 1fr">
         <div class="field"><label>Code</label>${bind(p, 'cc', 'text', 'placeholder="NL" maxlength="2" style="text-transform:uppercase"')}</div>
@@ -2455,7 +2693,8 @@ function viewFootprints(v) {
         <div class="field"><label>Longitude</label>${bind(p, 'lon', 'number', 'step="any" placeholder="6.5665"')}</div>
         <div class="field"><label>When</label>${bind(p, 'when', 'text', 'placeholder="2025-07, 2018-2025, or blank" data-when="${i}"')}<div class="hint">A month (2025-07), a year or a range (2018-2025, 2025 - present). Several visits: separate with “;”, e.g. 2019-05; 2023-08. <a href="#" data-addvisit="${i}">+ Add another visit</a></div></div></div>
       <div class="row" style="grid-template-columns:auto 1fr;align-items:center;gap:1.2rem;margin-bottom:0.7rem"><label class="check" style="margin:0">${bind(p, 'academic', 'checkbox', 'data-acad')} Academic visit (also shown on the public academic page)</label><label class="check" style="margin:0" title="Shown even while its country is collapsed on the pages, with a star">${bind(p, 'highlight', 'checkbox', 'data-hl')} ★ Highlight</label>
-        <div class="field" style="margin:0;max-width:260px"><label>${p.academic ? 'Also a private trip? (travel page only)' : 'Trip type (private page label)'}</label>${bind(p, 'trip', 'select', 'data-trip')}</div></div>
+        <div class="field" style="margin:0;max-width:260px"><label>${p.academic ? 'Also a private trip? (travel page only)' : 'Trip type (private page label)'}</label>${bind(p, 'trip', 'select', 'data-trip')}</div>
+        <div class="field icon-field" style="margin:0;max-width:300px"><label>Icon (map marker and list)</label><div class="icon-pick"><span class="tv-icon big">${window.CityIcons ? CityIcons.svg(CityIcons.iconKey(p)) : ''}</span>${bind(p, 'icon', 'select', 'data-icon')}</div></div></div>
       ${p.academic ? `<div class="tv-acad">
         <div class="row" style="grid-template-columns:240px 1fr">
           <div class="field"><label>Type</label>${bind(p, 'kind', 'select', 'data-kind')}</div>
@@ -2474,6 +2713,10 @@ function viewFootprints(v) {
         <div class="toolbar"><input type="file" id="tv-up-${i}" accept="image/*" multiple style="display:none"><button class="btn sm" data-up="${i}">Upload photos…</button>${p.academic ? `<label class="hint" style="margin:0;display:inline-flex;gap:0.4rem;align-items:center;text-transform:none;letter-spacing:0;font-weight:500">as <select data-up-vis="${i}" style="width:auto;padding:0.2rem 0.4rem"><option value="pub">🌐 public (academic)</option><option value="priv">🔒 private (travel only)</option></select></label>` : ''}<span id="tv-upsg-${i}"></span><span class="tv-prog" id="tv-prog-${i}"></span></div></div></div></div>`; }).join('') || `<p class="hint">Nothing yet. Search for a city above.</p>`;
     box.querySelectorAll('[data-toggle]').forEach(h => h.addEventListener('click', e => { if (e.target.closest('.tools')) return; const id = h.dataset.toggle; OPEN_PLACES.has(id) ? OPEN_PLACES.delete(id) : OPEN_PLACES.add(id); renderPlaces(); }));
     box.querySelectorAll('select[data-kind]').forEach((sel, k) => { const p = T.places.filter(x => x.academic)[k]; sel.innerHTML = KIND_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.kind === val ? 'selected' : ''}>${lab}</option>`).join(''); });
+    box.querySelectorAll('select[data-icon]').forEach(sel => { const p = T.places[Number(sel.closest('.item').dataset.i)]; if (!window.CityIcons) return;
+      const auto = CityIcons.autoIcon(p);
+      sel.innerHTML = `<option value="">Automatic · ${esc(CityIcons.label(auto, 'en'))} ${esc(CityIcons.label(auto, 'zh'))}</option>` + CityIcons.KEYS.filter(k => k !== 'lived' || p.trip === 'lived').map(k => `<option value="${k}" ${p.icon === k ? 'selected' : ''}>${esc(CityIcons.label(k, 'en'))} · ${esc(CityIcons.label(k, 'zh'))}</option>`).join('');
+      sel.addEventListener('change', () => { const item = sel.closest('.item'); const k = CityIcons.iconKey(p); item.querySelectorAll('.tv-icon').forEach(el => { el.innerHTML = CityIcons.svg(k); el.title = CityIcons.label(k, 'en'); }); }); });
     box.querySelectorAll('select[data-trip]').forEach(sel => { const p = T.places[Number(sel.closest('.item').dataset.i)]; sel.innerHTML = TRIP_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.trip === val ? 'selected' : ''}>${lab}</option>`).join(''); });
     box.querySelectorAll('select[data-talk]').forEach((sel, k) => { const p = T.places.filter(x => x.academic)[k]; sel.innerHTML = TALK_OPTIONS.map(([val, lab]) => `<option value="${val}" ${p.talk_type === val ? 'selected' : ''}>${lab}</option>`).join(''); });
     wireBindings(box); wireItemTools(box, T.places, renderPlaces);
@@ -2716,9 +2959,10 @@ function viewFootprints(v) {
       }
       if (fixed) { markDirty(); renderPlaces(); }
       const total = T.places.reduce((k, pl) => k + pl.sights.length, 0);
-      out.innerHTML = n ? `<p class="hint" style="margin:0.6rem 0 0.4rem">Checked ${total} sights: ${n} tag change${n === 1 ? '' : 's'} since the last publish. Click <b>Publish changes</b> to save them.</p>
+      out.innerHTML = n ? `<p class="hint" style="margin:0.6rem 0 0.4rem">Checked ${total} sights: ${n} tag change${n === 1 ? '' : 's'} since the last publish. ${fpDirty() ? `<button class="btn sm primary" id="tv-check-pub" type="button" style="margin-left:0.4rem">Publish now</button> <span class="hint" style="display:inline">(or use Publish changes at the top)</span>` : 'Already published.'}</p>
         <div class="check-rows">${rows.map(([w, nm, what, cls]) => `<div class="check-row ${cls}"><span class="w">${esc(w)}</span><span class="nm">${esc(nm)}</span><span class="what">${esc(what)}</span></div>`).join('')}</div>`
         : `<p class="hint" style="margin:0.6rem 0 0">All ${total} sights already match the official lists.</p>`;
+      const pubBtn = $('#tv-check-pub'); if (pubBtn) pubBtn.onclick = async () => { pubBtn.disabled = true; pubBtn.textContent = 'Publishing…'; await saveContent(); pubBtn.replaceWith(Object.assign(document.createElement('span'), { className: 'hint', style: 'display:inline;color:var(--ok)', textContent: 'Published. The pages update within about a minute (reload with Ctrl+F5 / ⌘⇧R if they still look old).' })); };
     } catch (e) { out.innerHTML = `<p class="hint">Check failed: ${esc(e.message)}</p>`; }
     btn.disabled = false;
   };
