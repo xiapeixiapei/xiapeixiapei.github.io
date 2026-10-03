@@ -74,6 +74,7 @@
     luoyang: 'pagoda', 洛阳: 'pagoda', kaifeng: 'pagoda', 开封: 'pagoda', hangzhou: 'pagoda', 杭州: 'pagoda', anyang: 'pagoda', 安阳: 'pagoda', zhengzhou: 'pagoda', 郑州: 'pagoda', dengfeng: 'pagoda', 登封: 'pagoda', yangzhou: 'pagoda', 扬州: 'pagoda', shaoxing: 'watertown', 绍兴: 'watertown',
     suzhou: 'garden', 苏州: 'garden', wuxi: 'garden', 无锡: 'garden', wuzhen: 'watertown', 乌镇: 'watertown', zhouzhuang: 'watertown', 周庄: 'watertown', tongli: 'watertown', 同里: 'watertown', xitang: 'watertown', 西塘: 'watertown', jiaxing: 'watertown', 嘉兴: 'watertown', huzhou: 'watertown', 湖州: 'watertown',
     shenyang: 'palace', 沈阳: 'palace', chengde: 'palace', 承德: 'palace', qufu: 'palace', 曲阜: 'palace', jinan: 'lake', 济南: 'lake', lijiang: 'snowmountain', 丽江: 'snowmountain', dali: 'lake', 大理: 'lake', shangri: 'tibet', 香格里拉: 'tibet', 迪庆: 'tibet',
+    海西: 'lake', 格尔木: 'camel', 德令哈: 'lake', 茶卡: 'lake', 海南州: 'lake', 共和: 'lake', 海北: 'yurt', 祁连: 'yurt', 门源: 'yurt', 海东: 'mountain', 互助: 'mountain', 黄南: 'tibet', 同仁: 'tibet', 青海湖: 'lake',
     lhasa: 'tibet', 拉萨: 'tibet', shigatse: 'tibet', 日喀则: 'tibet', xining: 'tibet', 西宁: 'tibet', yushu: 'tibet', 玉树: 'tibet', 果洛: 'tibet', 甘孜: 'tibet', 阿坝: 'tibet', 黄南: 'tibet', 甘南: 'tibet', nyingchi: 'snowmountain', 林芝: 'snowmountain',
     guilin: 'karst', 桂林: 'karst', yangshuo: 'karst', 阳朔: 'karst', wulong: 'karst', 武隆: 'karst', libo: 'karst', 荔波: 'karst', 黔南: 'karst', shilin: 'karst', 石林: 'karst', 兴义: 'karst', 黔西南: 'karst', 贺州: 'karst', 柳州: 'karst',
     zhangjiajie: 'pillars', 张家界: 'pillars', 武陵源: 'pillars', 恩施: 'canyon', enshi: 'canyon', huangshan: 'mountain', 黄山: 'mountain', 泰安: 'mountain', 'tai\'an': 'mountain', taian: 'mountain', emeishan: 'mountain', 峨眉山: 'mountain', 乐山: 'mountain', leshan: 'mountain', 九江: 'mountain', jiujiang: 'mountain', 华阴: 'mountain', 武夷山: 'mountain', wuyishan: 'mountain', 衡阳: 'mountain', 三清山: 'mountain', 上饶: 'mountain', 雁荡: 'mountain', 五台山: 'pagoda', 忻州: 'pagoda',
@@ -132,7 +133,9 @@
   ];
   const norm = s => String(s || '').toLowerCase().replace(/\s+/g, ' ').replace(/[,.'’]/g, m => m === '’' ? "'" : m).trim();
   function byCity(place) {
-    const en = norm(place.city?.en), zh = String(place.city?.zh || '').replace(/(市|地区|自治州|州|盟|县|区)$/, '');
+    const en = norm(place.city?.en), full = String(place.city?.zh || '');
+    if (/^海南.*自治州$/.test(full)) return 'lake';
+    const zh = full.replace(/(特别行政区|自治区|自治州|自治县|地区|市|州|盟|县|区)$/, '').replace(/(蒙古族|藏族|回族|彝族|苗族|布依族|侗族|壮族|土家族|哈萨克|傣族|白族|哈尼族|羌族|朝鲜族|黎族|傈僳族|景颇族|柯尔克孜|维吾尔)+$/, '');
     if (CITY[en]) return CITY[en];
     const enBare = en.replace(/ (city|shi|prefecture|county|district)$/, ''); if (CITY[enBare]) return CITY[enBare];
     if (zh && CITY[zh]) return CITY[zh];
