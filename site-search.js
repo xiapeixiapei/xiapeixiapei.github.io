@@ -23,16 +23,43 @@
   // ── Index ──
   let INDEX = null, LOADING = null;
   async function getJson(u) { try { const r = await fetch(u, { cache: 'no-cache' }); return r.ok ? await r.json() : null; } catch (e) { return null; } }
+  // ── Provinces of China (cn-provinces.json): point in polygon, else the nearest outline within ~1° ──
+  let PROV_DATA = null;
+  async function loadProvinces() { if (!PROV_DATA) { const d = await getJson('cn-provinces.json'); PROV_DATA = d?.features || []; } return PROV_DATA; }
+  const isCN = p => ['CN', 'TW', 'HK', 'MO'].includes(String(p.cc || '').toUpperCase());
+  function inRing(lon, lat, ring) { let inside = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, yi] = ring[i], [xj, yj] = ring[j]; if ((yi > lat) !== (yj > lat) && lon < (xj - xi) * (lat - yi) / (yj - yi) + xi) inside = !inside; } return inside; }
+  const polysOf = f => f.geometry.type === 'MultiPolygon' ? f.geometry.coordinates : [f.geometry.coordinates];
+  const PROV_CACHE = new Map();
+  function provinceOfPlace(p) {
+    if (!isCN(p) || !PROV_DATA || !PROV_DATA.length) return null;
+    if (PROV_CACHE.has(p.id)) return PROV_CACHE.get(p.id);
+    const feats = PROV_DATA, cc = String(p.cc || '').toUpperCase(), name = [both(p.city), both(p.country)].join(' ');
+    const byZh = zh => feats.find(f => f.properties.zh === zh);
+    let f = cc === 'TW' ? byZh('台湾') : cc === 'HK' || /香港|hong\s*kong/i.test(name) ? byZh('香港') : cc === 'MO' || /澳门|澳門|macau|macao/i.test(name) ? byZh('澳门') : null;
+    if (!f && typeof p.lat === 'number' && typeof p.lon === 'number') {
+      f = feats.find(x => polysOf(x).some(poly => inRing(p.lon, p.lat, poly[0])));
+      if (!f) { let bd = 1; for (const x of feats) for (const poly of polysOf(x)) for (const [lo, la] of poly[0]) { const d = (lo - p.lon) ** 2 + (la - p.lat) ** 2; if (d < bd) { bd = d; f = x; } } }
+    }
+    const r = f ? { zh: f.properties.zh, en: f.properties.en } : null; PROV_CACHE.set(p.id, r); return r;
+  }
+  const provText = pr => pr ? [pr.en, pr.zh, pr.en.replace(/\s+/g, ''), pr.en + ' province', pr.zh + '省'].join(' ') : '';
+  // One result per visited province
+  function provinceItems(d, priv) {
+    const m = new Map();
+    for (const p of (d?.places || [])) { const pr = provinceOfPlace(p); if (!pr) continue; if (!m.has(pr.zh)) m.set(pr.zh, { pr, cities: [] }); const c = m.get(pr.zh).cities; if (!c.some(x => B(x).en === B(p.city).en)) c.push(p.city); }
+    return [...m.values()].map(({ pr, cities }) => ({ g: 'prov', title: { en: pr.en, zh: pr.zh }, sub: { en: `${cities.length} ${cities.length === 1 ? 'city' : 'cities'} · ${cities.slice(0, 4).map(c => B(c).en).join(', ')}${cities.length > 4 ? ' …' : ''}`, zh: `${cities.length} 座城市 · ${cities.slice(0, 4).map(c => B(c).zh).join('、')}${cities.length > 4 ? '……' : ''}` },
+      text: [provText(pr), cities.map(both).join(' ')].join(' '), url: (priv ? 'travel.html' : 'academic.html') + '#prov=' + encodeURIComponent(pr.zh) }));
+  }
   function placeItems(d, priv) {
     const out = [];
     for (const p of (d?.places || [])) {
-      const when = String(p.when || '');
-      const sub = J([p.country, when, p.academic ? p.event : '']);
-      out.push({ g: priv ? 'trip' : 'place', id: p.id, title: B(p.city), sub, text: [both(p.city), both(p.country), when, both(p.event), p.talk, both(p.note), priv ? both(p.pnote) : ''].join(' '), url: (priv ? 'travel.html' : 'academic.html') + '#place=' + encodeURIComponent(p.id) });
+      const when = String(p.when || ''), pr = provinceOfPlace(p);
+      const sub = J([p.country, pr && pr.en !== B(p.country).en && pr.zh !== B(p.country).zh ? { en: pr.en, zh: pr.zh } : '', when, p.academic ? p.event : '']);
+      out.push({ g: priv ? 'trip' : 'place', id: p.id, title: B(p.city), sub, text: [both(p.city), both(p.country), provText(pr), when, both(p.event), p.talk, both(p.note), priv ? both(p.pnote) : ''].join(' '), url: (priv ? 'travel.html' : 'academic.html') + '#place=' + encodeURIComponent(p.id) });
       for (const g of (p.sights || [])) {
         const WHL = LB('World Heritage', '世界遗产');
         const tags = [...new Set((g.tags || []).map(t => ({ '5a': '5A', 'wh-cultural': 'wh', 'wh-natural': 'wh', 'wh-mixed': 'wh', wh: 'wh', 'national-park': 'np' }[t])).filter(Boolean))].map(k => k === 'wh' ? WHL : k === 'np' ? LB('National park', '国家公园') : B(k));
-        out.push({ g: 'sight', id: p.id, title: B(g.name), sub: J([p.city, ...tags]), text: [both(g.name), both(p.city), both(p.country), g.whsite ? both(g.whsite.name) : '', g.a5 ? both(g.a5.name) : '', tags.map(both).join(' ')].join(' '), url: (priv ? 'travel.html' : 'academic.html') + '#place=' + encodeURIComponent(p.id) });
+        out.push({ g: 'sight', id: p.id, title: B(g.name), sub: J([p.city, ...tags]), text: [both(g.name), both(p.city), both(p.country), provText(pr), g.whsite ? both(g.whsite.name) : '', g.a5 ? both(g.a5.name) : '', tags.map(both).join(' ')].join(' '), url: (priv ? 'travel.html' : 'academic.html') + '#place=' + encodeURIComponent(p.id) });
       }
     }
     return out;
@@ -50,13 +77,17 @@
       (c.education || []).forEach(e => items.push({ g: 'about', title: B(e.degree), sub: J([e.school, e.period]), text: [both(e.degree), both(e.school), e.period, (e.supervisors || []).map(both).join(' ')].join(' '), url: 'index.html#education' }));
       (c.awards || []).forEach(a => items.push({ g: 'about', title: B(a.text), sub: J([LB('Award', '获奖'), a.year]), text: [both(a.text), a.year, a.note].join(' '), url: 'index.html#awards' }));
     }
-    if (!onTravel) { const a = await getJson('academic/academic.json'); if (a) items.push(...placeItems(a, false)); }
+    const travelCN = onTravel && typeof DATA !== 'undefined' && DATA?.places?.some(isCN);
+    const a = onTravel ? null : await getJson('academic/academic.json');
+    if (travelCN || a?.places?.some(isCN)) await loadProvinces();
+    if (a) items.push(...placeItems(a, false), ...provinceItems(a, false));
     items.forEach(it => { it.n = norm(it.title.en + ' ' + it.title.zh + ' ' + it.text); it.nt = norm(it.title.en + ' ' + it.title.zh); });
     return items;
   }
   function privateItems() {
     // travel.html after unlocking: its decrypted list lives in the page (DATA); read it, never store it
-    try { if (onTravel && typeof DATA !== 'undefined' && DATA && DATA.places) return placeItems(DATA, true).map(it => Object.assign(it, { n: norm(it.title.en + ' ' + it.title.zh + ' ' + it.text), nt: norm(it.title.en + ' ' + it.title.zh) })); } catch (e) {}
+    try { if (onTravel && typeof DATA !== 'undefined' && DATA && DATA.places) { if (!PROV_DATA && DATA.places.some(isCN)) loadProvinces().then(() => { if (back) render(); }); } } catch (e) {}
+    try { if (onTravel && typeof DATA !== 'undefined' && DATA && DATA.places) return [...placeItems(DATA, true), ...provinceItems(DATA, true)].map(it => Object.assign(it, { n: norm(it.title.en + ' ' + it.title.zh + ' ' + it.text), nt: norm(it.title.en + ' ' + it.title.zh) })); } catch (e) {}
     return [];
   }
   function search(q) {
@@ -66,7 +97,7 @@
     for (const it of all) {
       if (!terms.every(t => it.n.includes(t))) continue;
       const qn = terms.join(' ');
-      const score = (it.nt === qn || norm(it.title.en) === qn || norm(it.title.zh) === qn ? 50 : 0) + (it.nt.startsWith(qn) ? 20 : 0) + (it.nt.includes(qn) ? 15 : 0) + (it.n.includes(qn) ? 8 : 0) + (terms.every(t => it.nt.includes(t)) ? 10 : 0) + ({ pub: 3, place: 2, trip: 2, sight: 1, about: 0 }[it.g] || 0);
+      const score = (it.nt === qn || norm(it.title.en) === qn || norm(it.title.zh) === qn ? 50 : 0) + (it.nt.startsWith(qn) ? 20 : 0) + (it.nt.includes(qn) ? 15 : 0) + (it.n.includes(qn) ? 8 : 0) + (terms.every(t => it.nt.includes(t)) ? 10 : 0) + ({ pub: 3, prov: 3, place: 2, trip: 2, sight: 1, about: 0 }[it.g] || 0);
       hits.push([score, it]);
     }
     hits.sort((a, b) => b[0] - a[0]);
@@ -76,7 +107,7 @@
   }
 
   // ── UI ──
-  const GROUPS = [['pub', ['Publications', '论文']], ['place', ['Conferences & visits', '学术足迹']], ['trip', ['Travel (private)', '旅行（私密）']], ['sight', ['Sights', '景点']], ['about', ['About', '个人信息']]];
+  const GROUPS = [['pub', ['Publications', '论文']], ['prov', ['Provinces', '省份']], ['place', ['Conferences & visits', '学术足迹']], ['trip', ['Travel (private)', '旅行（私密）']], ['sight', ['Sights', '景点']], ['about', ['About', '个人信息']]];
   const ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>';
   const css = `
   .ss-btn svg { width: 18px; height: 18px; }
@@ -116,7 +147,8 @@
     const res = search(q), terms = q.split(/\s+/).filter(Boolean);
     cur = [];
     let html = '';
-    for (const [g, [en, z]] of GROUPS) {
+    const order = [...new Set(res.map(r => r.g))], GR = order.map(g => GROUPS.find(x => x[0] === g)).filter(Boolean);
+    for (const [g, [en, z]] of GR) {
       const rows = res.filter(r => r.g === g).slice(0, g === 'sight' ? 10 : 8); if (!rows.length) continue;
       html += `<div class="ss-h">${L(en, z)}</div>` + rows.map(r => { cur.push(r); return `<a class="ss-item" href="${esc(r.url)}" data-k="${cur.length - 1}"><div class="t">${mark(pick(r.title), terms)}</div>${pick(r.sub) ? `<div class="s">${mark(pick(r.sub), terms)}</div>` : ''}</a>`; }).join('');
     }
@@ -154,13 +186,16 @@
   // ── Jump targets: #pub=<id> on publications.html, #place=<id> on academic.html / travel.html ──
   function waitFor(fn, ms = 10000) { return new Promise(res => { const t0 = Date.now(); (function poll() { const v = fn(); if (v) return res(v); if (Date.now() - t0 > ms) return res(null); setTimeout(poll, 150); })(); }); }
   async function handleHash() {
-    const m = location.hash.match(/^#(pub|place)=(.+)$/); if (!m) return;
+    const m = location.hash.match(/^#(pub|place|prov)=(.+)$/); if (!m) return;
     const id = decodeURIComponent(m[2]);
     if (m[1] === 'pub') {
       const el = await waitFor(() => document.querySelector(`.pub-card[data-id="${CSS.escape(id)}"]`)); if (!el) return;
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       if (!el.classList.contains('expanded') && el.querySelector('.pub-abstract')) el.click();
       el.classList.remove('ss-flash'); void el.offsetWidth; el.classList.add('ss-flash');
+    } else if (m[1] === 'prov') {
+      const el = await waitFor(() => document.querySelector(`.prov[data-prov="${CSS.escape(id)}"]`)); if (!el) return;
+      if (typeof jumpToProvince === 'function') jumpToProvince('CN', id); else el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
       const el = await waitFor(() => document.querySelector(`.city[data-pid="${CSS.escape(id)}"]`)); if (!el) return;
       if (typeof revealCity === 'function') revealCity(id); else el.scrollIntoView({ behavior: 'smooth', block: 'center' });
