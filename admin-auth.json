@@ -1,0 +1,10 @@
+{
+  "v": 1,
+  "kdf": "PBKDF2-SHA256",
+  "iter": 600000,
+  "salt": "hdJaiwyOUG23ZMmdgtLZYQ==",
+  "iv": "wrNW+AW9Equp3Q/g",
+  "ct": "Tz0zAhtFZ4WHFq6V5ie5m3N4B1y4gWr4f/ouXG4JInjTWRjRpZtpDID0kC9Akd1gKB8AADZrDqS8xX+VhEbOgEOJR2NRNMucNcngBtvibSQZqhbYTgUQjygySq9P+b4HOSN9/B0rl1JSzN43kpAkVuGjgRKmbFpOGU2OZgKg/csWkqwvS5Is6/x1JvDGnMOg",
+  "updated": "2026-10-03T08:57:45.821Z",
+  "note": "Encrypted sign-in for admin.html (AES-256-GCM, key derived from the admin password). Delete this file to disable password sign-in."
+}
