@@ -1,0 +1,242 @@
+# Fetches journal cover images for publications that have a DOI but no cover.
+# Runs after every change to content.json (e.g. "Publish changes" in admin.html),
+# or manually from the Actions tab. Covers are saved as cover-*.jpg in the repo root.
+name: Fetch journal covers
+
+on:
+  push:
+    paths: [content.json]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: fetch-covers
+  cancel-in-progress: false
+
+jobs:
+  covers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install --quiet requests pillow
+
+      - name: Find and download covers
+        run: |
+          cat > /tmp/fetch_covers.py <<'PY'
+          import io, json, os, re, sys, time
+          from html import unescape
+          from urllib.parse import urljoin, quote
+          import requests
+          from PIL import Image
+
+          CONTENT = 'content.json'
+          UA_BROWSER = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
+                        '(KHTML, like Gecko) Chrome/126.0 Safari/537.36')
+          UA_API = 'academic-homepage cover fetcher (https://github.com/' + os.environ.get('GITHUB_REPOSITORY', '') + ')'
+          S = requests.Session()
+          S.headers.update({'User-Agent': UA_BROWSER, 'Accept-Language': 'en'})
+          STOP = {'of', 'and', 'the', 'in', 'for', 'on', 'a', 'an', '&'}
+
+          def log(*a):
+              print(*a, flush=True)
+
+          def journal_of(pub):
+              # Journal name = venue up to the first comma
+              return (pub.get('venue') or '').split(',')[0].strip()
+
+          def norm(s):
+              return re.sub(r'[^a-z0-9]', '', (s or '').lower())
+
+          def doi_of(pub):
+              for v in (pub.get('doi'), pub.get('url'), pub.get('venue')):
+                  m = re.search(r'10\.\d{4,9}/[^\s"<>]+', v or '', re.I)
+                  if m:
+                      return m.group(0).rstrip('.,;)')
+              return None
+
+          def slug_for(journal):
+              words = [w for w in re.findall(r"[A-Za-z]+", journal) if w.lower() not in STOP]
+              s = ''.join(w[0] for w in words).lower() if len(words) > 1 else norm(journal)[:12]
+              return s or 'journal'
+
+          def crossref(doi):
+              try:
+                  r = requests.get('https://api.crossref.org/works/' + quote(doi), timeout=20,
+                                   headers={'User-Agent': UA_API})
+                  if r.ok:
+                      return r.json()['message']
+              except Exception as e:
+                  log('  crossref error', e)
+              return {}
+
+          def get_image(url, referer=None):
+              # Download and validate a portrait-shaped cover image; returns a PIL image or None
+              try:
+                  h = {'Accept': 'image/avif,image/webp,image/*,*/*;q=0.8'}
+                  if referer:
+                      h['Referer'] = referer
+                  r = S.get(url, timeout=20, headers=h)
+                  if not r.ok or len(r.content) < 1500:
+                      return None
+                  im = Image.open(io.BytesIO(r.content))
+                  im.load()
+                  w, hgt = im.size
+                  if w < 60 or hgt < 80:
+                      return None
+                  ratio = hgt / w
+                  if not (1.05 <= ratio <= 1.75):
+                      return None
+                  return im
+              except Exception:
+                  return None
+
+          def candidates_direct(doi, meta):
+              # Publisher CDN patterns that do not need the article page
+              out = []
+              issns = [i.replace('-', '') for i in (meta.get('ISSN') or [])]
+              publisher = (meta.get('publisher') or '').lower()
+              if doi.startswith('10.1016/') or 'elsevier' in publisher:
+                  out += [('elsevier', f'https://ars.els-cdn.com/content/image/X{i}.jpg') for i in issns]
+              m = re.match(r'10\.(?:1007|1186|1038|1140)/s(\d{5})-', doi, re.I)
+              if m:
+                  jid = m.group(1)
+                  out += [('springer', f'https://media.springernature.com/{w}/springer-static/cover/journal/{jid}.jpg')
+                          for w in ('w300', 'w153', 'w92')]
+              return out
+
+          IMG_RE = re.compile(r'<img[^>]+?(?:src|data-src)\s*=\s*["\']([^"\']+)["\']', re.I)
+          META_RE = re.compile(r'<meta[^>]+(?:property|name)\s*=\s*["\'](?:og:image|twitter:image)["\'][^>]*content\s*=\s*["\']([^"\']+)["\']', re.I)
+
+          def candidates_page(doi, meta):
+              # Scrape the article landing page for an image that looks like a cover
+              out = []
+              pages = []
+              res = (meta.get('resource') or {}).get('primary', {}).get('URL')
+              if res:
+                  pages.append(res)
+              pages.append('https://doi.org/' + doi)
+              for page in pages:
+                  try:
+                      r = S.get(page, timeout=25, allow_redirects=True)
+                  except Exception as e:
+                      log('  page error', page, e)
+                      continue
+                  if not r.ok:
+                      log(f'  page {r.status_code}', r.url)
+                      continue
+                  html = r.text
+                  urls = [unescape(u) for u in IMG_RE.findall(html)] + [unescape(u) for u in META_RE.findall(html)]
+                  for u in urls:
+                      if re.search(r'cover|cov\d+h|largecover|journal[-_]?image', u, re.I) and not re.search(r'logo|icon|sprite|banner', u, re.I):
+                          out.append(('page', urljoin(r.url, u), r.url))
+                  if out:
+                      break
+              return out
+
+          def candidates_wikipedia(journal):
+              try:
+                  r = requests.get('https://en.wikipedia.org/w/api.php', timeout=20, headers={'User-Agent': UA_API}, params={
+                      'action': 'query', 'format': 'json', 'redirects': 1, 'generator': 'search',
+                      'gsrsearch': f'"{journal}" journal', 'gsrlimit': 3,
+                      'prop': 'pageimages', 'piprop': 'thumbnail', 'pithumbsize': 400})
+                  pages = (r.json().get('query') or {}).get('pages') or {}
+                  out = []
+                  for p in sorted(pages.values(), key=lambda p: p.get('index', 99)):
+                      if norm(p.get('title', '')).startswith(norm(journal)[:15]) and p.get('thumbnail'):
+                          out.append(('wikipedia', p['thumbnail']['source']))
+                  return out
+              except Exception:
+                  return []
+
+          def save_cover(im, journal, taken):
+              base = 'cover-' + slug_for(journal)
+              name, n = base + '.jpg', 2
+              while os.path.exists(name) or name in taken:
+                  name = f'{base}-{n}.jpg'
+                  n += 1
+              im = im.convert('RGB')
+              if im.width > 240:
+                  im = im.resize((240, round(im.height * 240 / im.width)), Image.LANCZOS)
+              im.save(name, 'JPEG', quality=85, optimize=True, progressive=True)
+              return name
+
+          data = json.load(open(CONTENT, encoding='utf-8'))
+          pubs = data.get('publications', [])
+
+          # Reuse covers already assigned to the same journal
+          by_journal = {}
+          for p in pubs:
+              if p.get('cover'):
+                  by_journal.setdefault(norm(journal_of(p)), p['cover'])
+
+          changed, taken, failed = 0, set(), []
+          for p in pubs:
+              if p.get('cover') or p.get('year') == 'book':
+                  continue
+              journal = journal_of(p)
+              key = norm(journal)
+              if key and key in by_journal:
+                  p['cover'] = by_journal[key]
+                  changed += 1
+                  log(f'= reused {by_journal[key]} for {journal}')
+                  continue
+              doi = doi_of(p)
+              if not doi:
+                  continue
+              log(f'* {journal or doi}  ({doi})')
+              meta = crossref(doi)
+              journal = journal or ((meta.get('container-title') or [''])[0])
+              found = None
+              # Sources are tried in order and only fetched when the previous one found nothing
+              sources = (lambda: candidates_direct(doi, meta), lambda: candidates_page(doi, meta), lambda: candidates_wikipedia(journal))
+              for c in (c for src in sources for c in src()):
+                  src, url = c[0], c[1]
+                  im = get_image(url, referer=c[2] if len(c) > 2 else None)
+                  if im:
+                      found = (src, url, im)
+                      break
+                  time.sleep(0.3)
+              if not found:
+                  log('  no cover found')
+                  failed.append(journal or doi)
+                  continue
+              name = save_cover(found[2], journal or doi, taken)
+              taken.add(name)
+              p['cover'] = name
+              if key:
+                  by_journal[key] = name
+              changed += 1
+              log(f'  saved {name} from {found[0]}: {found[1]}')
+
+          if changed:
+              # Same formatting as admin.html (JSON.stringify(c, null, 2) + newline)
+              with open(CONTENT, 'w', encoding='utf-8') as f:
+                  f.write(json.dumps(data, ensure_ascii=False, indent=2) + '\n')
+          log(f'\nUpdated {changed} publication(s).')
+          if failed:
+              log('No cover found for: ' + '; '.join(failed) + '. Paste one in the admin page instead.')
+          PY
+          python /tmp/fetch_covers.py
+
+      - name: Commit covers
+        run: |
+          if [ -z "$(git status --porcelain)" ]; then echo "Nothing to commit"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add content.json cover-*.jpg
+          git commit -m "Add journal covers"
+          # Retry in case content.json was published again meanwhile
+          for i in 1 2 3; do git pull --rebase --quiet && git push && break; sleep 3; done
+          # Ask GitHub Pages to rebuild (pushes made by Actions may not trigger it on their own)
+          curl -s -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pages/builds" > /dev/null || true
