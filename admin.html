@@ -185,6 +185,10 @@
   .sg-wh select { padding: 0.25rem 0.4rem; font-size: 14.5px; }
   .sg-wh input[type=text] { padding: 0.3rem 0.5rem; font-size: 15px; }
   @media (max-width: 760px) { .sg-wh { grid-column: 1 / -1; grid-template-columns: 1fr; } }
+  .logo-up { display: flex; gap: 0.5rem; align-items: center; }
+  .logo-up input[type="text"] { flex: 1; min-width: 0; }
+  .logo-prev { width: 42px; height: 42px; flex: none; object-fit: contain; border: 1px solid var(--subtle); border-radius: 8px; background: #fff; padding: 3px; }
+  .logo-prev.none { display: grid; place-items: center; color: var(--muted); font-size: 0.9rem; background: var(--card); }
   .tag-check .check-rows { display: grid; gap: 0.25rem; max-height: 320px; overflow: auto; border: 1px solid var(--subtle); border-radius: 8px; padding: 0.5rem 0.6rem; }
   .check-row { display: grid; grid-template-columns: minmax(70px, 0.6fr) minmax(0, 1.4fr) minmax(0, 1.6fr); gap: 0.6rem; font-size: 14.5px; align-items: baseline; }
   .check-row .w { color: var(--muted); }
@@ -1074,7 +1078,7 @@ function viewEducation(v) {
       e.supervisors ||= [];
       return `<div class="item" data-i="${i}"><div class="item-head"><div class="title">${esc(e.degree?.en || 'New entry')}</div>${itemTools(list, i)}</div>
       <div class="row"><div class="field"><label>Period</label>${bind(e, 'period', 'text', 'placeholder="2022.9 – 2025.7"')}</div>
-        <div class="field"><label>Logo file</label>${bind(e, 'logo', 'text', 'placeholder="logo-xxx.png"')}</div>
+        <div class="field"><label>Logo</label><div class="logo-up">${e.logo ? `<img class="logo-prev" src="${esc(LOGO_PREVIEW.get(e.logo) || e.logo)}" alt="" onerror="imgFallback(this)">` : '<span class="logo-prev none" title="No logo yet">?</span>'}${bind(e, 'logo', 'text', 'placeholder="logo-xxx.png"')}<button class="btn sm" type="button" data-logo-up="${i}" title="Upload a logo image (PNG, JPG, WebP or SVG). It is resized to 240 px and saved in the repository.">Upload</button><input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg" data-logo-file="${i}" hidden></div><div class="hint" data-logo-msg="${i}" style="margin:0.2rem 0 0"></div></div>
         <div class="field"><label>Logo tooltip</label>${bind(e, 'logo_title')}</div></div>
       ${biField('Degree', e, 'degree')}${biField('School', e, 'school')}
       <div class="field"><label>Supervisors</label>
@@ -1084,11 +1088,43 @@ function viewEducation(v) {
         <button class="btn sm" data-sup-add>+ Add supervisor</button></div></div>`;
     }).join('');
     wireBindings(box); wireItemTools(box, list, rr);
+    box.querySelectorAll('[data-logo-up]').forEach(btn => {
+      const i = Number(btn.dataset.logoUp), inp = box.querySelector(`[data-logo-file="${i}"]`), msg = box.querySelector(`[data-logo-msg="${i}"]`);
+      btn.onclick = () => { if (!TOKEN) return toast('Sign in with a token to upload files.', true); inp.click(); };
+      inp.onchange = async () => {
+        const f = inp.files[0]; inp.value = ''; if (!f) return;
+        if (f.size > 10 * 1024 * 1024) return toast('The image is larger than 10 MB.', true);
+        btn.disabled = true; msg.textContent = `Uploading ${f.name}…`;
+        try {
+          const e = list[i], img = await shrinkLogo(f);
+          // Keep the entry's own file name (replaces the old logo); otherwise logo-<school>.png
+          const own = e.logo && !/^https?:|\//i.test(e.logo) ? e.logo.replace(/\.[a-z0-9]+$/i, '') : '';
+          const slug = String(e.logo_title || e.school?.en || 'school').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'school';
+          const name = await uploadToRepo(img, (own || 'logo-' + slug) + '.' + img.ext);
+          LOGO_PREVIEW.set(name, URL.createObjectURL(img));
+          const changed = e.logo !== name; e.logo = name; if (!e.logo_title) e.logo_title = e.school?.en || '';
+          if (changed) markDirty();
+          toast(changed ? `Uploaded ${name}. Click Publish changes to save.` : `Uploaded ${name}. The website shows it after GitHub Pages updates (about a minute).`);
+          rr();
+        } catch (err) { toast(err.message, true); msg.textContent = ''; btn.disabled = false; }
+      };
+    });
     box.querySelectorAll('[data-sup-add]').forEach((b, i) => b.onclick = () => { list[i].supervisors.push({ en: '', zh: '', url: '' }); markDirty(); rr(); });
     box.querySelectorAll('.item').forEach((item, i) => item.querySelectorAll('[data-sup-del]').forEach(b => b.onclick = () => { list[i].supervisors.splice(Number(b.dataset.supDel), 1); markDirty(); rr(); }));
   };
   rr();
   $('#add-edu').onclick = () => { list.unshift({ period: '', degree: { en: '', zh: '' }, school: { en: '', zh: '' }, logo: '', logo_title: '', supervisors: [] }); markDirty(); rr(); };
+}
+
+// Logo images for the Education tab: SVG kept, others resized to at most 240 px (PNG keeps transparency)
+const LOGO_PREVIEW = new Map();
+async function shrinkLogo(file) {
+  if (/svg/i.test(file.type) || /\.svg$/i.test(file.name)) { const f = new File([file], 'logo.svg', { type: 'image/svg+xml' }); f.ext = 'svg'; return f; }
+  const bmp = await createImageBitmap(file), k = Math.min(1, 240 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise((ok, no) => c.toBlob(b => b ? ok(b) : no(new Error('Could not read this image.')), 'image/png'));
+  const f = new File([blob], 'logo.png', { type: 'image/png' }); f.ext = 'png'; return f;
 }
 
 // ── DOI metadata lookup (Crossref → OpenAlex → Semantic Scholar) ──
