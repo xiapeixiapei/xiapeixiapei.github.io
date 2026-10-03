@@ -1,0 +1,10 @@
+{
+  "v": 1,
+  "kdf": "PBKDF2-SHA256",
+  "iter": 600000,
+  "salt": "Mmm6aEPzKjR23zspb8gXdg==",
+  "iv": "yufnCPbqP6/9g9On",
+  "ct": "KZPnBy9Wh/nsWqMRfXFl8yTD/2D/GI9zeUs8LANB/PYIT0C5j0n8pqu9glJuCDxXqsx5a79vfTyM9B+r+W4WME2//450NSxM6B/fMtoz1O2o1cx8PKRT8jfYlUmtQjjJuwVp7dpYxWg/bCwa5THllR06mEtHuWraPH9Bt7ikBHrdbk9WyS0l6/u89h/Gb1/UxMWeV1wEXuyjVZ12K/r5QjcgWpfNSUN615Cj/DRf8kkW9zD0w7l36cAXqxIuXXZBm05ExrZzCvDSrpSoe3D5/Qf+5YKFKr4uALqYttvf3338Aec26sn7vuXTDsVth14ZXOApRCV5V6G5/taEXA0PoTYsu7lqkScu1xWACb27WKGp+n28wp5f23aC7PV+GU9+LIB/Ygfb/lVGrQJQQ5OwPGSdrmGQIJ6wRqERgFaJSH7cYfw7uHFDCzIQ5BJKQCQNeoHLyH5skgnYswyxWxdURCIiTdI+ISrYhaLUmaNHpw==",
+  "updated": "2026-10-03T12:50:02.080Z",
+  "note": "Private travel map for travel.html: AES-256-GCM, key derived from the travel password. Photos in this folder are encrypted with a content key stored inside."
+}
