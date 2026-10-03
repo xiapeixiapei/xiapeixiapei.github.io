@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="site-fonts.js"></script>
+  <script src="site-theme.js"></script>
+  <title>Publications</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" rel="stylesheet">
+  <style>
+    :root {
+    /* Theme tokens (dark values below, under html[data-theme="dark"]) */
+    --on-accent: #ffffff; --on-accent-2: #a9c8f0; --ink-2: #334155; --highlight-2: #eaf1fb; --hover-border: #b9cbe3; --card-2: #fbfcfe; --hint: #d3dce7;
+    --paper-rgb: 245, 247, 250; --card-rgb: 255, 255, 255; --accent-rgb: 27, 79, 138; --accent-light-rgb: 59, 125, 216; --cover-a: #1b4f8a; --cover-b: #0f3360; --highlight-rgb: 214, 227, 245; --subtle-rgb: 211, 220, 231;
+    --warn: #8a5300; --warn-bg: #fcefd6; --ok: #2f7a4f; --ok-bg: #e6f3ea; --ok-border: #b7dcc3; --err: #b42318;
+    --note-bg: #c8dbf5; --note-fg: #174a85; --badge-blue: #2f74e0; --gold: #b8860b; --tip-sub: #c9dbf3;
+    --map-bg: #e9eef5; --map-ring: #ffffff; --map-dot: #1b4f8a; --map-line: #1b4f8a; --net-node: #9db4d0;
+    --ramp-lo: #cfe0f5; --ramp-hi: #0f3360; --map-empty: #e6ebf2; --map-sphere: #f7f9fc; --map-border: #ffffff;
+    --font-head: 'Source Serif 4', 'Noto Serif SC', Georgia, serif; --font-body: 'Source Sans 3', 'Noto Sans SC', system-ui, sans-serif;
+
+      --ink: #0d1b2a;
+      --paper: #f5f7fa;
+      --accent: #1b4f8a;
+      --accent-light: #3b7dd8;
+      --subtle: #d3dce7;
+      --muted: #647387;
+      --highlight: #d6e3f5;
+      --card-bg: #ffffff;
+      --shadow: rgba(13, 27, 42, 0.06);
+    }
+
+  /* Dark theme: deep blue-black paper, light ink, a lighter ocean blue for links and accents */
+  html[data-theme="dark"] {
+    --ink: #e3e9f1; --ink-2: #c5cfdb; --paper: #0e141c; --paper-rgb: 14, 20, 28;
+    --accent: #8fb9ef; --accent-light: #6fa3e6; --accent-rgb: 143, 185, 239; --accent-light-rgb: 111, 163, 230; --subtle: #2a3747; --subtle-rgb: 42, 55, 71; --muted: #97a5b7;
+    --highlight: #1c2d44; --highlight-rgb: 28, 45, 68; --highlight-2: #172438;
+    --card-bg: #151e2a; --card: #151e2a; --card-2: #18222f; --card-rgb: 21, 30, 42; --hint: #53657c; --shadow: rgba(0, 0, 0, 0.35);
+    --on-accent: #0b1320; --on-accent-2: #1f3d63; --hover-border: #3d5675;
+    --warn: #f0c46a; --warn-bg: #3a2d12; --ok: #7fcf9e; --ok-bg: #16301f; --ok-border: #2f5a3f; --err: #ff8f80; --err-bg: #3d1915;
+    --note-bg: #22395a; --note-fg: #b5d0f4; --badge-blue: #3d84ea; --gold: #e0b347; --tip-sub: #475a72;
+    --map-bg: #131b25; --map-ring: #0e141c; --map-dot: #8fb9ef; --map-line: #8fb9ef; --net-node: #4a6585;
+    --ramp-lo: #1f3049; --ramp-hi: #a9cdf7; --map-empty: #1a2330; --map-sphere: #111923; --map-border: #0e141c;
+    color-scheme: dark;
+  }
+  html[data-theme="dark"] img.logo-on-dark, html[data-theme="dark"] .school-logo { background: #f5f7fa; }
+
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+    body.zh { font-family: var(--font-body); }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      opacity: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .top-bar {
+      position: fixed; top: 0; width: 100%; z-index: 50;
+      backdrop-filter: blur(16px);
+      background: rgba(var(--paper-rgb), 0.88);
+      border-bottom: 1px solid var(--subtle);
+      height: 60px; display: flex; align-items: center;
+    }
+    .top-bar-inner {
+      max-width: 1100px; width: 100%; margin: 0 auto; padding: 0 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .back-link {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      text-decoration: none; font-family: 'Pinyon Script', cursive;
+      font-size: 1.68rem; color: var(--accent); transition: opacity 0.25s;
+    }
+    .back-link:hover { opacity: 0.7; }
+    .back-arrow { font-family: var(--font-body); font-size: 1.062rem; opacity: 0.6; }
+    .lang-toggle { display: flex; border: 1px solid var(--subtle); border-radius: 100px; overflow: hidden; background: var(--card-bg); }
+    .lang-btn { padding: 0.3rem 0.7rem; font-size: 0.938rem; font-weight: 600; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.25s; }
+    .lang-btn.active { background: var(--accent); color: var(--on-accent); }
+
+    .page-header {
+      max-width: 1100px; margin: 0 auto; padding: 100px 2rem 2rem;
+    }
+    .page-header h1 {
+      font-family: var(--font-head); font-size: 2.688rem; font-weight: 300;
+      color: var(--ink); margin-bottom: 0.3rem;
+    }
+    body.zh .page-header h1 { font-family: var(--font-head); }
+    .page-header .subtitle { font-size: 1.15rem; color: var(--muted); }
+    .stats-row { display: flex; gap: 2rem; margin-top: 1.2rem; flex-wrap: wrap; }
+    .stat { display: flex; align-items: baseline; gap: 0.4rem; }
+    .stat-num { font-family: var(--font-head); font-size: 2.016rem; font-weight: 600; color: var(--accent); }
+    .stat-label { font-size: 1.025rem; color: var(--muted); }
+
+    .year-section { max-width: 1100px; margin: 0 auto; padding: 2.5rem 2rem 0.5rem; }
+    .year-label {
+      font-family: var(--font-head); font-size: 1.792rem; font-weight: 600;
+      color: var(--accent); display: flex; align-items: center; gap: 1rem;
+    }
+    .year-label::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--subtle), transparent); }
+
+    .pub-grid {
+      max-width: 1100px; margin: 0 auto; padding: 1rem 2rem;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 1.2rem;
+    }
+
+    .pub-card {
+      display: flex; gap: 1.2rem;
+      background: linear-gradient(135deg, rgba(var(--card-rgb), 0.95) 0%, rgba(var(--highlight-rgb), 0.65) 100%);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(var(--subtle-rgb), 0.4);
+      border-radius: 12px; padding: 1.4rem;
+      transition: all 0.35s ease; text-decoration: none; color: inherit;
+      cursor: pointer; flex-wrap: wrap;
+      position: relative;
+      overflow: hidden;
+    }
+    .pub-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .pub-card:hover::before { opacity: 1; }
+    .pub-card:hover {
+      border-color: rgba(var(--accent-light-rgb), 0.3);
+      box-shadow: 0 12px 36px rgba(13, 27, 42, 0.1), 0 2px 8px rgba(var(--accent-rgb), 0.06);
+      transform: translateY(-4px);
+      background: linear-gradient(135deg, rgba(var(--card-rgb), 1) 0%, rgba(var(--highlight-rgb), 0.9) 100%);
+    }
+
+    .pub-card .pub-title {
+      font-weight: 600; font-size: 1.15rem; color: var(--ink);
+      line-height: 1.45; margin-bottom: 0.4rem;
+    }
+    .pub-card .pub-title a {
+      color: var(--ink);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .pub-card .pub-title a:hover {
+      color: var(--accent);
+    }
+
+    .pub-abstract {
+      width: 100%;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.4s ease, opacity 0.3s ease;
+      opacity: 0;
+      font-size: 1.025rem;
+      color: var(--muted);
+      line-height: 1.7;
+      border-top: 1px solid transparent;
+      padding: 0 0.2rem;
+    }
+    .pub-card.expanded .pub-abstract {
+      max-height: 2000px;
+      opacity: 1;
+      padding: 0.8rem 0.2rem 0;
+      border-top-color: rgba(var(--subtle-rgb), 0.5);
+      margin-top: 0.5rem;
+    }
+    /* Clamp abstract text to 5 lines with ellipsis; remove clamp when expanded */
+    .pub-abstract p {
+      display: -webkit-box;
+      -webkit-line-clamp: 5;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .pub-card.expanded .pub-abstract p {
+      display: block;
+      -webkit-line-clamp: unset;
+      overflow: visible;
+    }
+    .abstract-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+    }
+    .expand-hint {
+      font-size: 0.875rem;
+      color: var(--hint);
+      margin-top: 0.4rem;
+      transition: color 0.2s;
+    }
+    .pub-card:hover .expand-hint { color: var(--accent-light); }
+
+    .journal-cover {
+      width: 90px; height: 120px; border-radius: 6px; object-fit: cover;
+      flex-shrink: 0; background: var(--highlight); border: 1px solid var(--subtle);
+    }
+
+    /* SVG placeholder covers */
+    .cover-placeholder {
+      width: 90px; height: 120px; border-radius: 6px; flex-shrink: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center; padding: 0.5rem; font-size: 0.65rem; font-weight: 600;
+      line-height: 1.3; border: 1px solid var(--subtle);
+    }
+    .cover-tree { background: linear-gradient(135deg, #1a3a2a, #2d5a3f); color: #c8e6c9; }
+    .cover-ppg { background: linear-gradient(135deg, #1a237e, #3949ab); color: #c5cae9; }
+    .cover-ldd { background: linear-gradient(135deg, #4e342e, #795548); color: #d7ccc8; }
+    .cover-gec { background: linear-gradient(135deg, #1b5e20, #388e3c); color: #c8e6c9; }
+    .cover-lup { background: linear-gradient(135deg, #263238, #455a64); color: #b0bec5; }
+    .cover-gs { background: linear-gradient(135deg, #004d40, #00796b); color: #b2dfdb; }
+    .cover-le { background: linear-gradient(135deg, #33691e, #558b2f); color: #dcedc8; }
+    .cover-jem { background: linear-gradient(135deg, #0d47a1, #1976d2); color: #bbdefb; }
+    .cover-book { background: linear-gradient(135deg, #b71c1c, #d32f2f); color: #ffcdd2; }
+    .cover-journal {
+      background: linear-gradient(160deg, var(--cover-a) 0%, var(--cover-b) 100%);
+      color: #eaf2fc; border: none; font-family: var(--font-head); font-size: 0.78rem;
+      font-weight: 600; line-height: 1.25; padding: 0.6rem; letter-spacing: 0.01em;
+    }
+    .cover-inprep {
+      background: linear-gradient(135deg, var(--highlight), var(--subtle));
+      color: var(--accent); border: 2px dashed var(--subtle);
+    }
+
+    .pub-info { flex: 1; min-width: 0; }
+    .pub-card .pub-title { font-weight: 600; font-size: 1.15rem; color: var(--ink); line-height: 1.45; margin-bottom: 0.4rem; }
+    .pub-card .pub-authors { font-size: 1.025rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .pub-card .pub-authors strong { color: var(--accent); font-weight: 600; }
+    .pub-card .pub-venue { font-size: 1rem; font-style: italic; color: var(--accent-light); margin-bottom: 0.5rem; }
+    .pub-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+    .pub-badge { display: inline-block; font-size: 0.85rem; font-weight: 600; padding: 0.12rem 0.5rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .badge-first { background: var(--badge-blue); color: var(--on-accent); }
+    .badge-corr { background: var(--card-bg); color: var(--badge-blue); box-shadow: inset 0 0 0 1.5px var(--badge-blue); }
+    .badge-review { background: var(--warn-bg); color: var(--warn); }
+    .pub-link-btn {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.938rem; padding: 0.3rem 0.8rem;
+      border-radius: 5px; text-decoration: none;
+      background: var(--accent); color: var(--on-accent); border: 1.5px solid var(--accent); font-weight: 600;
+      transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .pub-link-btn::after { content: '↗'; font-size: 0.95em; line-height: 1; }
+    .pub-link-btn:hover, .pub-link-btn:focus-visible { background: var(--card-bg); color: var(--accent); border-color: var(--accent); box-shadow: 0 4px 12px rgba(var(--accent-rgb), 0.2); }
+
+    .cite-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      background: var(--highlight);
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+      letter-spacing: 0.02em;
+    }
+    .cite-badge svg { width: 11px; height: 11px; opacity: 0.7; }
+
+    footer {
+      max-width: 1100px; margin: 3rem auto 0; padding: 2rem;
+      border-top: 1px solid var(--subtle); text-align: center;
+      font-size: 1.025rem; color: var(--muted);
+    }
+    footer a { color: var(--accent); text-decoration: none; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .pub-card { animation: fadeUp 0.5s ease both; }
+    .pub-grid .pub-card:nth-child(1) { animation-delay: 0s; }
+    .pub-grid .pub-card:nth-child(2) { animation-delay: 0.05s; }
+    .pub-grid .pub-card:nth-child(3) { animation-delay: 0.1s; }
+    .pub-grid .pub-card:nth-child(4) { animation-delay: 0.15s; }
+    .pub-grid .pub-card:nth-child(5) { animation-delay: 0.2s; }
+    .pub-grid .pub-card:nth-child(6) { animation-delay: 0.25s; }
+    .pub-grid .pub-card:nth-child(7) { animation-delay: 0.3s; }
+
+    @media (max-width: 580px) {
+      .pub-grid { grid-template-columns: 1fr; }
+      .page-header h1 { font-size: 2.016rem; }
+    }
+  
+
+  /* Phones: original type sizes (the larger desktop sizes were too big on small screens) */
+  @media (max-width: 720px) {
+    .back-link { font-size: 1.5rem !important; }
+    .back-arrow { font-size: 0.85rem !important; }
+    .lang-btn { font-size: 0.75rem !important; }
+    .page-header h1 { font-size: 2.4rem !important; }
+    .page-header .subtitle { font-size: 0.92rem !important; }
+    .stat-num { font-size: 1.8rem !important; }
+    .stat-label { font-size: 0.82rem !important; }
+    .year-label { font-size: 1.6rem !important; }
+    .pub-card .pub-title { font-size: 0.92rem !important; }
+    .pub-abstract { font-size: 0.82rem !important; }
+    .abstract-label { font-size: 0.72rem !important; }
+    .expand-hint { font-size: 0.7rem !important; }
+    .pub-card .pub-authors { font-size: 0.82rem !important; }
+    .pub-card .pub-venue { font-size: 0.8rem !important; }
+    .pub-badge { font-size: 0.68rem !important; }
+    .pub-link-btn { font-size: 0.75rem !important; }
+    .cite-badge { font-size: 0.72rem !important; }
+    footer { font-size: 0.82rem !important; }
+  }
+    @media (max-width: 580px) {
+    .page-header h1 { font-size: 1.8rem !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <a href="index.html" class="back-link"><span class="back-arrow">←</span> <span id="back-name">Home</span></a>
+    <div class="bar-right" style="display:flex;align-items:center;gap:0.7rem">
+    <button type="button" class="theme-btn" data-theme-toggle aria-label="Switch to dark mode"></button>
+    <div class="lang-toggle" id="lang-toggle">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <button class="lang-btn" data-lang="zh">中</button>
+    </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-header">
+  <h1 data-en="Publications" data-zh="学术论文">Publications</h1>
+  <p class="subtitle" data-en="Peer-reviewed journal articles and books" data-zh="同行评审期刊论文与著作">Peer-reviewed journal articles and books</p>
+  <div class="stats-row" id="stats-row"></div>
+</div>
+
+<!-- Publication list is rendered from content.json -->
+<div id="pub-list"></div>
+
+<footer>
+  <p><a href="index.html" data-en="← Back to Homepage" data-zh="← 返回主页">← Back to Homepage</a> &nbsp;&middot;&nbsp; &copy; <span id="footer-year">2026</span> <span id="footer-name"></span></p>
+</footer>
+
+<script>
+  let currentLang = 'en';
+  let CONTENT = null;
+
+  const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const attr = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const CITE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
+
+  function pubCard(p) {
+    const isBook = p.year === 'book';
+    const cover = p.cover
+      ? `<img class="journal-cover" src="${attr(p.cover)}" alt="${attr(p.venue)}" loading="lazy">`
+      : (p.status || (!p.url && !p.venue))
+        ? `<div class="cover-placeholder cover-inprep">📝<br><br>${esc(p.status === 'In Prep' ? 'In Preparation' : (p.status || 'In Preparation')).replace(' ', '<br>')}</div>`
+        : `<div class="cover-placeholder cover-journal"><span>${esc((p.venue || '').split(',')[0])}</span></div>`;
+    const title = p.url
+      ? `<a href="${attr(p.url)}" target="_blank" onclick="event.stopPropagation()">${esc(p.title)}</a>`
+      : esc(p.title);
+    let badges = '';
+    if (p.first_author) badges += '<span class="pub-badge badge-first">First Author</span>';
+    if (p.corresponding) badges += '<span class="pub-badge badge-corr">Corresponding Author</span>';
+    if (p.status) badges += `<span class="pub-badge badge-review">${esc(p.status)}</span>`;
+    if (p.url) badges += `<a class="pub-link-btn" href="${attr(p.url)}" target="_blank" data-en="Read" data-zh="阅读原文">Read</a>`;
+    if (p.cited !== null && p.cited !== undefined && p.cited !== '') badges += `<span class="cite-badge">${CITE_ICON} Cited: ${esc(p.cited)}</span>`;
+    const hasAbstract = !isBook;
+    const abstract = hasAbstract ? `<div class="pub-abstract"><div class="abstract-label">Abstract</div><p>${esc(p.abstract || 'Coming soon.')}</p></div>` : '';
+    const hint = hasAbstract ? '<div class="expand-hint" data-en="Click to view abstract" data-zh="点击查看摘要">Click to view abstract</div>' : '';
+    const style = isBook ? ' style="background: linear-gradient(135deg, var(--highlight) 0%, var(--highlight-2) 100%); border: 1px solid var(--subtle);"' : '';
+    return `<div class="pub-card"${style}>${cover}
+      <div class="pub-info">
+        <div class="pub-title">${title}</div>
+        <div class="pub-authors">${p.authors}</div>
+        <div class="pub-venue">${esc(p.venue)}</div>
+        ${badges ? `<div class="pub-badges">${badges}</div>` : ''}
+        ${hint}
+      </div>${abstract}</div>`;
+  }
+
+  function render() {
+    const pubs = CONTENT.publications || [];
+    const groups = {};
+    pubs.forEach(p => { (groups[p.year] = groups[p.year] || []).push(p); });
+    const years = Object.keys(groups).filter(y => y !== 'book').sort((a, b) => b.localeCompare(a));
+    if (groups.book) years.push('book');
+    document.getElementById('pub-list').innerHTML = years.map(y => `
+      <div class="year-section">${y === 'book' ? '<div class="year-label" data-en="Book" data-zh="著作">Book</div>' : `<div class="year-label">${esc(y)}</div>`}</div>
+      <div class="pub-grid">${groups[y].map(pubCard).join('')}</div>`).join('');
+
+    // Summary stats derived from the data
+    const nBook = (groups.book || []).length;
+    const nFirst = pubs.filter(p => p.first_author).length;
+    document.getElementById('stats-row').innerHTML = `
+      <div class="stat"><span class="stat-num">${pubs.length - nBook}</span><span class="stat-label" data-en="Publications" data-zh="篇论文">Publications</span></div>
+      <div class="stat"><span class="stat-num">${nFirst}</span><span class="stat-label" data-en="First Author" data-zh="篇第一作者">First Author</span></div>
+      ${nBook ? `<div class="stat"><span class="stat-num">${nBook}</span><span class="stat-label" data-en="Book" data-zh="部著作">Book</span></div>` : ''}`;
+
+    document.getElementById('back-name').textContent = CONTENT.profile?.name_en || 'Home';
+    document.getElementById('footer-name').textContent = CONTENT.profile?.name_en || '';
+    document.getElementById('footer-year').textContent = CONTENT.site?.footer_year || new Date().getFullYear();
+
+    // Click to expand abstract
+    document.querySelectorAll('.pub-card').forEach(card => {
+      if (!card.querySelector('.pub-abstract')) return;
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('a')) return;
+        this.classList.toggle('expanded');
+        const hint = this.querySelector('.expand-hint');
+        if (hint) {
+          const isOpen = this.classList.contains('expanded');
+          hint.textContent = isOpen
+            ? (currentLang === 'zh' ? '点击收起' : 'Click to collapse')
+            : (currentLang === 'zh' ? '点击查看摘要' : 'Click to view abstract');
+        }
+      });
+    });
+  }
+
+  // Inject Google Analytics if an ID is set in content.json (site.ga_id)
+  function injectGA(id) {
+    if (!id || !/^G-[A-Z0-9]+$/i.test(id)) return;
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { dataLayer.push(arguments); };
+    gtag('js', new Date()); gtag('config', id);
+    const s = document.createElement('script'); s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=' + encodeURIComponent(id);
+    document.head.appendChild(s);
+  }
+  function injectGoatCounter(code) {
+    if (!code) return;
+    const s = document.createElement('script');
+    s.async = true;
+    s.dataset.goatcounter = `https://${code}.goatcounter.com/count`;
+    s.src = '//gc.zgo.at/count.js';
+    document.head.appendChild(s);
+  }
+
+  function applyLang(lang) {
+    currentLang = lang;
+    document.querySelectorAll('#lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    document.body.classList.toggle('zh', lang === 'zh');
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+      const badges = el.querySelectorAll('.pub-badge, .pub-link-btn');
+      let preserved = '';
+      badges.forEach(n => { preserved += ' ' + n.outerHTML; });
+      el.innerHTML = el.getAttribute('data-' + lang) + preserved;
+    });
+    if (CONTENT) document.title = CONTENT.site.pub_page_title?.[lang] || 'Publications';
+  }
+  document.getElementById('lang-toggle').addEventListener('click', (e) => {
+    const btn = e.target.closest('.lang-btn');
+    if (!btn || btn.dataset.lang === currentLang) return;
+    applyLang(btn.dataset.lang);
+  });
+
+  (async function boot() {
+    try {
+      const res = await fetch('content.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error(res.status);
+      CONTENT = await res.json();
+    } catch (err) {
+      document.getElementById('pub-list').innerHTML = `<p style="text-align:center;color:var(--muted)">Failed to load content.json (${esc(err.message)}).</p>`;
+      return;
+    }
+    render();
+    injectGoatCounter(CONTENT.site?.goatcounter_code);
+    injectGA(CONTENT.site?.ga_id);
+    applyLang(currentLang);
+  })();
+</script>
+</body>
+</html>

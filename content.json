@@ -1,0 +1,404 @@
+{
+  "_schema": "Academic homepage content v1. Edit via the Site Manager (admin.html) or by hand. Fields with en/zh keys are bilingual.",
+  "site": {
+    "title": {
+      "en": "Pei Xia | Academic Homepage",
+      "zh": "夏沛 | 学术主页"
+    },
+    "pub_page_title": {
+      "en": "Publications | Pei Xia",
+      "zh": "学术论文 | 夏沛"
+    },
+    "footer_year": "2026",
+    "ga_id": "",
+    "goatcounter_code": "",
+    "photo_credit": {
+      "en": "Photo by Pei Xia",
+      "zh": "夏沛 摄"
+    },
+    "me_author": "Xia P."
+  },
+  "profile": {
+    "name_en": "Pei Xia",
+    "name_zh": "夏沛",
+    "photo": "photo.jpg",
+    "affiliation": {
+      "en": "Associate Researcher & Postdoctoral Fellow · South China Normal University",
+      "zh": "特聘副研究员 / 博士后 · 华南师范大学地理科学学院"
+    },
+    "bio": {
+      "en": "Dr. Pei Xia is a special-appointment associate researcher and postdoctoral fellow at the School of Geography, South China Normal University. Dr. Xia's research covers landscape ecology and land use, integrated physical geography, ecosystem services and human well-being, and sustainability. Dr. Xia received a Ph.D. in Physical Geography from Peking University (2025), including a joint Ph.D. stay at the Norwegian Institute for Nature Research in Oslo (2024–2025), an M.S. in Natural Resources from Beijing Normal University (2021) and a B.S. in Geographic Information Science from Huazhong Agricultural University (2018). Dr. Xia reviews for npj Urban Sustainability, Ecosystem Services and Communications Earth & Environment.",
+      "zh": "夏沛，华南师范大学地理科学学院特聘副研究员、博士后。研究方向为景观生态与土地利用、综合自然地理、生态系统服务与人类福祉、可持续性。2025年获北京大学自然地理学理学博士学位，其间于2024年3月至2025年1月在挪威自然研究所（奥斯陆）联合培养；2021年获北京师范大学自然资源专业理学硕士学位；2018年获华中农业大学地理信息科学专业理学学士学位。担任 npj Urban Sustainability、Ecosystem Services、Communications Earth & Environment 等期刊审稿人。"
+    },
+    "email": "xiapei@m.scnu.edu.cn",
+    "links": [
+      {
+        "icon": "other",
+        "label": "SCNU profile",
+        "url": "https://staff.scnu.edu.cn/xiapei"
+      }
+    ]
+  },
+  "research_interests": [
+    {
+      "en": "Landscape Ecology & Land Use",
+      "zh": "景观生态与土地利用"
+    },
+    {
+      "en": "Integrated Physical Geography",
+      "zh": "综合自然地理"
+    },
+    {
+      "en": "Ecosystem Services & Human Well-being",
+      "zh": "生态系统服务与人类福祉"
+    },
+    {
+      "en": "Sustainability",
+      "zh": "可持续性"
+    }
+  ],
+  "education": [
+    {
+      "period": "2021.09 – 2025.07",
+      "degree": {
+        "en": "Ph.D. in Physical Geography",
+        "zh": "理学博士"
+      },
+      "school": {
+        "en": "College of Urban and Environmental Sciences, Peking University, China",
+        "zh": "自然地理学 · 北京大学城市与环境学院"
+      },
+      "logo": "logo-pku.png",
+      "logo_title": "Peking University",
+      "supervisors": []
+    },
+    {
+      "period": "2024.03 – 2025.01",
+      "degree": {
+        "en": "Joint Ph.D. Student",
+        "zh": "联合培养博士"
+      },
+      "school": {
+        "en": "Norwegian Institute for Nature Research (NINA), Oslo, Norway",
+        "zh": "挪威自然研究所，奥斯陆"
+      },
+      "logo": "logo-nina.png",
+      "logo_title": "Norwegian Institute for Nature Research",
+      "supervisors": []
+    },
+    {
+      "period": "2018.09 – 2021.07",
+      "degree": {
+        "en": "M.S. in Natural Resources",
+        "zh": "理学硕士"
+      },
+      "school": {
+        "en": "Faculty of Geographical Science, Beijing Normal University, China",
+        "zh": "自然资源 · 北京师范大学地理科学学部"
+      },
+      "logo": "logo-bnu.png",
+      "logo_title": "Beijing Normal University",
+      "supervisors": []
+    },
+    {
+      "period": "2014.09 – 2018.07",
+      "degree": {
+        "en": "B.S. in Geographic Information Science",
+        "zh": "理学学士"
+      },
+      "school": {
+        "en": "College of Resources and Environment, Huazhong Agricultural University, China",
+        "zh": "地理信息科学 · 华中农业大学资源与环境学院"
+      },
+      "logo": "logo-hzau.png",
+      "logo_title": "Huazhong Agricultural University",
+      "supervisors": []
+    }
+  ],
+  "carousels": [
+    [],
+    []
+  ],
+  "publications": [
+    {
+      "id": "pub01",
+      "year": "2026",
+      "title": "Impacts of glacier retreat on ecosystem services and mountain communities: A case study in eastern Himalayas",
+      "title_short": "",
+      "authors": "<strong>Xia P.</strong>, Gomez-Baggethun E.",
+      "venue": "Ecosystem Services, 77, 101790",
+      "url": "",
+      "first_author": true,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": true
+    },
+    {
+      "id": "pub06",
+      "year": "2026",
+      "title": "Afforestation or reclamation in great lake basins? An approach to enhance the synergy between food and ecological security",
+      "title_short": "",
+      "authors": "Zheng H., Peng J., Xu Z., <strong>Xia P.</strong>, Hu T., Zhang H.",
+      "venue": "Environmental Impact Assessment Review, 120, 108439",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub02",
+      "year": "2025",
+      "title": "Lake-related ecosystem services facing social-ecological risks",
+      "title_short": "",
+      "authors": "<strong>Xia P.</strong>, Peng J., Gu T., Yu S., Xu Z.",
+      "venue": "People and Nature, 7(4), 734–751",
+      "url": "",
+      "first_author": true,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": true
+    },
+    {
+      "id": "pub03",
+      "year": "2025",
+      "title": "Linking perceptions of ecosystem services, human well-being and sustainable development goals impacted by ecological restoration project: A case study from Dongting Lake area",
+      "title_short": "",
+      "authors": "<strong>Xia P.</strong>, Zheng H., Hu T., Xu Z., Peng J.",
+      "venue": "Applied Geography, 178, 103570",
+      "url": "",
+      "first_author": true,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": true
+    },
+    {
+      "id": "pub07",
+      "year": "2025",
+      "title": "Mapping flood regulation service flow: a beneficiary approach",
+      "title_short": "",
+      "authors": "Wang J., Peng J., <strong>Xia P.</strong>, Lin Y., Yu S., Xu Z.",
+      "venue": "Science Bulletin, 70(17), 2761–2765",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub08",
+      "year": "2025",
+      "title": "Social-ecological impacts on forest conservation and restoration in Pan-tropical Asia Karst",
+      "title_short": "",
+      "authors": "Hu T., <strong>Xia P.</strong>, Dong J., Yang Z., Shu J., Yu X., Peng J.",
+      "venue": "Environmental Impact Assessment Review, 114, 107962",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub09",
+      "year": "2025",
+      "title": "Integrating river transport processes and seasonal dynamics to assess watershed nitrogen export risk",
+      "title_short": "",
+      "authors": "Peng J., Lan T., Wang J., <strong>Xia P.</strong>, Zheng H.",
+      "venue": "Environment International, 195, 109194",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub10",
+      "year": "2024",
+      "title": "Social-ecological heterogeneity drove contrasting tree cover restoration in South China Karst",
+      "title_short": "",
+      "authors": "Hu T., Peng J., Qiu S., Dong J., Hu Y., Lin Y., <strong>Xia P.</strong>",
+      "venue": "Communications Earth & Environment, 5, 484",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub11",
+      "year": "2024",
+      "title": "Exploring watershed ecological risk bundles based on ecosystem services: A case study of Shanxi Province, China",
+      "title_short": "",
+      "authors": "Wang Y., Xu Z., Yu S., <strong>Xia P.</strong>, Zhang Z., Liu X., Wang Y., Peng J.",
+      "venue": "Environmental Research, 245, 118040",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub04",
+      "year": "2023",
+      "title": "Ecosystem services research: From golden era to next crossing",
+      "title_short": "",
+      "authors": "Peng J., <strong>Xia P.</strong>, Liu Y., Xu Z., Zheng H., Lan T., Yu S.",
+      "venue": "Transactions in Earth Environment and Sustainability, 1(1), 9–19",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub12",
+      "year": "2023",
+      "title": "Network analysis of water-related ecosystem services in search of solutions for sustainable catchment management: A case study in Sutlej-Beas River systems, India",
+      "title_short": "",
+      "authors": "Yu S., Peng J., <strong>Xia P.</strong>, Wang Q., Grabowski R.C., Azhoni A., Bala B., Shankar V., Meersmans J.",
+      "venue": "Ecosystem Services, 63, 101557",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub13",
+      "year": "2023",
+      "title": "A wavelet coherence approach to zoning supply-demand matching of carbon sequestration service",
+      "title_short": "",
+      "authors": "Zheng H., Xu Z., Hu T., Cheng X., <strong>Xia P.</strong>, Peng J.",
+      "venue": "Science of the Total Environment, 901, 165641",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub05",
+      "year": "2022",
+      "title": "The supply and demand of water purification service in an urbanizing basin on the Tibetan Plateau",
+      "title_short": "",
+      "authors": "<strong>Xia P.</strong>, Chen B., Gong B., Liu Z., He C., Wang Y.",
+      "venue": "Landscape Ecology, 37, 1937–1955",
+      "url": "",
+      "first_author": true,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub14",
+      "year": "2022",
+      "title": "Spatiotemporal patterns of light pollution on the Tibetan Plateau over three decades at multiple scales: Implications for conservation of natural habitats",
+      "title_short": "",
+      "authors": "Wang Y., Lv C., Pan X., Liu Z., <strong>Xia P.</strong>, Zhang C., Liu Z.",
+      "venue": "Remote Sensing, 14(22), 5755",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub15",
+      "year": "2022",
+      "title": "Distinguishing the impacts of land use change in intensity and type on ecosystem services trade-offs",
+      "title_short": "",
+      "authors": "Zheng H., Peng J., Qiu S., Xu Z., Zhou F., <strong>Xia P.</strong>, Adalibieke W.",
+      "venue": "Journal of Environmental Management, 316, 115206",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub16",
+      "year": "2020",
+      "title": "Quantifying urbanization levels on the Tibetan Plateau with high-resolution nighttime light data",
+      "title_short": "",
+      "authors": "Wang Y., Liu Z., He C., <strong>Xia P.</strong>, Liu Z., Liu H.",
+      "venue": "Geography and Sustainability, 1(3), 233–244",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    },
+    {
+      "id": "pub17",
+      "year": "2020",
+      "title": "The Regional Hydro-Ecological Simulation System for 30 Years: A Systematic Review",
+      "title_short": "",
+      "authors": "Chen B., Liu Z., He C., Peng H., <strong>Xia P.</strong>, Nie Y.",
+      "venue": "Water, 12(10), 2878",
+      "url": "",
+      "first_author": false,
+      "corresponding": false,
+      "status": "",
+      "cover": "",
+      "cited": null,
+      "abstract": "",
+      "featured": false
+    }
+  ],
+  "awards": [],
+  "cv": {
+    "file": "",
+    "updated": {
+      "en": "",
+      "zh": ""
+    }
+  }
+}
