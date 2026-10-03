@@ -9,5 +9,37 @@
     "zh": "参加过的学术会议、研讨会与学术访问。"
   },
   "updated": "2026-10-03",
-  "places": []
+  "places": [
+    {
+      "id": "pl-d8bb1cf8b3",
+      "highlight": false,
+      "icon": "",
+      "cc": "NO",
+      "country": {
+        "en": "Norway",
+        "zh": "挪威"
+      },
+      "city": {
+        "en": "Oslo",
+        "zh": "奥斯陆"
+      },
+      "lat": 59.9127,
+      "lon": 10.7461,
+      "when": "",
+      "academic": true,
+      "kind": "visit",
+      "event": {
+        "en": "",
+        "zh": ""
+      },
+      "talk": "",
+      "talk_type": "",
+      "note": {
+        "en": "",
+        "zh": ""
+      },
+      "sights": [],
+      "photos": []
+    }
+  ]
 }
