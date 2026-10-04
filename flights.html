@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610041926"></script>
-<script src="fleet3d.js?v=202610041926"></script>
+<script src="aviation.js?v=202610041940"></script>
+<script src="fleet3d.js?v=202610041940"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -146,7 +146,7 @@
     background: var(--title-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .hero .sub { color: var(--muted); margin-top: 0.3rem; max-width: 640px; }
   /* a blinking full stop after the title, like a terminal cursor */
-  .hero h1::after { content: '.'; color: var(--cyan); -webkit-text-fill-color: var(--cyan); animation: blink-dot 1.1s steps(1, end) infinite; }
+  .hero h1::after { content: ''; display: inline-block; width: 0.17em; height: 0.17em; margin-left: 0.1em; background: var(--cyan); animation: blink-dot 1s steps(1, end) infinite; }   /* a square full stop that blinks like a cursor */
   @keyframes blink-dot { 50% { opacity: 0; } }
   @media (prefers-reduced-motion: reduce) { .hero h1::after { animation: none; } }
   .filters { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
@@ -475,7 +475,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
-<script src="map-base.js?v=202610041926"></script>
+<script src="map-base.js?v=202610041940"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
