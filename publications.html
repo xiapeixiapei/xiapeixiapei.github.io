@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="site-fonts.js"></script>
   <script src="site-theme.js"></script>
+  <script src="site-lang.js"></script>
   <script src="site-search.js" defer></script>
   <title>Publications</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -351,31 +352,34 @@
 </footer>
 
 <script>
-  let currentLang = 'en';
+  let currentLang = window.SiteLang ? SiteLang.initial() : 'en';   // remembered across the site
   let CONTENT = null;
 
   const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const attr = s => String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
   const CITE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
 
+  // Manuscript status labels in Chinese
+  const STATUS_ZH = { 'Under Revision': '修改中', 'Under Review': '审稿中', 'In Revision': '修改中', 'In Review': '审稿中', 'Submitted': '已投稿', 'Accepted': '已接收', 'In Press': '已接收', 'In Prep': '撰写中', 'In Preparation': '撰写中', 'Preprint': '预印本', 'Forthcoming': '即将发表' };
+  const statusZh = s => STATUS_ZH[String(s || '').trim()] || s;
   function pubCard(p) {
     const isBook = p.year === 'book';
     const cover = p.cover
       ? `<img class="journal-cover" src="${attr(p.cover)}" alt="${attr(p.venue)}" loading="lazy">`
       : (p.status || (!p.url && !p.venue))
-        ? `<div class="cover-placeholder cover-inprep">📝<br><br>${esc(p.status === 'In Prep' ? 'In Preparation' : (p.status || 'In Preparation')).replace(' ', '<br>')}</div>`
+        ? `<div class="cover-placeholder cover-inprep">📝<br><br><span data-en="${attr(p.status === 'In Prep' ? 'In Preparation' : (p.status || 'In Preparation'))}" data-zh="${attr(statusZh(p.status === 'In Prep' ? 'In Preparation' : (p.status || 'In Preparation')))}">${esc(p.status === 'In Prep' ? 'In Preparation' : (p.status || 'In Preparation')).replace(' ', '<br>')}</span></div>`
         : `<div class="cover-placeholder cover-journal"><span>${esc((p.venue || '').split(',')[0])}</span></div>`;
     const title = p.url
       ? `<a href="${attr(p.url)}" target="_blank" onclick="event.stopPropagation()">${esc(p.title)}</a>`
       : esc(p.title);
     let badges = '';
-    if (p.first_author) badges += '<span class="pub-badge badge-first">First Author</span>';
-    if (p.corresponding) badges += '<span class="pub-badge badge-corr">Corresponding Author</span>';
-    if (p.status) badges += `<span class="pub-badge badge-review">${esc(p.status)}</span>`;
+    if (p.first_author) badges += '<span class="pub-badge badge-first" data-en="First Author" data-zh="第一作者">First Author</span>';
+    if (p.corresponding) badges += '<span class="pub-badge badge-corr" data-en="Corresponding Author" data-zh="通讯作者">Corresponding Author</span>';
+    if (p.status) badges += `<span class="pub-badge badge-review" data-en="${attr(p.status)}" data-zh="${attr(statusZh(p.status))}">${esc(p.status)}</span>`;
     if (p.url) badges += `<a class="pub-link-btn" href="${attr(p.url)}" target="_blank" data-en="Read" data-zh="阅读原文">Read</a>`;
-    if (p.cited !== null && p.cited !== undefined && p.cited !== '') badges += `<span class="cite-badge">${CITE_ICON} Cited: ${esc(p.cited)}</span>`;
+    if (p.cited !== null && p.cited !== undefined && p.cited !== '') badges += `<span class="cite-badge">${CITE_ICON} <span data-en="Cited:" data-zh="被引">Cited:</span> ${esc(p.cited)}</span>`;
     const hasAbstract = !isBook;
-    const abstract = hasAbstract ? `<div class="pub-abstract"><div class="abstract-label">Abstract</div><p>${esc(p.abstract || 'Coming soon.')}</p></div>` : '';
+    const abstract = hasAbstract ? `<div class="pub-abstract"><div class="abstract-label" data-en="Abstract" data-zh="摘要">Abstract</div><p>${p.abstract ? esc(p.abstract) : '<span data-en="Coming soon." data-zh="即将补充。">Coming soon.</span>'}</p></div>` : '';
     const hint = hasAbstract ? '<div class="expand-hint" data-en="Click to view abstract" data-zh="点击查看摘要">Click to view abstract</div>' : '';
     const style = isBook ? ' style="background: linear-gradient(135deg, var(--highlight) 0%, var(--highlight-2) 100%); border: 1px solid var(--subtle);"' : '';
     return `<div class="pub-card" data-id="${attr(p.id)}"${style}>${cover}
@@ -406,8 +410,7 @@
       <div class="stat"><span class="stat-num">${nFirst}</span><span class="stat-label" data-en="First Author" data-zh="篇第一作者">First Author</span></div>
       ${nBook ? `<div class="stat"><span class="stat-num">${nBook}</span><span class="stat-label" data-en="Book" data-zh="部著作">Book</span></div>` : ''}`;
 
-    document.getElementById('back-name').textContent = CONTENT.profile?.name_en || 'Home';
-    document.getElementById('footer-name').textContent = CONTENT.profile?.name_en || '';
+    for (const id of ['back-name', 'footer-name']) { const el = document.getElementById(id), en = CONTENT.profile?.name_en || (id === 'back-name' ? 'Home' : ''); el.setAttribute('data-en', en); el.setAttribute('data-zh', CONTENT.profile?.name_zh || (en === 'Home' ? '首页' : en)); el.textContent = en; }
     document.getElementById('footer-year').textContent = CONTENT.site?.footer_year || new Date().getFullYear();
 
     // Click to expand abstract
@@ -447,11 +450,11 @@
   }
 
   function applyLang(lang) {
-    currentLang = lang;
+    currentLang = lang; window.SiteLang?.set(lang);
     document.querySelectorAll('#lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
     document.body.classList.toggle('zh', lang === 'zh');
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+    [...document.querySelectorAll('[data-en][data-zh]')].reverse().forEach(el => {
       const badges = el.querySelectorAll('.pub-badge, .pub-link-btn');
       let preserved = '';
       badges.forEach(n => { preserved += ' ' + n.outerHTML; });
@@ -459,6 +462,7 @@
     });
     if (CONTENT) document.title = CONTENT.site.pub_page_title?.[lang] || 'Publications';
   }
+  if (currentLang !== 'en') applyLang(currentLang);   // static markup in the remembered language before content.json arrives
   document.getElementById('lang-toggle').addEventListener('click', (e) => {
     const btn = e.target.closest('.lang-btn');
     if (!btn || btn.dataset.lang === currentLang) return;

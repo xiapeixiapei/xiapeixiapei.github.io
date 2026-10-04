@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610042130"></script>
-<script src="fleet3d.js?v=202610042130"></script>
+<script src="aviation.js?v=202610042330"></script>
+<script src="fleet3d.js?v=202610042330"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -480,10 +480,6 @@
         <div class="seg" id="f-purpose" role="group" aria-label="Purpose"></div>
       </div>
       <div class="stats" id="stats"></div>
-      <section class="sec-records">
-        <h2 class="sec small fold-h"><span data-en="Records" data-zh="飞行纪录">Records</span></h2>
-        <div class="records" id="records"></div>
-      </section>
       <section class="sec-flags">
         <h2 class="sec small fold-h"><span data-en="Flags" data-zh="国旗墙">Flags</span><span class="kicker" id="flags-n"></span></h2>
         <div class="flags-head"><div class="seg" id="f-flags" role="group" aria-label="Sort"></div><span class="flags-hint" data-en="Badge: take-offs and landings in that country" data-zh="角标：在该国的起降次数">Badge: take-offs and landings in that country</span></div>
@@ -492,6 +488,10 @@
       <section class="sec-tails">
         <h2 class="sec small fold-h"><span data-en="Airlines" data-zh="航司墙">Airlines</span><span class="kicker" id="tails-n"></span></h2>
         <div class="tails" id="tails"></div>
+      </section>
+      <section class="sec-records">
+        <h2 class="sec small fold-h"><span data-en="Records" data-zh="飞行纪录">Records</span></h2>
+        <div class="records" id="records"></div>
       </section>
     </aside>
     <main class="col main">
@@ -535,7 +535,8 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
-<script src="map-base.js?v=202610042130"></script>
+<script src="site-lang.js"></script>
+<script src="map-base.js?v=202610042330"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -551,7 +552,7 @@ const b64u8 = a => { let s = ''; a.forEach(x => { s += String.fromCharCode(x); }
 const A = window.Aviation;
 const EARTH = 40075, MOON = 384400;
 
-let LANG = 'en', FLIGHTS = [], YEAR = 'all', PURPOSE = 'all', Q = '', SEL = null, MAP = null, LAYER = null, FIRST_FIT = true, FLAG_SORT = 'n', VIEWER = null, ALL_BOUNDS = null;
+let LANG = window.SiteLang ? SiteLang.initial() : 'en', FLIGHTS = [], YEAR = 'all', PURPOSE = 'all', Q = '', SEL = null, MAP = null, LAYER = null, FIRST_FIT = true, FLAG_SORT = 'n', VIEWER = null, ALL_BOUNDS = null;
 const L10N = {
   all: ['All', '全部'], allYears: ['All years', '全部年份'], personal: ['Personal', '私人'], academic: ['Academic', '学术'],
   flights: ['Flights', '航班'], distance: ['Distance', '飞行距离'], time: ['Time aloft', '飞行时长'], airports: ['Airports', '机场'],
@@ -1179,7 +1180,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('#detail
 
 // ── Language ──
 function applyLang(lang) {
-  LANG = lang;
+  LANG = lang; window.SiteLang?.set(lang);
   document.querySelectorAll('#lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
   document.querySelectorAll('[data-en][data-zh]').forEach(el => { el.textContent = el.getAttribute('data-' + lang); });
@@ -1255,6 +1256,7 @@ matchMedia('(max-width: 1099px)').addEventListener('change', e => { if (!e.match
 $('#fleet-ftog').onclick = () => $('.sec-fleet').classList.toggle('ff-open');
 addEventListener('resize', setBarH); setBarH();
 function showApp() { $('#gate').hidden = true; $('#app').hidden = false; $('#btn-lock').hidden = false; renderAll(); if (detailOf(location.hash)) renderDetail(); }
+if (LANG !== 'en') applyLang(LANG);   // open in the language remembered from the rest of the site
 (async () => { if (await tryStoredKey()) showApp(); else $('#pw').focus(); })();
 </script>
 <script>
