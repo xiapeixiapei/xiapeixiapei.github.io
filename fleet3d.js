@@ -137,10 +137,46 @@
       over: P => { P.title([{ t: 'vueling', col: '#6b6b6b', w: 700 }, { dot: '#ffcc00' }, { t: 'com', col: '#ffcc00', w: 700 }], 0.11, tv(0.05), 0.05, { f: ROUND }); } },
     QR: { name: 'Qatar Airways', zh: '卡塔尔航空', engine: '#5c0632', winglet: '#5c0632', tail: 'qr',
       over: P => { P.title('QATAR AIRWAYS', 0.12, tv(0.046), 0.046, { col: '#5c0632', w: 700 }); } },
+    TV: { name: 'Tibet Airlines', zh: '西藏航空', engine: W, winglet: '#c8102e', tail: 'tv',
+      under: P => {   // a four-colour "khata" ribbon under the windows, lifting into the tail
+        const s = u => Math.max(0, Math.min(1, (u - 0.1) / 0.9)), base = u => 0.258 - 0.2 * s(u) ** 2.4;
+        [['#1f6fc5', 0.016], ['#2aa14b', 0.012], ['#f5c400', 0.012], ['#d6262b', 0.016]].reduce((v, [col, th]) => { P.ribbon(u => base(u) + v, u => base(u) + v + th, 0.1, 1.01, col); return v + th; }, 0); },
+      over: P => { const a = P.title('西藏航空', 0.12, tv(0.05), 0.05, { col: '#c8102e', w: 600, cjk: 1, sp: 0.2 }); P.title('TIBET AIRLINES', a[1] + 0.03, tv(0.044), 0.044, { col: '#1b3f8f', w: 700 }); } },
+    JD: { name: 'Capital Airlines', zh: '首都航空', engine: W, winglet: '#c8102e', tail: 'jd',
+      under: P => { const s = u => Math.max(0, Math.min(1, (u - 0.2) / 0.8)), rb = u => 0.44 - 0.16 * s(u) ** 0.55, rt = u => 0.44 - 0.2 * s(u) ** 0.5 - 0.17 * s(u) ** 5;
+        P.ribbon(rb, u => rb(u) + 0.028 * s(u) ** 0.5, 0.2, 1, '#e0a526'); P.ribbon(rt, rb, 0.2, 1, '#c8102e'); },
+      over: P => { const a = P.title('首都航空', 0.12, tv(0.05), 0.05, { col: '#c8102e', w: 600, cjk: 1, sp: 0.2 }); P.title('CAPITAL AIRLINES', a[1] + 0.03, tv(0.044), 0.044, { col: '#c8102e', w: 700 }); } },
+    KY: { name: 'Kunming Airlines', zh: '昆明航空', engine: W, winglet: '#d4202a', tail: 'ky',
+      under: P => { P.band(0.226, 0.236, '#d4202a', 0.02, 0.92); P.band(0.24, 0.246, '#e8a317', 0.02, 0.92); },
+      over: P => { const a = P.title('昆明航空', 0.12, tv(0.05), 0.05, { col: '#d4202a', w: 600, cjk: 1, sp: 0.2 }); P.title('KUNMING AIRLINES', a[1] + 0.03, tv(0.044), 0.044, { col: '#d4202a', w: 700 }); } },
+    GJ: { name: 'Loong Air', zh: '长龙航空', engine: W, winglet: '#c8102e', tail: 'gj',
+      under: P => { const s = u => Math.max(0, Math.min(1, (u - 0.3) / 0.7)), vb = u => 0.5 - 0.24 * s(u) ** 0.8; P.ribbon(vb, () => 0.5, 0.3, 1.01, '#c8102e'); P.ribbon(u => vb(u) - 0.006, vb, 0.3, 1.01, '#f0b429'); },
+      over: P => { const a = P.title('长龙航空', 0.12, tv(0.05), 0.05, { col: '#c8102e', w: 600, cjk: 1, sp: 0.2 }); P.title('LOONG AIR', a[1] + 0.03, tv(0.046), 0.046, { col: '#c8102e', w: 800 }); } },
   };
-  const liveryOf = al => {
+  // Manufacturers' house liveries, shown for airlines that have no scheme above (the airline name stays on the card)
+  const HOUSE = {
+    Airbus: { name: 'Airbus house livery', zh: '空客厂家涂装', engine: W, lip: '#c9d0d8', winglet: '#0b2a6f', tail: 'airbus',
+      under: P => {   // navy belly fairing sweeping up towards the tail, a teal line above it
+        const vb = u => 0.33 - 0.03 * Math.max(0, (u - 0.5) / 0.5) ** 1.5 + 0.1 * Math.max(0, (0.1 - u) / 0.1) ** 1.5;
+        P.ribbon(vb, () => 0.5, -0.01, 1.01, '#0b2a6f'); P.ribbon(u => vb(u) - 0.008, vb, -0.01, 1.01, '#1fa9d6'); },
+      over: P => { P.title([{ t: 'AIRBUS', w: 900, sp: 0.1 }], 0.12, tv(0.06), 0.06, { col: '#0b2a6f' }); } },
+    Boeing: { name: 'Boeing house livery', zh: '波音厂家涂装', engine: W, lip: '#c9d0d8', winglet: '#0e3c9e', tail: 'boeing',
+      under: P => {   // the 2019 scheme: deep blue lower fuselage, a lighter blue stripe above it, rising towards the tail
+        const vb = u => 0.31 - 0.05 * Math.max(0, (u - 0.55) / 0.45) ** 1.4 + 0.12 * Math.max(0, (0.12 - u) / 0.12) ** 1.6;
+        P.ribbon(vb, () => 0.5, -0.01, 1.01, '#0e3c9e'); P.ribbon(u => vb(u) - 0.012, vb, -0.01, 1.01, '#2fa6df'); },
+      over: P => { P.title([{ t: 'BOEING', w: 900, sp: 0.08 }], 0.12, tv(0.07), 0.07, { col: '#0e3c9e' }); } },
+    COMAC: { name: 'COMAC house livery', zh: '中国商飞厂家涂装', engine: W, winglet: '#1a7fc1', tail: 'comac',
+      under: P => { P.band(0.228, 0.236, '#1a7fc1', 0.03, 0.95); P.band(0.24, 0.246, '#4cb84b', 0.03, 0.95); },
+      over: P => { const a = P.title('中国商飞', 0.12, tv(0.05), 0.05, { col: '#1a4f8c', w: 600, cjk: 1, sp: 0.2 }); P.title([{ t: 'COMAC', w: 900 }], a[1] + 0.03, tv(0.05), 0.05, { col: '#1a4f8c' }); } },
+    Embraer: { name: 'Embraer house livery', zh: '巴航工业厂家涂装', engine: W, winglet: '#0b2a6f', tail: 'embraer',
+      under: P => { P.band(0.232, 0.244, '#0b2a6f', 0.02, 0.96); },
+      over: P => { P.title([{ t: 'EMBRAER', w: 900, sp: 0.08 }], 0.12, tv(0.05), 0.05, { col: '#0b2a6f' }); } },
+  };
+  const liveryOf = (al, code) => {
     const k = String(al?.iata || '').toUpperCase();
     if (LIV[k]) return { key: k, ...LIV[k] };
+    const mfr = window.Aviation?.type(code)?.mfr;
+    if (HOUSE[mfr]) return { key: 'house:' + mfr, ...HOUSE[mfr] };
     return { key: 'gen:' + (al?.name || ''), name: al?.name || '', text: [String(al?.name || '').toUpperCase()].filter(Boolean), textColor: '#2b3440', engine: W, tail: 'gen', code: k };
   };
 
@@ -341,6 +377,23 @@
     sq(x, w, h, f) { bg(x, w, h, '#0b2a6f'); LOGO.egret(x, f.cx, f.cy, f.s * 0.9, '#f0ab00'); },
     ek(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.2, 0.36, 0.1, 0.26, '#00843d'); band(x, f, 0.52, 0.68, 0.42, 0.58, '#111111'); x.fillStyle = '#d0021b'; x.fillRect(0, 0, f.at(0.5).xl + (f.at(0.5).xt - f.at(0.5).xl) * 0.25, h); },
     qr(x, w, h, f) { bg(x, w, h, '#5c0632'); x.strokeStyle = '#e8e2e5'; x.lineWidth = f.s * 0.05; x.beginPath(); x.moveTo(f.cx - f.s * 0.2, f.cy + f.s * 0.4); x.quadraticCurveTo(f.cx - f.s * 0.1, f.cy - f.s * 0.3, f.cx + f.s * 0.4, f.cy - f.s * 0.45); x.moveTo(f.cx - f.s * 0.05, f.cy + f.s * 0.4); x.quadraticCurveTo(f.cx + f.s * 0.05, f.cy - f.s * 0.2, f.cx + f.s * 0.5, f.cy - f.s * 0.32); x.stroke(); },
+    airbus(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.52, 1.1, 0.1, 0.62, '#1fa9d6'); band(x, f, 0.66, 1.1, 0.24, 0.62, '#0b2a6f'); lab(x, f, 'AIRBUS', f.cx + f.s * 0.05, f.cy - f.s * 0.42, f.s * 0.3, '#0b2a6f', { w: 900 }); },
+    boeing(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.56, 1.1, 0.16, 0.7, '#0e3c9e'); band(x, f, 0.5, 0.56, 0.1, 0.16, '#2fa6df');
+      // the Boeing symbol: a ring with a swept wing through it
+      const cx = f.cx + f.s * 0.05, cy = f.cy - f.s * 0.42, r = f.s * 0.22; x.strokeStyle = '#0e3c9e'; x.lineWidth = r * 0.16; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.stroke();
+      x.save(); x.translate(cx, cy); if (f.m) x.scale(-1, 1); x.fillStyle = '#0e3c9e'; x.beginPath(); x.moveTo(-r * 1.3, r * 0.25); x.quadraticCurveTo(0, -r * 0.1, r * 1.35, -r * 0.9); x.quadraticCurveTo(r * 0.2, -r * 0.25, -r * 1.3, r * 0.4); x.fill(); x.restore(); },
+    comac(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.4, 0.62, 0.05, 0.3, '#1a7fc1'); band(x, f, 0.62, 0.7, 0.3, 0.38, '#4cb84b'); lab(x, f, 'COMAC', f.cx, f.cy + f.s * 0.45, f.s * 0.28, '#1a4f8c', { w: 900 }); },
+    embraer(x, w, h, f) { bg(x, w, h, '#0b2a6f'); lab(x, f, 'E', f.cx, f.cy, f.s * 0.9, '#ffffff', { w: 900, i: 1 }); },
+    tv(x, w, h, f) { bg(x, w, h, '#ffffff'); [['#1f6fc5', 0.3], ['#2aa14b', 0.42], ['#f5c400', 0.54], ['#d6262b', 0.66]].forEach(([c, a]) => band(x, f, a, a + 0.14, a - 0.3, a - 0.16, c)); },
+    jd(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.05, '#e0a526'); },
+    ky(x, w, h, f) { bg(x, w, h, '#d4202a'); x.strokeStyle = '#e8a317'; x.lineCap = 'round';   // peacock feathers: golden arcs fanning out
+      const m = f.m ? -1 : 1, ox = f.cx - m * f.s * 0.55, oy = f.cy + f.s * 0.75;
+      for (let i = 0; i < 4; i++) { x.lineWidth = f.s * (0.09 + 0.02 * i); x.beginPath(); x.arc(ox, oy, f.s * (0.45 + i * 0.26), m > 0 ? -Math.PI * 0.6 : -Math.PI * 0.9, m > 0 ? -Math.PI * 0.1 : -Math.PI * 0.4); x.stroke(); }
+      disc(x, ox + m * f.s * 0.12, oy - f.s * 0.2, f.s * 0.11, '#ffffff'); },
+    gj(x, w, h, f) { bg(x, w, h, '#c8102e'); x.fillStyle = '#ffffff';   // a white dragon: a tapering S-curve with a flick for the head
+      const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy); x.scale(m, 1);
+      taper(x, [[-f.s * 0.45, f.s * 0.45], [-f.s * 0.1, f.s * 0.5], [-f.s * 0.3, -f.s * 0.2], [f.s * 0.42, -f.s * 0.42]], f.s * 0.02, f.s * 0.14, f.s * 0.05);
+      taper(x, [[f.s * 0.42, -f.s * 0.42], [f.s * 0.52, -f.s * 0.5], [f.s * 0.45, -f.s * 0.18], [f.s * 0.3, -f.s * 0.12]], f.s * 0.05, f.s * 0.06, f.s * 0.01); x.restore(); },
     gen(x, w, h, f, liv) { bg(x, w, h, '#c9d1dc'); if (liv.code) lab(x, f, liv.code, f.cx, f.cy, f.s * 0.5, '#2b3440'); },
   };
   function paintTail(liv, mirror, F) {
@@ -429,9 +482,11 @@
   // Vertical surface section at height y: chord along x, thickness along z
   const vSec = (xle, y, z0, c, t) => airfoil(t).map(([a, b]) => new T.Vector3(xle + a * c, y, z0 + b * c));
 
-  function buildAircraft(code, airline) {
-    const d = DIMS[code] || DIMS[FALLBACK[window.Aviation?.type(code)?.body] || 'A320'];
-    const [L, S, D, sweep, o] = d, R = D / 2, liv = liveryOf(airline);
+  const dimsOf = code => DIMS[code] || DIMS[FALLBACK[window.Aviation?.type(code)?.body] || 'A320'];
+  // ref: metres that span the 2-unit frame, so models of different types are shown to scale (own size when omitted)
+  function buildAircraft(code, airline, ref) {
+    const d = dimsOf(code);
+    const [L, S, D, sweep, o] = d, R = D / 2, liv = liveryOf(airline, code);
     const grp = new T.Group();
     const mat = (color, extra = {}) => new T.MeshStandardMaterial({ color, roughness: 0.42, metalness: 0.12, side: T.DoubleSide, ...extra });
     const hf = o.deck2 ? 1.2 : 1.03;   // height factor of the cross-section
@@ -527,7 +582,7 @@
 
     // Normalise: centred, longest dimension = 2 units
     const box = new T.Box3().setFromObject(grp), size = box.getSize(new T.Vector3()), ctr = box.getCenter(new T.Vector3());
-    const sc = 2 / Math.max(size.x, size.z); grp.children.forEach(m => m.position.sub(ctr));
+    const sc = 2 / (ref || Math.max(size.x, size.z)); grp.children.forEach(m => m.position.sub(ctr));
     const wrap = new T.Group(); wrap.add(grp); wrap.scale.setScalar(sc);
     wrap.userData = { liv, code, L, S };
     return wrap;
@@ -556,6 +611,7 @@
   const RW = 560, RH = 350, YAW0 = -0.15;
   let R0 = null, SCENE = null, CAM = null, IO = null, HOVER = null;
   const CARDS = new Map(), QUEUE = [], SPRITES = new Map();
+  let REF = 0;   // metres across the hangar cards' frame (the biggest type shown), 0 = each model fills its card
   function ensureShared() {
     if (R0) return;
     R0 = new T.WebGLRenderer({ canvas: cnv(RW, RH), antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'low-power' });
@@ -571,13 +627,13 @@
   function work() {   // one snapshot per task, so a long hangar never blocks the page
     const cv = QUEUE.shift(); if (!cv) return;
     const st = CARDS.get(cv);
-    if (st && cv.isConnected && !st.done && HOVER?.cv !== cv) { const m = buildAircraft(st.type, st.airline); draw(cv, m, st.yaw, st.pitch); dispose(m); st.done = true; }
+    if (st && cv.isConnected && !st.done && HOVER?.cv !== cv) { const m = buildAircraft(st.type, st.airline, REF); draw(cv, m, st.yaw, st.pitch); dispose(m); st.done = true; }
     if (QUEUE.length) setTimeout(work, 16);
   }
   function startHover(cv) {
     const st = CARDS.get(cv); if (!st || reduced()) return;
     stopHover();
-    HOVER = { cv, st, model: buildAircraft(st.type, st.airline), last: performance.now(), raf: 0 };
+    HOVER = { cv, st, model: buildAircraft(st.type, st.airline, REF), last: performance.now(), raf: 0 };
     const tick = now => {
       if (!HOVER || HOVER.cv !== cv) return;
       if (!st.dragging) st.yaw += (now - HOVER.last) * 0.0009;
@@ -606,6 +662,9 @@
       });
     },
     has: code => !!DIMS[String(code || '').toUpperCase()],
+    dims: code => { const [L, S, D] = dimsOf(String(code || '').toUpperCase()); return { L, S, D }; },
+    // Hangar scale: the longest dimension (m) that should fill a card; models are drawn to scale against it
+    setRef(m) { m = m > 0 ? m * 1.02 : 0; if (m === REF) return; REF = m; for (const [cv, st] of CARDS) { if (!cv.isConnected) { CARDS.delete(cv); IO?.unobserve(cv); continue; } st.done = false; if (st.visible) enqueue(cv); } },
     liveryName: (iata, lang) => { const l = LIV[String(iata || '').toUpperCase()]; return l ? (lang === 'zh' ? l.zh : l.name) : ''; },
     // Register a hangar card canvas (16:10); it is drawn once when it scrolls into view
     card(cv, { type, airline }) {
@@ -649,12 +708,13 @@
       const sun = new T.DirectionalLight('#ffffff', 1.7); sun.position.set(-1.5, 4, 2.5); sc.add(sun);
       const cam = new T.PerspectiveCamera(24, 1, 0.1, 40); cam.position.set(0, 5.3, 4.9); cam.up.set(0, 0, -1); cam.lookAt(0, 0, 0);
       const model = buildAircraft(type, airline), pivot = new T.Group(); pivot.add(model); sc.add(pivot);
+      const dim = Math.max(dimsOf(type)[0], dimsOf(type)[1]), size = 0.5 + 0.5 * Math.min(1, dim / 77);   // a regional jet is about half a 777
       return {
         canvas: cv,
         draw(heading, alt = 1, now = performance.now()) {
           // nose is −x in model space; a yaw of π − heading points it along the screen direction (screen y = world +z)
           pivot.rotation.set(0, Math.PI - heading, 0);
-          pivot.scale.setScalar(0.62 + 0.38 * alt);
+          pivot.scale.setScalar(size * (0.62 + 0.38 * alt));
           model.traverse(o => { if (o.userData.spin) o.userData.spin.rotation.x = now * 0.02; });
           rnd.render(sc, cam);
         },
