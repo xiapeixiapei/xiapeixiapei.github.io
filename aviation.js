@@ -151,6 +151,30 @@
     return lang === 'zh' && ap.city_zh ? ap.city_zh : shortAirportName(ap);
   }
 
+  // ── Airlines flown: a short profile for the detail page [founded, base, alliance, note en, note zh] ──
+  const AIRLINE_INFO = {
+    CA: { founded: 1988, base: 'Beijing Capital (PEK)', alliance: 'Star Alliance', en: "China's flag carrier, headquartered in Beijing. Its red phoenix emblem is a stylised \"VIP\"; the fleet spans A320s to A350s and 777-300ERs.", zh: '中国的载旗航空公司，总部北京。尾翼红色凤凰由艺术化的 "VIP" 字母组成；机队从 A320 到 A350、777-300ER。' },
+    CZ: { founded: 1988, base: 'Guangzhou Baiyun (CAN)', alliance: '—', en: 'The largest airline in China by fleet size, based in Guangzhou. The kapok flower on the blue tail is the city flower of Guangzhou.', zh: '按机队规模是中国最大的航空公司，基地广州。蓝色尾翼上的木棉花是广州市花。' },
+    MU: { founded: 1988, base: 'Shanghai Hongqiao / Pudong', alliance: 'SkyTeam', en: 'Shanghai-based carrier; the 2014 livery shows a swallow inside a red wing, a nod to the old China Eastern mark.', zh: '总部上海；2014 年新涂装的尾翼是红色翅膀环绕深蓝燕子，延续了东航的燕子传统。' },
+    MF: { founded: 1984, base: 'Xiamen Gaoqi (XMN)', alliance: 'SkyTeam', en: 'Boeing-only fleet from Xiamen; the white egret on the blue tail is the city bird of Xiamen.', zh: '来自厦门的全波音机队航司；蓝色尾翼上的白鹭是厦门市鸟。' },
+    TV: { founded: 2010, base: 'Lhasa Gonggar (LXA) / Chengdu', alliance: '—', en: 'The first airline based on the Tibetan plateau; its ribbon livery is a khata, the Tibetan ceremonial scarf.', zh: '第一家以青藏高原为基地的航空公司，彩带涂装取自藏族的哈达。' },
+    JD: { founded: 1995, base: 'Beijing Daxing (PKX)', alliance: '—', en: 'Beijing Capital Airlines, an HNA Group carrier; the golden dragon on a red tail is the HNA family look.', zh: '北京首都航空，海航集团成员；红尾金龙是海航系的家族风格。' },
+    KY: { founded: 2007, base: 'Kunming Changshui (KMG)', alliance: '—', en: 'Yunnan-based 737 operator; the golden peacock feathers on the red tail refer to the Dai peacock dance of Yunnan.', zh: '云南的全 737 机队航司；红尾翼上的金色孔雀翎取自云南傣族孔雀舞。' },
+    GJ: { founded: 2011, base: 'Hangzhou Xiaoshan (HGH)', alliance: '—', en: 'Zhejiang Loong Airlines, from Hangzhou; the sky-blue livery carries a red Chinese dragon (loong).', zh: '浙江长龙航空，基地杭州；天蓝色涂装配红色中国龙。' },
+    '9C': { founded: 2004, base: 'Shanghai Hongqiao (SHA)', alliance: '—', en: "China's first low-cost airline; the three S of its green emblem stand for smile, service and security.", zh: '中国第一家低成本航空公司；绿色标志里的三个 S 代表微笑、服务、安全。' },
+    CN: { founded: 2007, base: 'Beijing Capital (PEK)', alliance: '—', en: 'Grand China Air, an HNA Group carrier; red rear fuselage and golden roc like its sister Hainan Airlines.', zh: '大新华航空，海航集团成员；红色后机身与金色大鹏与姊妹公司海南航空一脉相承。' },
+    NH: { founded: 1952, base: 'Tokyo Haneda / Narita', alliance: 'Star Alliance', en: "Japan's largest airline; the Triton-blue and Mohican-blue tail band dates from 1983.", zh: '日本最大的航空公司；尾翼上的两种蓝色（Triton 蓝与 Mohican 蓝）始于 1983 年。' },
+    QR: { founded: 1993, base: 'Doha Hamad (DOH)', alliance: 'oneworld', en: 'State carrier of Qatar; the oryx on the burgundy tail is the national animal.', zh: '卡塔尔国家航空公司；酒红色尾翼上的羚羊（阿拉伯大羚羊）是卡塔尔国兽。' },
+    BA: { founded: 1974, base: 'London Heathrow (LHR)', alliance: 'oneworld', en: "The UK's flag carrier; the waving Union Flag tail is the \"Chatham Dockyard\" design of 1997.", zh: '英国载旗航空公司；尾翼上飘动的米字旗是 1997 年的 "Chatham Dockyard" 设计。' },
+    KL: { founded: 1919, base: 'Amsterdam Schiphol (AMS)', alliance: 'SkyTeam', en: 'The oldest airline still operating under its original name; the crown logo and KLM blue have been in use since the 1960s.', zh: '世界上仍以原名运营的最古老航空公司；皇冠标志与 KLM 蓝自 1960 年代沿用至今。' },
+    TO: { founded: 2007, base: 'Paris Orly (ORY)', alliance: '—', en: 'Transavia France, the low-cost arm of Air France-KLM, with the green "t" tail.', zh: '法国泛航航空，法航-荷航集团的低成本子公司，绿色 "t" 尾翼。' },
+    HV: { founded: 1966, base: 'Amsterdam Schiphol (AMS)', alliance: '—', en: 'Transavia, KLM\'s Dutch low-cost sister, with the green "t" tail.', zh: '泛航航空，荷航的荷兰低成本姊妹公司，绿色 "t" 尾翼。' },
+    OS: { founded: 1957, base: 'Vienna (VIE)', alliance: 'Star Alliance', en: "Austria's flag carrier, part of the Lufthansa Group; the red-white-red tail is the Austrian flag with the chevron arrow.", zh: '奥地利载旗航空公司，汉莎集团成员；红白红尾翼是奥地利国旗加箭头标志。' },
+    FR: { founded: 1984, base: 'Dublin (DUB)', alliance: '—', en: "Europe's largest airline by passengers; the winged harp on the navy tail is an Irish symbol.", zh: '按客运量是欧洲最大的航空公司；深蓝尾翼上的带翼竖琴是爱尔兰的象征。' },
+    VY: { founded: 2004, base: 'Barcelona El Prat (BCN)', alliance: '—', en: 'Spanish low-cost carrier of the IAG group, with the grey dot pattern and yellow accent.', zh: 'IAG 集团旗下的西班牙低成本航空公司，灰色圆点图案配黄色点缀。' },
+  };
+  const airlineInfo = iata => AIRLINE_INFO[String(iata || '').toUpperCase()] || null;
+
   // ── Distance and time ──
   const R = 6371.0088, rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
   function distKm(a, b) {
@@ -218,5 +242,5 @@
       <path d="${wing}"/><path d="${tail}"/><path d="${fus}"/><g>${engines}</g></svg>`;
   }
 
-  window.Aviation = { TYPES, type, typeName, mfrName, airlineName, airportName, AIRLINE_ZH, countryName, statCC, distKm, estMinutes, greatCircle, silhouette };
+  window.Aviation = { TYPES, type, typeName, mfrName, airlineName, airportName, airlineInfo, AIRLINE_ZH, countryName, statCC, distKm, estMinutes, greatCircle, silhouette };
 })();

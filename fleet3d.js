@@ -73,16 +73,16 @@
     MU: { img: 'MU', name: 'China Eastern', zh: '中国东方航空', engine: W, winglet: '#f2f3f5', tail: 'mu',
       under: P => { P.below(0.42, '#d9dde2'); },
       over: P => { const a = P.title('中國東方航空', 0.1, tv(0.05), 0.05, { col: '#B70109', w: 500, cjk: 1, sp: 0.12 }); P.title('CHINA EASTERN', a[1] + 0.03, tv(0.048), 0.048, { col: '#1F2F7A', w: 800 }); } },
-    MF: { name: 'Xiamen Air', zh: '厦门航空', belly: '#1f7fcc', engine: W, winglet: '#1f86d0', tail: 'mf',
+    MF: { img: 'MF', overOnArt: true, name: 'Xiamen Air', zh: '厦门航空', belly: '#1f7fcc', engine: W, winglet: '#1f86d0', tail: 'mf',
       under: P => {   // blue lower fuselage rising into the tail, a light-blue line under the windows, darker belly with a white sweep
         const top = u => 0.3 - 0.06 * Math.min(1, u / 0.8) - 0.22 * Math.max(0, (u - 0.8) / 0.2) ** 1.4 + 0.12 * Math.max(0, (0.06 - u) / 0.06);
         P.ribbon(top, () => 0.5, -0.01, 1.01, '#1f7fcc');
         P.ribbon(u => Math.min(0.236, top(u) - 0.022), u => Math.min(0.243, top(u) - 0.015), 0.01, 1.01, '#62b8ea');
         const dk = u => 0.4 - 0.1 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.3) / 0.55)));
         P.ribbon(dk, () => 0.5, 0.3, 0.85, '#174f9e'); P.ribbon(u => dk(u) - 0.006, dk, 0.3, 0.85, '#ffffff'); },
-      over: P => { P.logo('mfegret', 0.125, tv(0.05), 0.09, '#1a5fae');
-        const a = P.title('厦门航空', 0.165, tv(0.046), 0.046, { col: '#1a5fae', w: 600, cjk: 1, sp: 0.15 });
-        P.title([{ t: 'XIAMEN', w: 800 }, { t: 'AIR', w: 400 }], a[1] + 0.015, tv(0.044), 0.044, { col: '#1a5fae' }); } },
+      over: P => { P.logo('mfegret', 0.155, 0.145, 0.07, '#1a5fae');
+        const a = P.title('厦门航空', 0.19, 0.145, 0.04, { col: '#1a5fae', w: 600, cjk: 1, sp: 0.12 });
+        P.title([{ t: 'XIAMEN', w: 800 }, { t: 'AIR', w: 400 }], a[1] + 0.012, 0.145, 0.038, { col: '#1a5fae' }); } },
     HU: { name: 'Hainan Airlines', zh: '海南航空', engine: W, winglet: '#c8102e', tail: 'hu',
       under: P => {   // red and gold ribbon from the tail, sweeping down under the windows to a point below the forward cabin
         const s = u => Math.max(0, Math.min(1, (u - 0.17) / 0.83));
@@ -93,7 +93,7 @@
     '3U': { name: 'Sichuan Airlines', zh: '四川航空', engine: W, winglet: '#c8102e', tail: '3u', text: ['四川航空', 'SICHUAN AIRLINES'], textColor: '#b5121b' },
     ZH: { name: 'Shenzhen Airlines', zh: '深圳航空', engine: W, winglet: '#c8102e', tail: 'zh', text: ['深圳航空', 'SHENZHEN AIRLINES'], textColor: '#b5121b' },
     FM: { name: 'Shanghai Airlines', zh: '上海航空', engine: W, winglet: '#c8102e', tail: 'fm', text: ['上海航空', 'SHANGHAI AIRLINES'], textColor: '#b5121b' },
-    KL: { img: 'KL', name: 'KLM', zh: '荷兰皇家航空', body: '#dfe2e6', belly: '#dfe2e6', engine: '#dfe2e6', lip: '#c9d0d8', winglet: '#00a1de', tail: 'klm',
+    KL: { img: 'KL', paintTail: true, name: 'KLM', zh: '荷兰皇家航空', body: '#dfe2e6', belly: '#dfe2e6', engine: '#dfe2e6', lip: '#c9d0d8', winglet: '#00a1de', tail: 'klm',
       under: P => { P.band(0, 0.262, '#00a1de'); P.band(0.262, 0.268, '#13286b', 0.004, 0.99); },
       over: P => { P.title([{ t: 'KLM', w: 900, above: { logo: 'klm', s: 0.9, dy: 1.15 } }, { gap: 0.25 }, { t: 'Royal Dutch Airlines', s: 0.42, w: 500, dy: 0.06 }], 0.09, tv(0.04) + 0.006, 0.04, { col: '#fff' }); } },
     AF: { name: 'Air France', zh: '法国航空', engine: W, winglet: '#002157', tail: 'af',
@@ -425,7 +425,9 @@
     '3u'(x, w, h, f) { bg(x, w, h, '#c8102e'); x.strokeStyle = '#f5c400'; x.lineWidth = f.s * 0.06; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(f.cx - f.s * 0.2 + i * f.s * 0.13, f.cy + f.s * 0.35 - i * f.s * 0.12, f.s * 0.45, Math.PI * 1.15, Math.PI * 1.75); x.stroke(); } },
     zh(x, w, h, f) { bg(x, w, h, '#c8102e'); disc(x, f.cx, f.cy, f.s * 0.4, '#f2b632'); LOGO.egret(x, f.cx, f.cy, f.s * 0.55, '#c8102e'); },
     fm(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.egret(x, f.cx, f.cy, f.s * 0.95, '#ffffff'); },
-    klm(x, w, h, f) { bg(x, w, h, '#e2e5e9'); LOGO.klm(x, f.cx, f.cy - f.s * 0.24, f.s * 0.42, '#00a1de'); lab(x, f, 'KLM', f.cx, f.cy + f.s * 0.1, f.s * 0.4, '#00a1de', { w: 900 }); },
+    klm(x, w, h, f) {   // white fin, crown over bold KLM in the upper half; the fuselage blue climbs a little onto the fin root
+      bg(x, w, h, '#f7f8fa'); band(x, f, 0.9, 1.1, 0.97, 1.1, '#00a1de');
+      const cx = f.cx + f.s * 0.05, cy = f.cy - f.s * 0.3; LOGO.klm(x, cx, cy - f.s * 0.3, f.s * 0.5, '#00a1de'); lab(x, f, 'KLM', cx, cy + f.s * 0.12, f.s * 0.5, '#00a1de', { w: 900 }); },
     af(x, w, h, f) { bg(x, w, h, '#ffffff'); [[0.36, 0.47], [0.52, 0.62], [0.67, 0.76]].forEach(([a, b]) => along(x, f, a, b, '#002157')); along(x, f, 0.81, 0.95, '#e2001a'); },
     lh(x, w, h, f) { bg(x, w, h, '#0a1d4f'); LOGO.crane(x, f.cx, f.cy + f.s * 0.04, f.s * 0.95, '#ffffff'); },
     ay(x, w, h, f) { bg(x, w, h, '#0b8bd0'); for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? '#2aa3e2' : '#0a6fb2'; x.fillRect(0, h * (0.42 + i * 0.07), w, h * 0.028); }
@@ -476,7 +478,7 @@
     gen(x, w, h, f, liv) { bg(x, w, h, '#c9d1dc'); if (liv.code) lab(x, f, liv.code, f.cx, f.cy, f.s * 0.5, '#2b3440'); },
   };
   function paintTail(liv, mirror, F) {
-    const h = 512, w = Math.min(1024, Math.round(h * F.aspect)), c = cnv(w, h), x = c.getContext('2d'), f = finFrame(F, w, h, mirror), art = artOf(liv);
+    const h = 512, w = Math.min(1024, Math.round(h * F.aspect)), c = cnv(w, h), x = c.getContext('2d'), f = finFrame(F, w, h, mirror), art = liv.paintTail ? null : artOf(liv);
     if (art) {   // each row of the fin: the matching row of the baked fin, stretched from the leading to the trailing edge (the starboard side is seen mirrored)
       const S = art.fin.naturalWidth / 2, SH = art.fin.naturalHeight; bg(x, w, h, '#e9ebee');
       for (let y = 0; y < h; y++) {
@@ -767,6 +769,17 @@
       });
     },
     has: code => !!DIMS[String(code || '').toUpperCase()],
+    // The airline's tail fin as a small picture (data URL), painted exactly as on the model, inside an A320-like fin outline
+    tailIcon(airline, px = 160) {
+      const liv = liveryOf(airline, 'A320'), key = 'tail|' + liv.key + '|' + px + '|' + (artOf(liv) ? 'art' : 'paint');
+      if (SPRITES.has(key)) return SPRITES.get(key);
+      const F = { aspect: 1.05, poly: [[0, 1], [0.62, 1], [1, 0], [0.74, 0]] }, src = paintTail(liv, false, F);
+      const c = cnv(Math.round(px * F.aspect), px), x = c.getContext('2d');
+      x.beginPath(); F.poly.forEach(([u, v], i) => x[i ? 'lineTo' : 'moveTo'](u * c.width, v * c.height)); x.closePath(); x.save(); x.clip();
+      x.drawImage(src, 0, 0, c.width, c.height); x.restore();
+      x.strokeStyle = 'rgba(0,0,0,0.18)'; x.lineWidth = 1.5; x.stroke();
+      const url = c.toDataURL('image/png'); SPRITES.set(key, url); return url;
+    },
     // Debug: the fuselage texture of a type in an airline's livery, as a data URL
     debugTexture(type, airline) { const code = String(type || '').toUpperCase(), [L, , D, , o] = dimsOf(code); return paintFuselage(liveryOf(airline, code), L, D / 2, o.deck2 ? 1.2 : 1.03).toDataURL('image/png'); },
     // Resolve once the baked livery texture for this airline is loaded (or at once when there is none)
