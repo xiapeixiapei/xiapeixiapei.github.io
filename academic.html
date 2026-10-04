@@ -658,6 +658,7 @@
 <div class="sg-pop" id="sg-pop" role="dialog" aria-live="polite" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
+<script src="map-base.js"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Config and crypto. The file travel/travel.enc is AES-256-GCM encrypted with a
@@ -1499,7 +1500,7 @@ function jumpToCountry(key) {
   el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1600);
 }
 
-// ── Map (Leaflet + Carto light tiles + world-atlas country shapes) ──
+// ── Map (Leaflet + OSM + Gaode-in-China base from map-base.js + world-atlas country shapes) ──
 function loadScriptOnce(src, test) {
   if (test()) return Promise.resolve();
   return new Promise((ok, fail) => { const el = document.createElement('script'); el.src = src; el.onload = ok; el.onerror = () => fail(new Error('Could not load ' + src)); document.head.appendChild(el); });
@@ -1509,12 +1510,13 @@ async function renderMap() {
   if (!MAP) {
     MAP = L.map('map', { worldCopyJump: true, minZoom: 2, maxZoom: 18, zoomControl: true, attributionControl: true });
     MAP.attributionControl.setPrefix('');
-    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' }).addTo(MAP);
+    // Base map: OSM worldwide, with Gaode clipped to China's outline on top (map-base.js)
+    MapBase.attach(MAP, LANG);
     MAP.setView([25, 15], 2);
     MAP.createPane('countries'); MAP.getPane('countries').style.zIndex = 350;
     syncTopBar(); setTimeout(() => MAP.invalidateSize(), 50);
   }
+  MapBase.setLang(LANG);
   addFollowControl(); MAP._followSync?.();
   if (FOLLOW_CUR) setTimeout(() => { const c = FOLLOW_CUR; FOLLOW_CUR = ''; markCurrent(c); }, 0);
   // City markers
