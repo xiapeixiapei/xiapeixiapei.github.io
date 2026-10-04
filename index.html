@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="site-fonts.js"></script>
   <script src="site-theme.js"></script>
+  <script src="site-lang.js"></script>
   <script src="site-search.js" defer></script>
   <title>Academic Homepage</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1139,7 +1140,7 @@
   // ───────────────────────────────────────────────────────────────
   // Content-driven rendering. All text comes from content.json.
   // ───────────────────────────────────────────────────────────────
-  let currentLang = 'en';
+  let currentLang = window.SiteLang ? SiteLang.initial() : 'en';   // remembered across the site
   let CONTENT = null;
 
   // Escape text for safe insertion as HTML
@@ -1229,11 +1230,14 @@
       <div class="carousel-dots"></div>`;
   }
 
+  // Manuscript status labels in Chinese
+  const STATUS_ZH = { 'Under Revision': '修改中', 'Under Review': '审稿中', 'In Revision': '修改中', 'In Review': '审稿中', 'Submitted': '已投稿', 'Accepted': '已接收', 'In Press': '已接收', 'In Prep': '撰写中', 'In Preparation': '撰写中', 'Preprint': '预印本', 'Forthcoming': '即将发表' };
+  const statusZh = s => STATUS_ZH[String(s || '').trim()] || s;
   function pubBadges(p) {
     let b = '';
-    if (p.first_author) b += ' <span class="pub-badge badge-first">First Author</span>';
-    if (p.corresponding) b += ' <span class="pub-badge badge-corr">Corresponding Author</span>';
-    if (p.status) b += ` <span class="pub-badge badge-review">${esc(p.status)}</span>`;
+    if (p.first_author) b += ' <span class="pub-badge badge-first" data-en="First Author" data-zh="第一作者">First Author</span>';
+    if (p.corresponding) b += ' <span class="pub-badge badge-corr" data-en="Corresponding Author" data-zh="通讯作者">Corresponding Author</span>';
+    if (p.status) b += ` <span class="pub-badge badge-review" data-en="${attr(p.status)}" data-zh="${attr(statusZh(p.status))}">${esc(p.status)}</span>`;
     return b;
   }
   function pubItem(p, style = '') {
@@ -1276,7 +1280,7 @@
   }
 
   function renderFooter(site) {
-    document.getElementById('footer').innerHTML = `<p>&copy; ${esc(site.footer_year)} ${esc(CONTENT.profile.name_en)} &nbsp;&middot;&nbsp; Hosted on <a href="https://pages.github.com/" target="_blank">GitHub Pages</a> &nbsp;&middot;&nbsp; <a href="admin.html" rel="nofollow" class="admin-link" title="Site Manager">Admin</a></p>`;
+    document.getElementById('footer').innerHTML = `<p>&copy; ${esc(site.footer_year)} <span data-en="${attr(CONTENT.profile.name_en)}" data-zh="${attr(CONTENT.profile.name_zh || CONTENT.profile.name_en)}">${esc(CONTENT.profile.name_en)}</span> &nbsp;&middot;&nbsp; <span data-en="Hosted on" data-zh="托管于">Hosted on</span> <a href="https://pages.github.com/" target="_blank">GitHub Pages</a> &nbsp;&middot;&nbsp; <a href="admin.html" rel="nofollow" class="admin-link" title="Site Manager" data-en="Admin" data-zh="管理">Admin</a></p>`;
   }
 
   // Inject Google Analytics if an ID is set in content.json (site.ga_id)
@@ -1307,11 +1311,11 @@
       el.setAttribute('data-tip', t); el.setAttribute('aria-label', t);
       if (el.hasAttribute('title')) el.setAttribute('title', t);
     });
-    currentLang = lang;
+    currentLang = lang; window.SiteLang?.set(lang);
     document.querySelectorAll('#lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
     document.body.classList.toggle('zh', lang === 'zh');
     document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
-    document.querySelectorAll('[data-en][data-zh]').forEach(el => {
+    [...document.querySelectorAll('[data-en][data-zh]')].reverse().forEach(el => {
       // Preserve child elements like .award-note and .pub-badge
       const notes = el.querySelectorAll('.award-note, .pub-badge');
       let preserved = '';
@@ -1320,6 +1324,7 @@
     });
     if (CONTENT) document.title = CONTENT.site.title[lang] || CONTENT.site.title.en;
   }
+  if (currentLang !== 'en') applyLang(currentLang);   // static markup in the remembered language before content.json arrives
   document.getElementById('lang-toggle').addEventListener('click', (e) => {
     const btn = e.target.closest('.lang-btn');
     if (!btn || btn.dataset.lang === currentLang) return;

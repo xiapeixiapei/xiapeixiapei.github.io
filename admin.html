@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
+<script src="site-lang.js"></script>
+<script src="admin-zh.js"></script>
 <script src="city-icons.js"></script>
 <script src="aviation.js"></script>
 <meta name="robots" content="noindex, nofollow">
@@ -358,6 +360,8 @@
   .btn.block { width: 100%; justify-content: center; padding: 0.65rem 1rem; }
   .login-msg { min-height: 1.3em; margin-top: 0.7rem; font-size: 16.25px; color: var(--err); text-align: center; }
   .login-msg:empty { min-height: 0; margin: 0; }
+  .login-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .login-foot .lang-toggle { height: 30px; }
   .login-alt { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1.1rem; padding-top: 0.9rem; border-top: 1px dashed var(--subtle); font-size: 15.625px; }
   .login-alt a { text-decoration: none; }
   .login-alt a:hover { text-decoration: underline; }
@@ -474,6 +478,9 @@
     .modal { padding: 1.1rem 1rem; }
     img, svg, canvas { max-width: 100%; }
   }
+  .lang-toggle { display: inline-flex; border: 1px solid var(--line, var(--subtle, #ccd)); border-radius: 100px; overflow: hidden; height: 36px; align-items: stretch; }
+  .lang-btn { border: none; background: none; padding: 0 0.75rem; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--muted); cursor: pointer; }
+  .lang-btn.active { background: var(--accent); color: var(--on-accent, #fff); }
 </style>
 </head>
 <body>
@@ -496,6 +503,7 @@
     <div class="topbar">
       <div class="status" id="status">Loading…</div>
       <div class="actions">
+        <div class="lang-toggle" id="lang-toggle" aria-label="Language"><button type="button" class="lang-btn" data-lang="en">EN</button><button type="button" class="lang-btn" data-lang="zh">中</button></div>
         <button type="button" class="theme-btn" data-theme-toggle aria-label="Switch to dark mode" style="width:36px;height:36px"></button>
         <button class="btn mobile-only" id="btn-signout">Sign out</button>
         <button class="btn" id="btn-reload">Reload from GitHub</button>
@@ -510,6 +518,22 @@
 <div id="modal-root"></div>
 
 <script>
+// ── Language (EN / 中) ── the interface is written in English and translated at runtime from admin-zh.js; the choice is shared
+// with the public pages through site-lang.js. Content you typed is never translated.
+let LANG = window.SiteLang ? SiteLang.initial() : 'en';
+const TITLE0 = document.title;
+const I18N = window.SiteLang && window.ADMIN_ZH ? SiteLang.translator(window.ADMIN_ZH, document.body) : null;
+function applyLang(lang) {
+  LANG = lang; window.SiteLang?.set(lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('.lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  document.title = lang === 'zh' ? TITLE0.replace('Site Manager', '站点管理') : TITLE0;
+  I18N?.apply(lang === 'zh');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', e => { const b = e.target.closest('.lang-toggle .lang-btn'); if (b && b.dataset.lang !== LANG) applyLang(b.dataset.lang); });   // the topbar toggle and the one on the sign-in card
+  applyLang(LANG);
+});
 // ─────────────────────────────────────────────────────────────────────────────
 // Configuration
 // ─────────────────────────────────────────────────────────────────────────────
@@ -903,7 +927,7 @@ function showLogin(opts = {}) {
     const frame = inner => `<div class="login"><div class="login-card">
       <div class="login-brand"><span class="login-name">${esc(SITE_NAME || 'Site Manager')}</span><span class="login-sub">Site Manager · ${esc(REPO.owner ? REPO.owner + '/' + REPO.name : location.host)}</span></div>
       ${inner}</div>
-      <p class="login-foot"><a href="index.html">← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}</p></div>`;
+      <p class="login-foot"><a href="index.html">← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}<span class="lang-toggle"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></span></p></div>`;
     root.innerHTML = frame('<p class="hint" style="text-align:center;padding:1.5rem 0">Checking sign-in…</p>');
     if (!REPO.owner || !REPO.name) await new Promise(ok => {
       root.innerHTML = frame(`<h2>Which repository?</h2>
@@ -1044,7 +1068,7 @@ async function ensureSignedIn() {
           <h2>Can't reach GitHub</h2><p class="hint" style="margin:0.4rem 0 1rem">${esc(e.message)}</p>
           <button class="btn primary block" id="lg-retry" type="button">Try again</button>
           <p class="hint" style="text-align:center;margin-top:0.8rem"><a href="#" id="lg-fresh">Sign in again instead</a></p></div>
-          <p class="login-foot"><a href="index.html">← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}</p></div>`;
+          <p class="login-foot"><a href="index.html">← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}<span class="lang-toggle"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></span></p></div>`;
         $('#lg-retry').onclick = () => { root.innerHTML = ''; ensureSignedIn().then(resolve); };
         $('#lg-fresh').onclick = ev => { ev.preventDefault(); root.innerHTML = ''; clearSession(); showLogin().then(resolve); };
       });

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
+<script src="site-lang.js"></script>
 <script src="city-icons.js"></script>
 <script src="site-search.js" defer></script>
 <meta name="robots" content="noindex, nofollow">
@@ -844,7 +845,7 @@ function nearestFeature(lon, lat, feats) {
   return bd < 1 ? best : null;   // within about 1 degree
 }
 
-let LANG = 'en', DATA = null, CKEY = null, MAP = null, MARKERS = new Map(), COUNTRY_LAYERS = new Map(), SIGHTS_LAYER = null;
+let LANG = window.SiteLang ? SiteLang.initial() : 'en', DATA = null, CKEY = null, MAP = null, MARKERS = new Map(), COUNTRY_LAYERS = new Map(), SIGHTS_LAYER = null;
 const URLS = new Map();   // encrypted file path -> object URL (decrypted)
 const $ = (s, r = document) => r.querySelector(s);
 const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -1722,7 +1723,7 @@ document.addEventListener('keydown', e => { if (!LB) return; if (e.key === 'Esca
 
 // ── Language ──
 function applyLang(lang) {
-  LANG = lang;
+  LANG = lang; window.SiteLang?.set(lang);
   document.querySelectorAll('#lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
   document.body.classList.toggle('zh', lang === 'zh');
   document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
@@ -1737,6 +1738,7 @@ function showApp() {
   $('#gate').hidden = true; $('#app').hidden = false; $('#btn-lock').hidden = !PRIVATE; $('#btn-flights').hidden = !PRIVATE;
   renderHeader(); renderList(); renderMap();
 }
+if (LANG !== 'en') applyLang(LANG);   // open in the language remembered from the rest of the site
 (async () => {
   if (!PRIVATE) {
     // Public page: load the plain JSON and render straight away
