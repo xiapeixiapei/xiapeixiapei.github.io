@@ -2959,7 +2959,7 @@ function viewFlights(v) {
   const typeOpts = (() => { const g = new Map(); Aviation.TYPES.forEach(t => { if (!g.has(t.mfr)) g.set(t.mfr, []); g.get(t.mfr).push(t); });
     return `<option value="">—</option>` + [...g].map(([m, ts]) => `<optgroup label="${esc(m)}">${ts.map(t => `<option value="${t.code}" ${F.ac === t.code ? 'selected' : ''}>${esc(t.name)} (${t.code})</option>`).join('')}</optgroup>`).join('') + `<option value="__other" ${!F.ac && F.acText ? 'selected' : ''}>Other (type it in)…</option>`; })();
   const nA = T.flights.filter(f => f.purpose === 'academic').length, totKm = T.flights.reduce((s, f) => s + Aviation.distKm(f.from, f.to), 0);
-  v.innerHTML = `<h2>Flights</h2><div class="tv-head tv-top"><span class="pill ok">${T.flights.length} flight${T.flights.length === 1 ? '' : 's'}</span><span class="pill acad">${nA} academic</span>${flDupGroups(T.flights).length ? '' : '<span class="pill muted" title="Same flight number, date and route">no duplicates</span>'}<span class="hint">${Math.round(totKm).toLocaleString('en')} km · shown on <a href="flights.html" target="_blank">flights.html</a> (travel password) · saved with <b>Publish changes</b>.</span></div>
+  v.innerHTML = `<h2>Flights</h2><div class="tv-head tv-top"><span class="pill ok">${T.flights.length} flight${T.flights.length === 1 ? '' : 's'}</span><span class="pill acad">${nA} academic</span>${flDupGroups(T.flights).length ? '' : '<span class="pill muted" title="Same flight number, date and route">no duplicates</span>'}<span class="hint">${Math.round(totKm).toLocaleString('en')} km · shown on <a href="flights.html" target="_blank">flights.html</a> (travel password) · saved with <b>Publish changes</b>.</span>${T.flights.length ? '<button class="btn sm" id="fl-export" title="Download every flight as a CSV (re-importable here)">⬇ Export CSV</button>' : ''}</div>
   <div class="card fl-form" id="fl-form"><h3>${FL_EDIT ? 'Edit flight' : 'Add a flight'}</h3>
     <div class="row fl-row">
       <div class="field"><label for="fl-date">Date</label><input id="fl-date" type="date" value="${esc(F.date)}"></div>
@@ -3062,6 +3062,14 @@ function viewFlights(v) {
   if ($('#fl-cancel')) $('#fl-cancel').onclick = reset;
   if ($('#fl-clear')) $('#fl-clear').onclick = reset;
 
+  if ($('#fl-export')) $('#fl-export').onclick = () => {
+    const cols = ['Date', 'Flight number', 'From', 'To', 'Airline', 'Aircraft', 'Registration', 'Seat', 'Class', 'Purpose', 'Duration', 'Dep time', 'Arr time', 'Fare', 'Currency', 'Aircraft age', 'Note'];
+    const q = v => { v = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const rows = [...T.flights].sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.no).localeCompare(String(b.no)))
+      .map(f => [f.date, f.no, f.from?.iata, f.to?.iata, f.airline?.name, f.ac || f.acText, f.reg, f.seat, f.cls, f.purpose, fmtDur(f.dur), f.dep, f.arr, f.fare, f.cur, f.age, f.note].map(q).join(','));
+    const blob = new Blob(['\ufeff' + [cols.join(',')].concat(rows).join('\r\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = `flights-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
   if ($('#fl-merge')) $('#fl-merge').onclick = () => { const n = mergeDuplicates(T.flights); if (!n) return; markDirty(); render(); toast(`Merged ${n} duplicate${n === 1 ? '' : 's'}. Publish to save.`); };
 
   // ── List ──
@@ -3138,7 +3146,8 @@ function importFlightsCsv(text, flights) {
     const fp = parseFare(g('fare') + ' ' + g('cur')), extra = { dep: parseTime(g('dep')) || '', arr: parseTime(g('arr')) || '', fare: fp.fare, cur: fp.fare ? (fp.cur || 'CNY') : '', age: g('age') ? parseAge(g('age'), date) : null };
     const old = byKey.get([date, flNo(no), a.iata, b.iata].join('|'));
     if (old) {   // already logged: the row's filled-in cells update it
-      const upd = { ...extra, reg: g('reg').toUpperCase(), seat: g('seat').toUpperCase(), dur: parseDur(g('dur')), note: g('note') };
+      const n0 = g('note'), note = !n0 || (old.note || '').includes(n0) ? old.note : (old.note ? old.note + ' · ' + n0 : n0);   // notes add up instead of replacing
+      const upd = { ...extra, reg: g('reg').toUpperCase(), seat: g('seat').toUpperCase(), dur: parseDur(g('dur')), note };
       let ch = false; Object.entries(upd).forEach(([k, v]) => { if (!flEmpty(v) && old[k] !== v) { old[k] = v; ch = true; } });
       ch ? updated++ : skipped++; return;
     }
