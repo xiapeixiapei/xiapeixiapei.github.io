@@ -83,7 +83,7 @@
       over: P => { P.logo('mfegret', 0.155, 0.145, 0.07, '#1a5fae');
         const a = P.title('厦门航空', 0.19, 0.145, 0.04, { col: '#1a5fae', w: 600, cjk: 1, sp: 0.12 });
         P.title([{ t: 'XIAMEN', w: 800 }, { t: 'AIR', w: 400 }], a[1] + 0.012, 0.145, 0.038, { col: '#1a5fae' }); } },
-    GT: { name: 'Air Guilin', zh: '桂林航空', engine: W, lip: '#c9d0d8', winglet: '#1a44b8', tail: 'gt',
+    GT: { img: 'GT', overOnArt: true, winOnArt: true, name: 'Air Guilin', zh: '桂林航空', engine: W, lip: '#c9d0d8', winglet: '#1a44b8', tail: 'gt',
       over: P => { const a = P.title([{ logo: 'guilin', col: '#1f4fc0' }], 0.14, tv(0.05), 0.05); const b = P.title('桂林航空', a[1] + 0.01, tv(0.05), 0.05, { col: '#1f4fc0', w: 700, cjk: 1, sp: 0.1 });
         P.title('Air Guilin', b[1] + 0.015, tv(0.052), 0.052, { col: '#1f4fc0', w: 700, i: 1 }); } },
     HU: { img: 'HU', name: 'Hainan Airlines', zh: '海南航空', engine: W, winglet: '#c8102e', tail: 'hu',
