@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610050010"></script>
-<script src="fleet3d.js?v=202610050010"></script>
+<script src="aviation.js?v=202610050040"></script>
+<script src="fleet3d.js?v=202610050040"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -196,6 +196,9 @@
   .leaflet-tooltip.fl-tip::before { display: none; }
   .fl-tip b { font-family: var(--f-mono); color: var(--cyan); }
   .fl-flow { stroke-dasharray: 3 9; animation: flow 1.6s linear infinite; }
+  .fl-arrow { background: none; border: 0; pointer-events: none; }
+  .fl-arrow span { display: block; width: 18px; height: 18px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)); }
+  .fl-arrow.dim { opacity: 0.22; }
   .fl-plane { background: none; border: 0; pointer-events: none; }
   .fl-plane img, .fl-plane-svg { display: block; width: 48px; height: 48px; filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.35)); }
   .fl-plane-svg { color: var(--cyan); padding: 12px; box-sizing: border-box; }
@@ -537,7 +540,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
 <script src="site-lang.js"></script>
-<script src="map-base.js?v=202610050010"></script>
+<script src="map-base.js?v=202610050040"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -687,12 +690,40 @@ function initMap() {
 const mapColors = () => document.documentElement.dataset.theme === 'light'
   ? { route: '#0a7ea6', acad: '#c77700', flow: '#ffffff', dot: '#0a7ea6', dotFill: '#ffffff', trail: ['#06b6d4', '#7c3aed', '#db2777'] }
   : { route: '#4de1ff', acad: '#ffb547', flow: '#ffffff', dot: '#4de1ff', dotFill: '#04111f', trail: ['#22d3ee', '#a78bfa', '#f472b6'] };
+// Direction arrows on a route: a chevron a little past the middle for a→b and, when flown the other way too, one a little
+// before the middle for b→a, so a two-way route reads "← →". Mercator is conformal, so the chevron's angle (from the
+// projected neighbours of its anchor point) holds at every zoom.
+const ARROW_SVG = (col, halo) => `<svg viewBox="0 0 18 18" width="18" height="18"><path d="M5 3l7 6-7 6" fill="none" stroke="${halo}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/><path d="M5 3l7 6-7 6" fill="none" stroke="${col}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const ARROWS = new WeakMap();   // map → { group, specs }: arrows are redrawn on zoom so short routes stay clean
+function routeArrows(map, path, ab, ba, col, on = true) {
+  let st = ARROWS.get(map);
+  if (!st) { st = { group: L.layerGroup().addTo(map), specs: [] }; ARROWS.set(map, st); map.on('zoomend', () => drawArrows(map)); }
+  st.specs.push({ path, ab, ba, col, on });
+  if (!st.raf) st.raf = requestAnimationFrame(() => { st.raf = 0; drawArrows(map); });
+}
+function resetArrows(map) { const st = ARROWS.get(map); if (st) { st.group.clearLayers(); st.specs = []; } }
+function drawArrows(map) {
+  const st = ARROWS.get(map); if (!st) return; st.group.clearLayers();
+  const P = L.Projection.SphericalMercator, halo = document.documentElement.dataset.theme === 'light' ? '#ffffff' : '#04111f', z = map.getZoom();
+  st.specs.forEach(({ path, ab, ba, col, on }) => {
+    const a = map.project(path[0], z), b = map.project(path[path.length - 1], z), px = a.distanceTo(b);
+    if (px < 90) return;   // too short on screen for an arrow to read
+    const put = (t, flip) => {
+      const i = Math.max(1, Math.min(path.length - 2, Math.round(t * (path.length - 1))));
+      const p0 = P.project(L.latLng(path[i - 1])), p1 = P.project(L.latLng(path[i + 1]));
+      const deg = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI + (flip ? 180 : 0);   // projected y grows southwards, like CSS
+      L.marker(path[i], { icon: L.divIcon({ className: 'fl-arrow' + (on ? '' : ' dim'), iconSize: [18, 18], iconAnchor: [9, 9], html: `<span style="transform:rotate(${deg.toFixed(1)}deg)">${ARROW_SVG(col, halo)}</span>` }), interactive: false, keyboard: false }).addTo(st.group);
+    };
+    const two = ab && ba && px >= 160;   // both directions only when there is room for two chevrons
+    if (two) { put(0.6, false); put(0.4, true); } else if (ab >= (ba || 0)) put(0.5, false); else put(0.5, true);
+  });
+}
 function renderMap(list) {
-  initMap(); LAYER.clearLayers();
+  initMap(); LAYER.clearLayers(); resetArrows(MAP);
   const C = mapColors(), routes = new Map(), aps = new Map();
   list.forEach(f => {
-    const k = routeKey(f), r = routes.get(k) || { k, a: f.from, b: f.to, n: 0, acad: 0 };
-    r.n++; if (f.purpose === 'academic') r.acad++; routes.set(k, r);
+    const k = routeKey(f), r = routes.get(k) || { k, a: f.from, b: f.to, n: 0, acad: 0, ab: 0, ba: 0 };
+    r.n++; if (f.purpose === 'academic') r.acad++; if (f.from.iata === r.a.iata) r.ab++; else r.ba++; routes.set(k, r);
     [f.from, f.to].forEach(ap => { const e = aps.get(ap.iata) || { ap, n: 0 }; e.n++; aps.set(ap.iata, e); });
   });
   const pts = [], animate = routes.size <= 60 && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -706,6 +737,7 @@ function renderMap(list) {
       .on('click', () => { SEL = SEL?.kind === 'route' && SEL.key === r.k ? null : { kind: 'route', key: r.k, label: `${r.a.iata} ⇄ ${r.b.iata}` }; renderAll(); if (SEL) flyRoute(list.filter(f => routeKey(f) === r.k).sort((x, y) => String(y.date).localeCompare(String(x.date)))[0]); });
     L.polyline(path, { color: col, weight: w, opacity: on ? 0.7 : 0.14, interactive: false }).addTo(LAYER);
     if (on && animate) L.polyline(path, { color: C.flow, weight: Math.max(1.2, w - 1), opacity: 0.85, className: 'fl-flow', interactive: false }).addTo(LAYER);
+    routeArrows(MAP, path, r.ab, r.ba, col, on);
     pts.push([r.a.lat, r.a.lon], [r.b.lat, r.b.lon]);
   });
   aps.forEach(({ ap, n }) => {
@@ -1162,9 +1194,9 @@ function renderDetail() {
     DMAP = L.map('dmap', { worldCopyJump: true, minZoom: 2, maxZoom: 12, zoomSnap: 0.25, attributionControl: true }).setView([35, 60], 2);
     MapBase.attach(DMAP, LANG);
     const C = mapColors(), seen = new Map(), pts = [];
-    rows.forEach(f => { const k = routeKey(f), r = seen.get(k) || { a: f.from, b: f.to, n: 0, acad: 0 }; r.n++; if (f.purpose === 'academic') r.acad++; seen.set(k, r); });
+    rows.forEach(f => { const k = routeKey(f), r = seen.get(k) || { a: f.from, b: f.to, n: 0, acad: 0, ab: 0, ba: 0 }; r.n++; if (f.purpose === 'academic') r.acad++; if (f.from.iata === r.a.iata) r.ab++; else r.ba++; seen.set(k, r); });
     seen.forEach(r => { const path = A.greatCircle(r.a, r.b), col = r.acad > r.n / 2 ? C.acad : C.route, w = Math.min(5, 1.6 + Math.log2(r.n + 1));
-      L.polyline(path, { color: col, weight: w + 8, opacity: 0.14, interactive: false }).addTo(DMAP); L.polyline(path, { color: col, weight: w, opacity: 0.8, interactive: false }).addTo(DMAP); pts.push([r.a.lat, r.a.lon], [r.b.lat, r.b.lon]); });
+      L.polyline(path, { color: col, weight: w + 8, opacity: 0.14, interactive: false }).addTo(DMAP); L.polyline(path, { color: col, weight: w, opacity: 0.8, interactive: false }).addTo(DMAP); routeArrows(DMAP, path, r.ab, r.ba, col); pts.push([r.a.lat, r.a.lon], [r.b.lat, r.b.lon]); });
     const aps = new Map(); rows.forEach(f => [f.from, f.to].forEach(a => aps.set(a.iata, a)));
     aps.forEach(a => L.circleMarker([a.lat, a.lon], { radius: 5, color: C.dot, weight: 2, fillColor: C.dotFill, fillOpacity: 1 }).addTo(DMAP).bindTooltip(`<b>${esc(a.iata)}</b> ${esc(apName(a))}`, { className: 'fl-tip', direction: 'top', offset: [0, -6] }).on('click', () => { location.hash = '#ap=' + a.iata; }));
     DMAP.fitBounds(L.latLngBounds(pts).pad(0.2), { maxZoom: 7, animate: false });
