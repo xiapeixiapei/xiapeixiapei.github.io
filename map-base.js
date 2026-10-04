@@ -16,8 +16,9 @@
  * If Gaode tiles keep failing, the clipped layer switches to a label-free, border-free terrain base
  * (Esri World Terrain Base), so OSM's borders are never shown inside China.
  *
- * The South China Sea inside the dash line (cn-scs.json) is added to the clip as a separate ring set, so
- * the whole sea also shows Gaode, and the dash line itself is drawn as a vector layer on top.
+ * China's seas (cn-scs.json: the South China Sea inside the dash line; the Bohai, Yellow Sea and East China
+ * Sea incl. the Diaoyu Islands) are added to the clip as separate ring sets, so these seas also show Gaode,
+ * and the South China Sea dash line itself is drawn as a vector layer on top.
  *
  * Usage: MapBase.attach(map, lang) once after creating the map; MapBase.setLang(lang) on language change.
  */
@@ -80,7 +81,7 @@
     const scs = fetch(SCS_URL).then(r => r.json()).catch(() => null);
     return loadOutline.p ||= Promise.all([fetch(OUTLINE_URL).then(r => r.json()), scs]).then(([d, s]) => {
       SCS = s;
-      const sets = s ? [d.polygons, s.sea] : [d.polygons];
+      const sets = s ? [d.polygons, ...s.sea.map(r => [r])] : [d.polygons];   // each sea ring is its own set
       OUTLINE = {
         wgs: sets.map(polys => prepRings(polys, (la, lo) => [la, lo])),
         gcj: sets.map(polys => prepRings(polys, wgs84ToGcj02))
