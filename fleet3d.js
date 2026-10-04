@@ -60,15 +60,19 @@
   const ROUND = '"Arial Rounded MT Bold", "Varela Round", Nunito, "Helvetica Neue", Arial, sans-serif';
   const tv = hv => 0.184 - hv * 0.56;   // v of a title of cap height hv, sitting just above the windows
   const LIV = {
-    CA: { name: 'Air China', zh: '中国国际航空', belly: '#a6aaaf', engine: '#a6aaaf', lip: '#d5d9de', winglet: '#f2f3f5', tail: 'ca',
-      under: P => { P.below(0.236, '#a6aaaf'); P.band(0.218, 0.222, '#2b5aa8', 0.008, 0.975); P.band(0.226, 0.235, '#1b3a7a', 0.008, 0.975); },
-      over: P => { const a = P.title([{ flag: 'cn' }], 0.14, tv(0.038), 0.04); const b = P.title([{ t: 'AIR CHINA', i: 1, w: 900 }], a[1] + 0.012, tv(0.04), 0.04, { col: '#111' });
-        P.title('中国国际航空公司', b[1] + 0.045, tv(0.062), 0.062, { col: '#111', f: KAI, w: 400, cjk: 1, sp: 0.4 }); } },
+    CA: { name: 'Air China', zh: '中国国际航空', belly: '#a6aaaf', engine: '#b9bdc2', lip: '#d5d9de', winglet: '#f2f3f5', tail: 'ca',
+      under: P => {   // grey belly; a single blue cheatline right under the windows, lifting into the fin root at the tail
+        P.below(0.34, '#a6aaaf');
+        const s = u => Math.max(0, (u - 0.8) / 0.2), top = u => 0.229 - 0.17 * s(u) ** 1.6, th = u => 0.02 + 0.03 * s(u) ** 1.5;
+        P.ribbon(top, u => top(u) + th(u), -0.01, 1.01, '#0E4B7D'); },
+      over: P => { const a = P.title([{ flag: 'cn' }], 0.12, tv(0.036), 0.036); P.title([{ t: 'AIR CHINA', i: 1, w: 900 }], a[1] + 0.012, tv(0.046), 0.046, { col: '#111' });
+        P.title('中国国际航空公司', 0.4, tv(0.06), 0.06, { col: '#111', f: KAI, w: 400, cjk: 1, sp: 0.45 }); } },
     CZ: { name: 'China Southern', zh: '中国南方航空', engine: W, winglet: '#1793d1', tail: 'cz',
       under: P => { P.band(0.219, 0.225, '#1aa0dc', 0.012, 0.955); P.band(0.229, 0.241, '#0c2c66', 0.012, 0.955); P.band(0.246, 0.25, '#1aa0dc', 0.012, 0.955); },
       over: P => { const a = P.title('中国南方航空', 0.12, tv(0.05), 0.05, { col: '#14284b', w: 500, cjk: 1, sp: 0.3 }); P.title('CHINA SOUTHERN', a[1] + 0.03, tv(0.048), 0.048, { col: '#14284b', f: OPTIMA, w: 600 }); } },
     MU: { name: 'China Eastern', zh: '中国东方航空', engine: W, winglet: '#f2f3f5', tail: 'mu',
-      over: P => { const a = P.title('中國東方航空', 0.11, tv(0.048), 0.048, { col: '#e3171f', w: 500, cjk: 1, sp: 0.15 }); P.title('CHINA EASTERN', a[1] + 0.035, tv(0.046), 0.046, { col: '#2a2774', w: 800 }); } },
+      under: P => { P.below(0.42, '#d9dde2'); },
+      over: P => { const a = P.title('中國東方航空', 0.1, tv(0.05), 0.05, { col: '#B70109', w: 500, cjk: 1, sp: 0.12 }); P.title('CHINA EASTERN', a[1] + 0.03, tv(0.048), 0.048, { col: '#1F2F7A', w: 800 }); } },
     MF: { name: 'Xiamen Air', zh: '厦门航空', belly: '#1f7fcc', engine: W, winglet: '#1f86d0', tail: 'mf',
       under: P => {   // blue lower fuselage rising into the tail, a light-blue line under the windows, darker belly with a white sweep
         const top = u => 0.3 - 0.06 * Math.min(1, u / 0.8) - 0.22 * Math.max(0, (u - 0.8) / 0.2) ** 1.4 + 0.12 * Math.max(0, (0.06 - u) / 0.06);
@@ -99,9 +103,12 @@
       over: P => { P.title('Lufthansa', 0.11, tv(0.078), 0.078, { col: '#0a1d4f', w: 800 }); } },
     AY: { name: 'Finnair', zh: '芬兰航空', engine: W, winglet: '#0b86c8', tail: 'ay',
       over: P => { P.title([{ t: 'FINNAIR', i: 1, w: 900, sp: 0.06 }], 0.09, tv(0.066), 0.066, { col: '#0b86c8' }); } },
-    BA: { name: 'British Airways', zh: '英国航空', belly: '#1b2b5a', engine: '#d9dee5', winglet: '#1b2b5a', tail: 'ba',
-      under: P => { P.below(0.258, '#1b2b5a'); P.band(0.248, 0.254, '#c8102e', 0.03, 0.96); },
-      over: P => { P.title('BRITISH AIRWAYS', 0.12, tv(0.044), 0.044, { col: '#1b2b5a', w: 700 }); } },
+    BA: { name: 'British Airways', zh: '英国航空', belly: '#001F4E', engine: W, lip: '#c9d0d8', winglet: '#D52B1E', tail: 'ba',
+      under: P => {   // midnight blue over the whole lower half, thinning towards the nose; the red-and-blue Speedmarque ribbon under the cockpit
+        const vb = u => 0.262 + 0.14 * Math.max(0, (0.14 - u) / 0.14) ** 1.4; P.ribbon(vb, () => 0.5, -0.01, 1.01, '#001F4E');
+        P.ribbon(u => 0.2 - 0.06 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.04) / 0.11))), u => 0.2 - 0.06 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.04) / 0.11))) + 0.012 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.04) / 0.11))), 0.04, 0.15, '#D52B1E');
+        P.ribbon(u => 0.212 - 0.03 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.07) / 0.09))), u => 0.212 - 0.03 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.07) / 0.09))) + 0.008 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.07) / 0.09))), 0.07, 0.16, '#001F4E'); },
+      over: P => { P.title('BRITISH AIRWAYS', 0.17, tv(0.046), 0.046, { col: '#001F4E', f: SERIF, w: 600, sp: 0.02 }); } },
     CX: { name: 'Cathay Pacific', zh: '国泰航空', engine: '#d9dee5', winglet: '#005d63', tail: 'cx',
       under: P => { P.band(0.226, 0.236, '#8fa8a5', 0.02, 0.9); },
       over: P => { const a = P.title('CATHAY PACIFIC', 0.12, tv(0.044), 0.044, { col: '#005d63', w: 700 }); P.title('國泰航空', a[1] + 0.03, tv(0.046), 0.046, { col: '#005d63', cjk: 1, w: 500 }); } },
@@ -135,23 +142,30 @@
       under: P => {   // the tail's grey dots spill onto the rear fuselage
         for (let u = 0.8; u < 1; u += 0.012) for (let v = 0.01; v < 0.2; v += 0.022) { const t = (u - 0.8) / 0.2 - v * 2.2; if (t > 0.05) P.dot(u, v, Math.min(0.009, 0.0095 * t), '#8f8f8f'); } },
       over: P => { P.title([{ t: 'vueling', col: '#6b6b6b', w: 700 }, { dot: '#ffcc00' }, { t: 'com', col: '#ffcc00', w: 700 }], 0.11, tv(0.05), 0.05, { f: ROUND }); } },
-    QR: { name: 'Qatar Airways', zh: '卡塔尔航空', engine: '#5c0632', winglet: '#5c0632', tail: 'qr',
-      over: P => { P.title('QATAR AIRWAYS', 0.12, tv(0.046), 0.046, { col: '#5c0632', w: 700 }); } },
-    TV: { name: 'Tibet Airlines', zh: '西藏航空', engine: W, winglet: '#c8102e', tail: 'tv',
-      under: P => {   // a four-colour "khata" ribbon under the windows, lifting into the tail
-        const s = u => Math.max(0, Math.min(1, (u - 0.1) / 0.9)), base = u => 0.258 - 0.2 * s(u) ** 2.4;
-        [['#1f6fc5', 0.016], ['#2aa14b', 0.012], ['#f5c400', 0.012], ['#d6262b', 0.016]].reduce((v, [col, th]) => { P.ribbon(u => base(u) + v, u => base(u) + v + th, 0.1, 1.01, col); return v + th; }, 0); },
-      over: P => { const a = P.title('西藏航空', 0.12, tv(0.05), 0.05, { col: '#c8102e', w: 600, cjk: 1, sp: 0.2 }); P.title('TIBET AIRLINES', a[1] + 0.03, tv(0.044), 0.044, { col: '#1b3f8f', w: 700 }); } },
-    JD: { name: 'Capital Airlines', zh: '首都航空', engine: W, winglet: '#c8102e', tail: 'jd',
-      under: P => { const s = u => Math.max(0, Math.min(1, (u - 0.2) / 0.8)), rb = u => 0.44 - 0.16 * s(u) ** 0.55, rt = u => 0.44 - 0.2 * s(u) ** 0.5 - 0.17 * s(u) ** 5;
-        P.ribbon(rb, u => rb(u) + 0.028 * s(u) ** 0.5, 0.2, 1, '#e0a526'); P.ribbon(rt, rb, 0.2, 1, '#c8102e'); },
-      over: P => { const a = P.title('首都航空', 0.12, tv(0.05), 0.05, { col: '#c8102e', w: 600, cjk: 1, sp: 0.2 }); P.title('CAPITAL AIRLINES', a[1] + 0.03, tv(0.044), 0.044, { col: '#c8102e', w: 700 }); } },
-    KY: { name: 'Kunming Airlines', zh: '昆明航空', engine: W, winglet: '#d4202a', tail: 'ky',
-      under: P => { P.band(0.226, 0.236, '#d4202a', 0.02, 0.92); P.band(0.24, 0.246, '#e8a317', 0.02, 0.92); },
-      over: P => { const a = P.title('昆明航空', 0.12, tv(0.05), 0.05, { col: '#d4202a', w: 600, cjk: 1, sp: 0.2 }); P.title('KUNMING AIRLINES', a[1] + 0.03, tv(0.044), 0.044, { col: '#d4202a', w: 700 }); } },
-    GJ: { name: 'Loong Air', zh: '长龙航空', engine: W, winglet: '#c8102e', tail: 'gj',
-      under: P => { const s = u => Math.max(0, Math.min(1, (u - 0.3) / 0.7)), vb = u => 0.5 - 0.24 * s(u) ** 0.8; P.ribbon(vb, () => 0.5, 0.3, 1.01, '#c8102e'); P.ribbon(u => vb(u) - 0.006, vb, 0.3, 1.01, '#f0b429'); },
-      over: P => { const a = P.title('长龙航空', 0.12, tv(0.05), 0.05, { col: '#c8102e', w: 600, cjk: 1, sp: 0.2 }); P.title('LOONG AIR', a[1] + 0.03, tv(0.046), 0.046, { col: '#c8102e', w: 800 }); } },
+    QR: { name: 'Qatar Airways', zh: '卡塔尔航空', body: '#b6b8ba', belly: '#f1f1f2', engine: '#5c0632', lip: '#c9c9cb', winglet: '#5c0632', tail: 'qr',
+      under: P => { P.below(0.33, '#f1f1f2'); },
+      over: P => { P.title('QATAR', 0.1, tv(0.1), 0.1, { col: '#5C0631', f: SERIF, w: 700, sp: 0.04 }); } },
+    TV: { name: 'Tibet Airlines', zh: '西藏航空', engine: W, winglet: '#1E5AA8', tail: 'tv',
+      under: P => {   // the wavy four-colour "khata" ribbon: starts under the forward door, dips under the wing, climbs to the tail and thins out
+        P.below(0.42, '#d9dde2');
+        const s = u => Math.max(0, Math.min(1, (u - 0.08) / 0.9)), base = u => 0.265 + 0.07 * Math.sin(Math.PI * s(u)) - 0.12 * s(u) ** 3, sc = u => 1 - 0.7 * s(u) ** 3;
+        [['#BB000D', 0.016], ['#D5BC00', 0.013], ['#2aa14b', 0.013], ['#1E5AA8', 0.017]].reduce((v, [col, th]) => { P.ribbon(u => base(u) + v * sc(u), u => base(u) + (v + th) * sc(u), 0.08, 1.01, col); return v + th; }, 0); },
+      over: P => { const a = P.title('西藏航空', 0.12, tv(0.046), 0.046, { col: '#111', w: 600, cjk: 1, sp: 0.1 }); P.title('TIBET AIRLINES', a[1] + 0.025, tv(0.042), 0.042, { col: '#111', w: 700 }); } },
+    JD: { name: 'Capital Airlines', zh: '首都航空', belly: '#d9dde2', engine: W, winglet: '#E41720', tail: 'jd',
+      under: P => {   // the rear fuselage is red, the red climbing from the belly to the crown ahead of the fin, with a golden brush sweep along its edge
+        P.below(0.44, '#d9dde2');
+        const s = u => Math.max(0, Math.min(1, (u - 0.66) / 0.24)), edge = u => 0.5 - 0.5 * s(u) ** 1.3;
+        P.ribbon(edge, () => 0.5, 0.66, 1.01, '#E41720');
+        P.ribbon(u => edge(u) - 0.035 * Math.sin(Math.PI * Math.min(1, s(u) * 1.1)), u => edge(u) + 0.004, 0.66, 1.01, '#F5CC00'); },
+      over: P => { const a = P.title([{ logo: 'jdswoosh', col: '#E41720', s: 1.2, dy: -0.05 }, { gap: 0.1 }, { t: '首都航空', w: 600, cjk: 1 }], 0.11, tv(0.05), 0.05, { col: '#E41720', cjk: 1 }); P.title('Capital Airlines', a[1] + 0.03, tv(0.05), 0.05, { col: '#111', i: 1, w: 700 }); } },
+    KY: { name: 'Kunming Airlines', zh: '昆明航空', belly: '#d9dde2', engine: W, winglet: '#C8102E', tail: 'ky',
+      under: P => { P.below(0.42, '#d9dde2'); },
+      over: P => { const a = P.title('昆明航空', 0.12, tv(0.05), 0.05, { col: '#C8102E', w: 600, cjk: 1, sp: 0.15 }); P.title('Kunming Airlines', a[1] + 0.03, tv(0.046), 0.046, { col: '#C8102E', w: 700 }); } },
+    GJ: { name: 'Loong Air', zh: '长龙航空', belly: '#8EC8EB', engine: W, lip: '#c9d0d8', winglet: '#8EC8EB', tail: 'gj',
+      under: P => {   // sky-blue lower fuselage that rises over the rear fuselage into the blue fin
+        const s = u => Math.max(0, Math.min(1, (u - 0.55) / 0.45)), vb = u => 0.31 - 0.3 * s(u) ** 1.5 + 0.1 * Math.max(0, (0.1 - u) / 0.1) ** 1.5;
+        P.ribbon(vb, () => 0.5, -0.01, 1.01, '#8EC8EB'); },
+      over: P => { const a = P.title('长龙航空', 0.12, tv(0.05), 0.05, { col: '#1b3f8f', w: 600, cjk: 1, sp: 0.2 }); P.title('LOONG AIR', a[1] + 0.03, tv(0.046), 0.046, { col: '#1b3f8f', w: 800 }); } },
   };
   // Manufacturers' house liveries, shown for airlines that have no scheme above (the airline name stays on the card)
   const HOUSE = {
@@ -269,11 +283,42 @@
       taper(x, [[-0.3, -0.13], [-0.3, -0.22], [-0.24, -0.29], [-0.17, -0.27]], 0.06, 0.035, 0.01); // crest
       x.restore();
     },
-    swallow(x, cx, cy, s) {   // China Eastern: red swallow chevron with a blue crescent
+    swallow(x, cx, cy, s) {   // China Eastern: a red wing curving round from the top, a dark-blue swallow (forked tail) tucked inside
       x.save(); x.translate(cx, cy); x.scale(s, s);
-      x.fillStyle = '#e8261f'; x.beginPath(); x.moveTo(0.46, -0.38); x.lineTo(-0.02, -0.38); x.lineTo(-0.4, 0.02); x.quadraticCurveTo(-0.2, 0.26, 0.04, 0.42);
-      x.lineTo(0.2, 0.42); x.quadraticCurveTo(-0.02, 0.22, -0.14, 0.04); x.lineTo(0.12, -0.2); x.lineTo(0.46, -0.2); x.closePath(); x.fill();
-      x.fillStyle = '#1d2a80'; x.beginPath(); x.moveTo(0.48, -0.02); x.quadraticCurveTo(0.12, 0.05, -0.1, 0.07); x.quadraticCurveTo(0.1, 0.27, 0.48, 0.15); x.closePath(); x.fill();
+      x.fillStyle = '#B70109'; x.beginPath(); x.moveTo(0.5, -0.46); x.bezierCurveTo(0.1, -0.5, -0.36, -0.36, -0.46, -0.02); x.bezierCurveTo(-0.5, 0.2, -0.3, 0.42, 0.02, 0.46);
+      x.bezierCurveTo(-0.14, 0.3, -0.24, 0.1, -0.18, -0.06); x.bezierCurveTo(-0.1, -0.26, 0.14, -0.36, 0.5, -0.3); x.closePath(); x.fill();
+      x.fillStyle = '#1F2F7A'; x.beginPath(); x.moveTo(0.5, -0.1); x.bezierCurveTo(0.14, -0.14, -0.06, 0.0, -0.1, 0.1); x.bezierCurveTo(0.02, 0.1, 0.16, 0.14, 0.26, 0.24);
+      x.lineTo(0.5, 0.3); x.lineTo(0.3, 0.08); x.closePath(); x.fill();
+      x.restore();
+    },
+    oryx(x, cx, cy, s, col = '#c9c9cb') {   // Qatar Airways: oryx head facing the nose, two long horns sweeping back
+      x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = col;
+      taper(x, [[-0.46, 0.5], [-0.3, 0.26], [-0.14, 0.06], [0.04, -0.02]], 0.03, 0.2, 0.22);   // muzzle to brow
+      taper(x, [[0.04, -0.02], [0.2, -0.02], [0.3, 0.08], [0.3, 0.22]], 0.22, 0.14, 0.02);     // back of the head
+      taper(x, [[0.26, 0.1], [0.4, 0.04], [0.44, 0.12], [0.36, 0.2]], 0.06, 0.05, 0.0);        // ear
+      taper(x, [[-0.02, -0.08], [-0.02, -0.46], [0.18, -0.74], [0.5, -0.98]], 0.06, 0.035, 0.0);   // long horns sweeping back
+      taper(x, [[0.1, -0.06], [0.14, -0.42], [0.34, -0.68], [0.64, -0.9]], 0.06, 0.035, 0.0);
+      x.restore();
+    },
+    jdswoosh(x, cx, cy, s, col = '#E41720') {   // Capital Airlines: a brush swoosh with a flick, nose-left
+      x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = col;
+      taper(x, [[-0.5, 0.3], [-0.2, 0.34], [0.2, 0.1], [0.5, -0.3]], 0.0, 0.16, 0.0);
+      taper(x, [[-0.4, -0.1], [-0.1, -0.02], [0.2, -0.12], [0.44, -0.4]], 0.0, 0.1, 0.0); x.restore();
+    },
+    dragon(x, cx, cy, s, col = '#E0312B') {   // Loong Air: a stylised dragon, head to the nose, body curling back in an S with a flicked tail
+      x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = col;
+      taper(x, [[-0.5, -0.06], [-0.3, -0.26], [0.0, -0.26], [0.12, 0.0]], 0.02, 0.17, 0.14);    // head and neck
+      taper(x, [[0.12, 0.0], [0.24, 0.3], [0.0, 0.46], [-0.26, 0.3]], 0.14, 0.12, 0.08);      // body loop
+      taper(x, [[-0.26, 0.3], [-0.42, 0.18], [-0.1, 0.02], [0.5, 0.42]], 0.08, 0.06, 0.0);     // tail
+      taper(x, [[-0.4, -0.16], [-0.46, -0.3], [-0.36, -0.42], [-0.22, -0.46]], 0.05, 0.03, 0.0);   // horn
+      taper(x, [[-0.5, -0.06], [-0.62, -0.02], [-0.68, 0.06], [-0.7, 0.14]], 0.05, 0.03, 0.0);   // whisker
+      x.restore();
+    },
+    peacock(x, cx, cy, s, col = '#F2B705') {   // Kunming Airlines: golden peacock feathers fanning up and back, each ending in an eye
+      x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = col;
+      [[-0.1, 0.5, -0.5, 0.1, -0.2, -0.4, 0.1, -0.52], [-0.1, 0.5, -0.2, 0.2, 0.2, -0.25, 0.42, -0.44], [-0.1, 0.5, 0.1, 0.3, 0.42, 0.0, 0.6, -0.2]].forEach(q => {
+        taper(x, [[q[0], q[1]], [q[2], q[3]], [q[4], q[5]], [q[6], q[7]]], 0.02, 0.09, 0.05);
+        x.beginPath(); x.arc(q[6], q[7], 0.085, 0, Math.PI * 2); x.fill(); x.fillStyle = '#C8102E'; x.beginPath(); x.arc(q[6], q[7], 0.04, 0, Math.PI * 2); x.fill(); x.fillStyle = col; });
       x.restore();
     },
     egret(x, cx, cy, s, col = '#fff') {   // egret in flight: raised wings, S-shaped neck reaching forward (to the left)
@@ -347,9 +392,9 @@
   }
   const disc = (x, cx, cy, r, col) => { x.fillStyle = col; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill(); };
   const TAILS = {
-    ca(x, w, h, f) { bg(x, w, h, '#f4f5f7'); LOGO.phoenix(x, f.cx - f.s * 0.02, f.cy - f.s * 0.06, f.s * 1.08); },
+    ca(x, w, h, f) { bg(x, w, h, '#f4f5f7'); LOGO.phoenix(x, f.cx, f.cy - f.s * 0.1, f.s * 1.1); },
     cz(x, w, h, f) { bg(x, w, h, '#1793d1'); LOGO.kapok(x, f.cx, f.cy - f.s * 0.04, f.s * 0.95); },
-    mu(x, w, h, f) { bg(x, w, h, '#fbfbfc'); LOGO.swallow(x, f.cx, f.cy, f.s * 1.05); },
+    mu(x, w, h, f) { bg(x, w, h, '#fbfbfc'); along(x, f, 0.62, 0.635, '#1F2F7A'); LOGO.swallow(x, f.cx, f.cy - f.s * 0.05, f.s * 1.1); },
     mf(x, w, h, f) { bg(x, w, h, '#1f86d0'); LOGO.mfegret(x, f.cx, f.cy + f.s * 0.05, f.s * 1.3); },
     hu(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.1, '#e0a526'); },
     '3u'(x, w, h, f) { bg(x, w, h, '#c8102e'); x.strokeStyle = '#f5c400'; x.lineWidth = f.s * 0.06; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(f.cx - f.s * 0.2 + i * f.s * 0.13, f.cy + f.s * 0.35 - i * f.s * 0.12, f.s * 0.45, Math.PI * 1.15, Math.PI * 1.75); x.stroke(); } },
@@ -372,11 +417,18 @@
       for (let y = d / 2; y < h; y += d) for (let i = -2; i < 30; i++) { const xx = i * d + (Math.round(y / d) % 2) * d / 2, a = f.at(y / h), t = (xx - a.xl) / Math.max(1, a.xt - a.xl) * 0.7 + (1 - y / h) * 0.6 - 0.25;
         if (t > 0.05) disc(x, xx, y, Math.min(0.46, 0.46 * t) * d, '#8f8f8f'); }
       disc(x, f.cx, f.cy, d * 0.4, '#ffcc00'); },
-    ba(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.18, 0.38, 0.05, 0.25, '#c8102e'); band(x, f, 0.44, 0.66, 0.3, 0.5, '#1b2b5a'); band(x, f, 0.7, 0.78, 0.56, 0.64, '#c8102e'); },
+    ba(x, w, h, f) {   // Chatham Dockyard flag: red and midnight-blue ribbons waving across a white fin
+      bg(x, w, h, '#ffffff');
+      const wave = (a0, a1, th, col) => { x.fillStyle = col; x.beginPath(); const n = 24;
+        for (let i = 0; i <= n; i++) { const t = i / n, a = a0 + (a1 - a0) * t + 0.03 * Math.sin(t * Math.PI * 2), p = f.at(Math.max(0, Math.min(1, a))); x[i ? 'lineTo' : 'moveTo'](p.xl - 6 + (p.xt - p.xl + 12) * t, a * f.h); }
+        for (let i = n; i >= 0; i--) { const t = i / n, a = a0 + (a1 - a0) * t + 0.03 * Math.sin(t * Math.PI * 2) + th, p = f.at(Math.max(0, Math.min(1, a))); x.lineTo(p.xl - 6 + (p.xt - p.xl + 12) * t, a * f.h); } x.fill(); };
+      wave(0.62, 0.1, 0.16, '#D52B1E'); wave(0.8, 0.28, 0.02, '#ffffff'); wave(0.82, 0.3, 0.22, '#001F4E'); wave(1.06, 0.54, 0.04, '#ffffff'); wave(1.1, 0.58, 0.3, '#D52B1E'); },
     cx(x, w, h, f) { bg(x, w, h, '#005d63'); x.strokeStyle = '#fff'; x.lineWidth = f.s * 0.12; x.lineCap = 'round'; x.beginPath(); x.moveTo(f.cx - f.s * 0.4, f.cy + f.s * 0.25); x.quadraticCurveTo(f.cx, f.cy - f.s * 0.55, f.cx + f.s * 0.45, f.cy - f.s * 0.1); x.stroke(); },
     sq(x, w, h, f) { bg(x, w, h, '#0b2a6f'); LOGO.egret(x, f.cx, f.cy, f.s * 0.9, '#f0ab00'); },
     ek(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.2, 0.36, 0.1, 0.26, '#00843d'); band(x, f, 0.52, 0.68, 0.42, 0.58, '#111111'); x.fillStyle = '#d0021b'; x.fillRect(0, 0, f.at(0.5).xl + (f.at(0.5).xt - f.at(0.5).xl) * 0.25, h); },
-    qr(x, w, h, f) { bg(x, w, h, '#5c0632'); x.strokeStyle = '#e8e2e5'; x.lineWidth = f.s * 0.05; x.beginPath(); x.moveTo(f.cx - f.s * 0.2, f.cy + f.s * 0.4); x.quadraticCurveTo(f.cx - f.s * 0.1, f.cy - f.s * 0.3, f.cx + f.s * 0.4, f.cy - f.s * 0.45); x.moveTo(f.cx - f.s * 0.05, f.cy + f.s * 0.4); x.quadraticCurveTo(f.cx + f.s * 0.05, f.cy - f.s * 0.2, f.cx + f.s * 0.5, f.cy - f.s * 0.32); x.stroke(); },
+    qr(x, w, h, f) { bg(x, w, h, '#5C0631'); x.fillStyle = '#b6b8ba';   // thin grey stripes low on the fin, the oryx above them
+      for (let i = 0; i < 6; i++) { const a = 0.6 + i * 0.07; band(x, f, a, a + 0.012, a - 0.1, a - 0.088, '#9d9fa2'); }
+      LOGO.oryx(x, f.cx + f.s * 0.02, f.cy - f.s * 0.02, f.s * 1.0); },
     airbus(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.52, 1.1, 0.1, 0.62, '#1fa9d6'); band(x, f, 0.66, 1.1, 0.24, 0.62, '#0b2a6f'); lab(x, f, 'AIRBUS', f.cx + f.s * 0.05, f.cy - f.s * 0.42, f.s * 0.3, '#0b2a6f', { w: 900 }); },
     boeing(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.56, 1.1, 0.16, 0.7, '#0e3c9e'); band(x, f, 0.5, 0.56, 0.1, 0.16, '#2fa6df');
       // the Boeing symbol: a ring with a swept wing through it
@@ -384,16 +436,16 @@
       x.save(); x.translate(cx, cy); if (f.m) x.scale(-1, 1); x.fillStyle = '#0e3c9e'; x.beginPath(); x.moveTo(-r * 1.3, r * 0.25); x.quadraticCurveTo(0, -r * 0.1, r * 1.35, -r * 0.9); x.quadraticCurveTo(r * 0.2, -r * 0.25, -r * 1.3, r * 0.4); x.fill(); x.restore(); },
     comac(x, w, h, f) { bg(x, w, h, '#ffffff'); band(x, f, 0.4, 0.62, 0.05, 0.3, '#1a7fc1'); band(x, f, 0.62, 0.7, 0.3, 0.38, '#4cb84b'); lab(x, f, 'COMAC', f.cx, f.cy + f.s * 0.45, f.s * 0.28, '#1a4f8c', { w: 900 }); },
     embraer(x, w, h, f) { bg(x, w, h, '#0b2a6f'); lab(x, f, 'E', f.cx, f.cy, f.s * 0.9, '#ffffff', { w: 900, i: 1 }); },
-    tv(x, w, h, f) { bg(x, w, h, '#ffffff'); [['#1f6fc5', 0.3], ['#2aa14b', 0.42], ['#f5c400', 0.54], ['#d6262b', 0.66]].forEach(([c, a]) => band(x, f, a, a + 0.14, a - 0.3, a - 0.16, c)); },
-    jd(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.05, '#e0a526'); },
-    ky(x, w, h, f) { bg(x, w, h, '#d4202a'); x.strokeStyle = '#e8a317'; x.lineCap = 'round';   // peacock feathers: golden arcs fanning out
-      const m = f.m ? -1 : 1, ox = f.cx - m * f.s * 0.55, oy = f.cy + f.s * 0.75;
-      for (let i = 0; i < 4; i++) { x.lineWidth = f.s * (0.09 + 0.02 * i); x.beginPath(); x.arc(ox, oy, f.s * (0.45 + i * 0.26), m > 0 ? -Math.PI * 0.6 : -Math.PI * 0.9, m > 0 ? -Math.PI * 0.1 : -Math.PI * 0.4); x.stroke(); }
-      disc(x, ox + m * f.s * 0.12, oy - f.s * 0.2, f.s * 0.11, '#ffffff'); },
-    gj(x, w, h, f) { bg(x, w, h, '#c8102e'); x.fillStyle = '#ffffff';   // a white dragon: a tapering S-curve with a flick for the head
-      const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy); x.scale(m, 1);
-      taper(x, [[-f.s * 0.45, f.s * 0.45], [-f.s * 0.1, f.s * 0.5], [-f.s * 0.3, -f.s * 0.2], [f.s * 0.42, -f.s * 0.42]], f.s * 0.02, f.s * 0.14, f.s * 0.05);
-      taper(x, [[f.s * 0.42, -f.s * 0.42], [f.s * 0.52, -f.s * 0.5], [f.s * 0.45, -f.s * 0.18], [f.s * 0.3, -f.s * 0.12]], f.s * 0.05, f.s * 0.06, f.s * 0.01); x.restore(); },
+    tv(x, w, h, f) {   // two curved multicolour ribbons forming a stylised wing
+      bg(x, w, h, '#ffffff'); const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy); x.scale(m * f.s, f.s);
+      const sw = (p, w0) => [['#BB000D', 0], ['#D5BC00', 1], ['#2aa14b', 2], ['#1E5AA8', 3]].forEach(([c, i]) => { x.fillStyle = c; taper(x, p.map(([a, b]) => [a, b + i * w0 * 1.05]), w0 * 0.3, w0, w0 * 0.2); });
+      sw([[-0.6, 0.15], [-0.25, -0.4], [0.25, -0.6], [0.7, -0.66]], 0.06); sw([[-0.4, 0.7], [0.0, 0.3], [0.35, 0.12], [0.75, 0.1]], 0.06); x.restore(); },
+    jd(x, w, h, f) { bg(x, w, h, '#E41720'); along(x, f, 0.0, 0.06, '#F5CC00');   // golden sweep up the leading edge, yellow dragon streak on the fin
+      const m = f.m ? -1 : 1; x.save(); x.translate(f.cx + f.s * 0.05, f.cy - f.s * 0.05); x.scale(m * f.s, f.s); x.fillStyle = '#F5CC00';
+      taper(x, [[-0.5, -0.2], [-0.2, -0.46], [0.2, -0.4], [0.5, -0.1]], 0.02, 0.14, 0.02); taper(x, [[-0.4, 0.1], [-0.1, -0.12], [0.25, -0.1], [0.52, 0.2]], 0.02, 0.1, 0.0);
+      taper(x, [[-0.3, 0.36], [0.0, 0.16], [0.3, 0.2], [0.5, 0.42]], 0.02, 0.07, 0.0); taper(x, [[-0.52, -0.22], [-0.6, -0.34], [-0.52, -0.46], [-0.4, -0.5]], 0.06, 0.04, 0.0); x.restore(); },
+    ky(x, w, h, f) { bg(x, w, h, '#C8102E'); const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy + f.s * 0.05); x.scale(m, 1); LOGO.peacock(x, 0, 0, f.s * 1.15); x.restore(); },
+    gj(x, w, h, f) { bg(x, w, h, '#8EC8EB'); const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy - f.s * 0.05); x.scale(m, 1); LOGO.dragon(x, 0, 0, f.s * 1.05); x.restore(); },
     gen(x, w, h, f, liv) { bg(x, w, h, '#c9d1dc'); if (liv.code) lab(x, f, liv.code, f.cx, f.cy, f.s * 0.5, '#2b3440'); },
   };
   function paintTail(liv, mirror, F) {
