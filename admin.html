@@ -202,6 +202,12 @@
   .fl-item .fl-d { color: var(--muted); }
   .fl-item .fl-m { color: var(--muted); font-size: 15px; min-width: 0; }
   .fl-item .fl-t { display: flex; gap: 0.3rem; }
+  .fl-dups { border: 1px solid var(--warn); background: var(--warn-bg); }
+  .fl-dups h3 { color: var(--warn); }
+  .fl-dups ul { margin: 0.3rem 0 0.7rem 1.2rem; font-size: 15px; }
+  .fl-fare { display: flex; gap: 0.4rem; }
+  .fl-fare input { flex: 1; min-width: 0; }
+  .fl-fare select { width: 6.2rem; flex: none; }
   .tv-flag { font-size: 1.4rem; line-height: 1; }
   .flag-img { height: 16px; width: 24px; aspect-ratio: 3 / 2; object-fit: cover; object-position: center; border-radius: 2px; box-shadow: 0 0 0 1px rgba(13, 27, 42, 0.12); vertical-align: -3px; flex: none; background: var(--subtle); }
   .tv-acad { background: var(--highlight); border-radius: 8px; padding: 0.9rem 1rem 0.1rem; margin-bottom: 0.9rem; }
@@ -2881,7 +2887,40 @@ function loadAvdb() {
 }
 const FL_CLASSES = [['', '—'], ['economy', 'Economy'], ['premium', 'Premium economy'], ['business', 'Business'], ['first', 'First']];
 let FL_FILTER = '', FL_EDIT = null, FL_FORM = null;
-const flBlank = () => ({ date: new Date().toISOString().slice(0, 10), no: '', airline: null, from: null, to: null, ac: '', acText: '', reg: '', seat: '', cls: '', purpose: 'personal', dur: null, note: '' });
+const flBlank = () => ({ date: new Date().toISOString().slice(0, 10), no: '', airline: null, from: null, to: null, ac: '', acText: '', reg: '', seat: '', cls: '', purpose: 'personal', dur: null, note: '',
+  fare: null, cur: FP.data?.flights?.findLast?.(f => f.cur)?.cur || 'CNY', age: null, dep: '', arr: '' });
+const FL_CURS = ['CNY', 'EUR', 'USD', 'GBP', 'JPY', 'HKD', 'KRW', 'SGD', 'CHF', 'SEK', 'NOK', 'DKK', 'AUD', 'CAD', 'TWD', 'THB', 'AED', 'TRY'];
+// Optional extras: actual take-off / landing times (local, "06:10+1" for the next day), fare, aircraft age in years
+const parseTime = s => {
+  const m = /(\d{1,2}):?(\d{2})(?::\d{2})?\s*(\+\s*\d)?\s*$/.exec(String(s || '').trim()); if (!m || +m[1] > 23 || +m[2] > 59) return null;
+  return `${m[1].padStart(2, '0')}:${m[2]}${m[3] ? m[3].replace(/\s/g, '') : ''}`;
+};
+function parseFare(s) {   // "¥3,280", "€ 320.50", "320 EUR" → { fare, cur }
+  s = String(s || '').trim(); if (!s) return { fare: null, cur: '' };
+  const code = (/\b([A-Z]{3})\b/.exec(s.toUpperCase()) || [])[1], sym = /[¥￥]|RMB/i.test(s) ? 'CNY' : /€/.test(s) ? 'EUR' : /£/.test(s) ? 'GBP' : /\$/.test(s) ? 'USD' : '';
+  let n = s.replace(/[^\d.,]/g, '');
+  if (n.includes(',') && n.includes('.')) n = n.replace(/,/g, ''); else if (/,\d{1,2}$/.test(n)) n = n.replace(',', '.'); else n = n.replace(/,/g, '');
+  const v = parseFloat(n); return { fare: v > 0 ? Math.round(v * 100) / 100 : null, cur: code === 'RMB' ? 'CNY' : (code || sym) };
+}
+const parseAge = (s, date) => { const v = parseFloat(String(s || '').replace(',', '.')); if (!(v >= 0)) return null; return v > 1900 ? Math.max(0, (+String(date).slice(0, 4) || v) - v) : Math.round(v * 10) / 10; };   // a year of manufacture works too
+// Duplicates: the same flight number on the same day between the same airports ("CA0931" = "CA931")
+const flNo = s => { const t = String(s || '').toUpperCase().replace(/\s+/g, ''), m = /^([A-Z0-9]{2})0*(\d{1,4}[A-Z]?)$/.exec(t); return m ? m[1] + m[2] : t; };
+const flKey = f => [f.date, flNo(f.no), f.from?.iata, f.to?.iata].join('|');
+const FL_FIELDS = ['no', 'airline', 'ac', 'acText', 'reg', 'seat', 'cls', 'dur', 'note', 'fare', 'cur', 'age', 'dep', 'arr'];
+const flEmpty = v => v === null || v === undefined || v === '';
+function flDupGroups(flights) {
+  const m = new Map(); flights.forEach(f => { const k = flKey(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f); });
+  return [...m.values()].filter(g => g.length > 1);
+}
+function mergeDuplicates(flights) {   // keeps the first of each group, filling its empty fields from the others
+  let removed = 0;
+  flDupGroups(flights).forEach(([keep, ...rest]) => rest.forEach(d => {
+    FL_FIELDS.forEach(k => { if (flEmpty(keep[k]) && !flEmpty(d[k])) keep[k] = d[k]; });
+    if (d.purpose === 'academic') keep.purpose = 'academic';
+    flights.splice(flights.indexOf(d), 1); removed++;
+  }));
+  return removed;
+}
 // Chinese city name for an airport: taken from the nearest footprints place within 80 km, if any
 function cityZhNear(ap) {
   let best = null, bd = 80;
@@ -2920,15 +2959,15 @@ function viewFlights(v) {
   const typeOpts = (() => { const g = new Map(); Aviation.TYPES.forEach(t => { if (!g.has(t.mfr)) g.set(t.mfr, []); g.get(t.mfr).push(t); });
     return `<option value="">—</option>` + [...g].map(([m, ts]) => `<optgroup label="${esc(m)}">${ts.map(t => `<option value="${t.code}" ${F.ac === t.code ? 'selected' : ''}>${esc(t.name)} (${t.code})</option>`).join('')}</optgroup>`).join('') + `<option value="__other" ${!F.ac && F.acText ? 'selected' : ''}>Other (type it in)…</option>`; })();
   const nA = T.flights.filter(f => f.purpose === 'academic').length, totKm = T.flights.reduce((s, f) => s + Aviation.distKm(f.from, f.to), 0);
-  v.innerHTML = `<h2>Flights</h2><div class="tv-head tv-top"><span class="pill ok">${T.flights.length} flight${T.flights.length === 1 ? '' : 's'}</span><span class="pill acad">${nA} academic</span><span class="hint">${Math.round(totKm).toLocaleString('en')} km · shown on <a href="flights.html" target="_blank">flights.html</a> (travel password) · saved with <b>Publish changes</b>.</span></div>
+  v.innerHTML = `<h2>Flights</h2><div class="tv-head tv-top"><span class="pill ok">${T.flights.length} flight${T.flights.length === 1 ? '' : 's'}</span><span class="pill acad">${nA} academic</span>${flDupGroups(T.flights).length ? '' : '<span class="pill muted" title="Same flight number, date and route">no duplicates</span>'}<span class="hint">${Math.round(totKm).toLocaleString('en')} km · shown on <a href="flights.html" target="_blank">flights.html</a> (travel password) · saved with <b>Publish changes</b>.</span></div>
   <div class="card fl-form" id="fl-form"><h3>${FL_EDIT ? 'Edit flight' : 'Add a flight'}</h3>
     <div class="row fl-row">
       <div class="field"><label for="fl-date">Date</label><input id="fl-date" type="date" value="${esc(F.date)}"></div>
       <div class="field"><label for="fl-no">Flight number</label><input id="fl-no" type="text" value="${esc(F.no)}" placeholder="e.g. KL897" autocomplete="off" class="mono"><div class="hint">The airline is filled in from the first two characters.</div></div>
     </div>
     <div class="row fl-row">
-      <div class="field fl-ac-wrap"><label for="fl-from">From</label><input id="fl-from" type="text" value="${esc(F.from ? F.from.iata + ' · ' + F.from.city : '')}" placeholder="IATA code or city, e.g. AMS" autocomplete="off"><div class="fl-sug" id="fl-from-sug"></div><div class="hint" id="fl-from-h">${F.from ? esc(`${F.from.name}, ${F.from.cc}`) : ''}</div></div>
-      <div class="field fl-ac-wrap"><label for="fl-to">To</label><input id="fl-to" type="text" value="${esc(F.to ? F.to.iata + ' · ' + F.to.city : '')}" placeholder="IATA code or city, e.g. PEK" autocomplete="off"><div class="fl-sug" id="fl-to-sug"></div><div class="hint" id="fl-to-h">${F.to ? esc(`${F.to.name}, ${F.to.cc}`) : ''}</div></div>
+      <div class="field fl-ac-wrap"><label for="fl-from">From</label><input id="fl-from" type="text" value="${esc(F.from ? F.from.iata + ' · ' + Aviation.airportName(F.from, 'en') : '')}" placeholder="IATA code or city, e.g. AMS" autocomplete="off"><div class="fl-sug" id="fl-from-sug"></div><div class="hint" id="fl-from-h">${F.from ? esc(`${F.from.name}, ${F.from.cc}`) : ''}</div></div>
+      <div class="field fl-ac-wrap"><label for="fl-to">To</label><input id="fl-to" type="text" value="${esc(F.to ? F.to.iata + ' · ' + Aviation.airportName(F.to, 'en') : '')}" placeholder="IATA code or city, e.g. PEK" autocomplete="off"><div class="fl-sug" id="fl-to-sug"></div><div class="hint" id="fl-to-h">${F.to ? esc(`${F.to.name}, ${F.to.cc}`) : ''}</div></div>
     </div>
     <div class="row fl-row">
       <div class="field fl-ac-wrap"><label for="fl-al">Airline</label><input id="fl-al" type="text" value="${esc(F.airline ? (F.airline.iata ? F.airline.iata + ' · ' : '') + F.airline.name : '')}" placeholder="Name or code" autocomplete="off"><div class="fl-sug" id="fl-al-sug"></div></div>
@@ -2937,26 +2976,36 @@ function viewFlights(v) {
     </div>
     <div class="row fl-row4">
       <div class="field"><label for="fl-reg">Registration</label><input id="fl-reg" type="text" value="${esc(F.reg)}" placeholder="optional, e.g. PH-BKA" class="mono"></div>
+      <div class="field"><label for="fl-age">Aircraft age (years)</label><input id="fl-age" type="text" inputmode="decimal" value="${esc(F.ageText ?? (F.age ?? ''))}" placeholder="optional, e.g. 8.5 or 2016" class="mono"></div>
       <div class="field"><label for="fl-seat">Seat</label><input id="fl-seat" type="text" value="${esc(F.seat)}" placeholder="optional, e.g. 32K" class="mono"></div>
       <div class="field"><label for="fl-cls">Class</label><select id="fl-cls">${FL_CLASSES.map(([k, l]) => `<option value="${k}" ${F.cls === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="row fl-row4">
+      <div class="field"><label for="fl-dep">Actual take-off</label><input id="fl-dep" type="text" value="${esc(F.depText ?? F.dep)}" placeholder="local, e.g. 09:35" class="mono"></div>
+      <div class="field"><label for="fl-arr">Actual landing</label><input id="fl-arr" type="text" value="${esc(F.arrText ?? F.arr)}" placeholder="local, e.g. 06:10+1" class="mono"></div>
+      <div class="field"><label for="fl-dur">Flight time (h:mm)</label><input id="fl-dur" type="text" value="${esc(fmtDur(F.dur))}" placeholder="optional, e.g. 9:50" class="mono"></div>
       <div class="field"><label for="fl-pur">Purpose</label><select id="fl-pur"><option value="personal" ${F.purpose !== 'academic' ? 'selected' : ''}>Personal</option><option value="academic" ${F.purpose === 'academic' ? 'selected' : ''}>Academic</option></select></div>
     </div>
+    <div class="hint" id="fl-calc" style="margin:-0.5rem 0 0.9rem">${km ? `${Math.round(km).toLocaleString('en')} km · estimate ${fmtDur(Aviation.estMinutes(km))} if the flight time is left empty.` : 'Distance and time are calculated from the two airports.'} Times are local at each airport; add +1 when it lands the next day.</div>
     <div class="row fl-row">
-      <div class="field"><label for="fl-dur">Flight time (h:mm)</label><input id="fl-dur" type="text" value="${esc(fmtDur(F.dur))}" placeholder="optional, e.g. 9:50" class="mono"><div class="hint" id="fl-calc">${km ? `${Math.round(km).toLocaleString('en')} km · estimate ${fmtDur(Aviation.estMinutes(km))} if left empty` : 'Distance and time are calculated from the two airports.'}</div></div>
+      <div class="field"><label for="fl-fare">Fare</label><div class="fl-fare"><input id="fl-fare" type="text" inputmode="decimal" value="${esc(F.fareText ?? (F.fare ?? ''))}" placeholder="optional, e.g. 3280" class="mono"><select id="fl-cur" aria-label="Currency">${[...new Set([F.cur || 'CNY', ...FL_CURS])].map(c => `<option ${c === (F.cur || 'CNY') ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div></div>
       <div class="field"><label for="fl-note">Note</label><input id="fl-note" type="text" value="${esc(F.note)}" placeholder="optional"></div>
     </div>
     <div class="toolbar" style="margin-bottom:0"><button class="btn primary" id="fl-save">${FL_EDIT ? '✓ Save changes' : '+ Add flight'}</button>${FL_EDIT ? '<button class="btn" id="fl-cancel">Cancel</button>' : '<button class="btn" id="fl-clear">Clear</button>'}<span class="hint" id="fl-msg" style="margin:0"></span></div>
   </div>
+  ${(() => { const g = flDupGroups(T.flights); return g.length ? `<div class="card fl-dups" id="fl-dups"><h3>⚠ ${g.reduce((n, x) => n + x.length - 1, 0)} duplicate flight${g.reduce((n, x) => n + x.length - 1, 0) === 1 ? '' : 's'}</h3>
+    <p class="hint" style="margin:0">Same flight number, same day, same airports:</p><ul>${g.map(x => `<li><span class="mono">${esc(x[0].date)} ${esc(x[0].no || '—')} ${esc(flRoute(x[0]))}</span> × ${x.length}</li>`).join('')}</ul>
+    <button class="btn sm primary" id="fl-merge">Merge duplicates</button> <span class="hint" style="display:inline">Keeps one of each, with any details only the copies had.</span></div>` : ''; })()}
   <h3 class="yearhead">Flights</h3>
   <div class="tv-filter"><input type="search" id="fl-filter" placeholder="Find a flight: number, airport, airline, aircraft, year …" autocomplete="off" value="${esc(FL_FILTER)}"><span class="hint" id="fl-filter-n"></span></div>
   <div id="fl-list"></div>
-  <div class="tv-folds">${foldCardGlobal('fl-import', 'Import flights from CSV', 'e.g. a my.flightradar24 export', `<p class="hint" style="margin-bottom:0.6rem">Paste a CSV with a header row. Recognised columns: <b>Date, Flight number, From, To, Airline, Aircraft, Registration, Seat, Class, Reason / Purpose, Duration, Note</b>. Airports may be written as IATA codes (<span class="mono">AMS</span>) or like <span class="mono">Amsterdam (AMS/EHAM)</span>; aircraft by name or ICAO code (<span class="mono">B78X</span>). Flights already in the list (same date, flight and route) are skipped. A reason of “business” or “academic” marks the flight as academic.</p>
+  <div class="tv-folds">${foldCardGlobal('fl-import', 'Import flights from CSV', 'e.g. a my.flightradar24 export', `<p class="hint" style="margin-bottom:0.6rem">Paste a CSV with a header row. Recognised columns: <b>Date, Flight number, From, To, Airline, Aircraft, Registration, Seat, Class, Reason / Purpose, Duration, Note</b>, and also <b>Dep time / Actual departure, Arr time / Actual arrival, Fare / Price, Currency, Aircraft age</b>. Airports may be written as IATA codes (<span class="mono">AMS</span>) or like <span class="mono">Amsterdam (AMS/EHAM)</span>; aircraft by name or ICAO code (<span class="mono">B78X</span>). A row for a flight already in the list (same date, flight number and route) is not added twice: its filled-in cells update that flight, so a CSV of just <span class="mono">Date, Flight number, From, To, Dep time, Arr time</span> adds the actual times to existing flights. A reason of “business” or “academic” marks the flight as academic.</p>
     <textarea id="fl-csv" rows="6" class="mono" placeholder="Date,Flight number,From,To,Airline,Aircraft&#10;2025-09-14,KL897,AMS,PEK,KLM,B78X"></textarea>
     <div class="toolbar" style="margin-bottom:0"><input type="file" id="fl-csv-file" accept=".csv,text/csv" hidden><button class="btn sm" id="fl-csv-pick">Choose a CSV file…</button><button class="btn sm primary" id="fl-csv-go">Import</button><span class="hint" id="fl-csv-msg" style="margin:0"></span></div>`)}</div>`;
 
   // ── Form wiring ──
   const msg = t => { $('#fl-msg').textContent = t || ''; };
-  const calc = () => { const k = Aviation.distKm(F.from, F.to); $('#fl-calc').textContent = k ? `${Math.round(k).toLocaleString('en')} km · estimate ${fmtDur(Aviation.estMinutes(k))} if left empty` : 'Distance and time are calculated from the two airports.'; };
+  const calc = () => { const k = Aviation.distKm(F.from, F.to); $('#fl-calc').textContent = (k ? `${Math.round(k).toLocaleString('en')} km · estimate ${fmtDur(Aviation.estMinutes(k))} if the flight time is left empty.` : 'Distance and time are calculated from the two airports.') + ' Times are local at each airport; add +1 when it lands the next day.'; };
   const suggest = (inputId, boxId, search, label, pick) => {
     const inp = $('#' + inputId), box = $('#' + boxId); let res = [];
     const show = () => { res = search(inp.value); box.innerHTML = res.map((r, i) => `<button type="button" class="tv-res" data-i="${i}">${label(r)}</button>`).join(''); box.querySelectorAll('[data-i]').forEach(b => b.onmousedown = e => { e.preventDefault(); pick(res[+b.dataset.i]); box.innerHTML = ''; }); };
@@ -2965,7 +3014,7 @@ function viewFlights(v) {
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && res[0]) { e.preventDefault(); pick(res[0]); box.innerHTML = ''; } });
   };
   const apLabel = a => `<span>${tvFlag(a.cc)} <b class="mono">${esc(a.iata)}</b> · ${esc(a.city || a.name)}<span class="m"> — ${esc(a.name)}</span></span><span class="m">${esc(a.cc)}</span>`;
-  ['from', 'to'].forEach(k => suggest('fl-' + k, `fl-${k}-sug`, searchAirports, apLabel, a => { F[k] = apRecord(a); $('#fl-' + k).value = `${a.iata} · ${a.city || a.name}`; $(`#fl-${k}-h`).textContent = `${a.name}, ${a.cc}`; calc(); }));
+  ['from', 'to'].forEach(k => suggest('fl-' + k, `fl-${k}-sug`, searchAirports, apLabel, a => { F[k] = apRecord(a); $('#fl-' + k).value = `${a.iata} · ${Aviation.airportName(a, 'en')}`; $(`#fl-${k}-h`).textContent = `${a.name}, ${a.cc}`; calc(); }));
   suggest('fl-al', 'fl-al-sug', searchAirlines, a => `<span><b class="mono">${esc(a.iata)}</b> · ${esc(a.name)}${Aviation.AIRLINE_ZH[a.iata] ? ` · ${esc(Aviation.AIRLINE_ZH[a.iata])}` : ''}</span><span class="m">${esc(a.cc)}</span>`, a => { F.airline = alRecord(a); $('#fl-al').value = `${a.iata} · ${a.name}`; });
   $('#fl-al').addEventListener('change', e => { const t = e.target.value.trim(); if (!t) F.airline = null; else if (!F.airline || !t.endsWith(F.airline.name)) F.airline = { iata: '', icao: '', name: t, zh: '' }; });
   $('#fl-date').onchange = e => { F.date = e.target.value; };
@@ -2982,11 +3031,27 @@ function viewFlights(v) {
   $('#fl-pur').onchange = e => { F.purpose = e.target.value; };
   $('#fl-dur').oninput = e => { F.dur = parseDur(e.target.value); };
   $('#fl-note').oninput = e => { F.note = e.target.value; };
+  $('#fl-age').oninput = e => { F.ageText = e.target.value; };
+  $('#fl-dep').oninput = e => { F.depText = e.target.value; };
+  $('#fl-arr').oninput = e => { F.arrText = e.target.value; };
+  $('#fl-fare').oninput = e => { F.fareText = e.target.value; };
+  $('#fl-cur').onchange = e => { F.cur = e.target.value; };
   $('#fl-save').onclick = () => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(F.date || '')) return msg('Choose a date.');
     if (!F.from || !F.to) return msg('Choose both airports from the suggestions.');
     if (F.from.iata === F.to.iata) return msg('From and To are the same airport.');
-    const rec = { id: FL_EDIT || 'fl-' + rid(), date: F.date, no: F.no, airline: F.airline, from: F.from, to: F.to, ac: F.ac, acText: F.ac ? '' : (F.acText || '').trim(), reg: F.reg, seat: F.seat, cls: F.cls, purpose: F.purpose, dur: F.dur || null, note: F.note };
+    const txt = (k, v) => F[k + 'Text'] !== undefined ? F[k + 'Text'] : v;
+    const dep = txt('dep', F.dep).trim(), arr = txt('arr', F.arr).trim();
+    if (dep && !parseTime(dep)) return msg('Take-off time: write it like 09:35.');
+    if (arr && !parseTime(arr)) return msg('Landing time: write it like 14:10, or 06:10+1 for the next day.');
+    const fareIn = String(txt('fare', F.fare ?? '')).trim(), fp = parseFare(fareIn);
+    if (fareIn && !fp.fare) return msg('Fare: write a number, e.g. 3280.');
+    const ageIn = String(txt('age', F.age ?? '')).trim(), age = ageIn ? parseAge(ageIn, F.date) : null;
+    if (ageIn && age === null) return msg('Aircraft age: write the years (8.5) or the year it was built (2016).');
+    const rec = { id: FL_EDIT || 'fl-' + rid(), date: F.date, no: F.no, airline: F.airline, from: F.from, to: F.to, ac: F.ac, acText: F.ac ? '' : (F.acText || '').trim(), reg: F.reg, seat: F.seat, cls: F.cls, purpose: F.purpose, dur: F.dur || null, note: F.note,
+      fare: fp.fare, cur: fp.fare ? (fp.cur || F.cur || 'CNY') : '', age, dep: dep ? parseTime(dep) : '', arr: arr ? parseTime(arr) : '' };
+    const dup = T.flights.find(f => f.id !== rec.id && flKey(f) === flKey(rec));
+    if (dup) return msg(`Already logged: ${dup.date} ${dup.no || ''} ${flRoute(dup)} (same flight number, date and route). Edit that one instead.`);
     if (FL_EDIT) { const i = T.flights.findIndex(f => f.id === FL_EDIT); if (i >= 0) T.flights[i] = rec; toast('Flight updated. Publish to save.'); }
     else { T.flights.push(rec); toast(`Added ${flRoute(rec)}. Publish to save.`); }
     const keep = FL_EDIT ? null : { date: F.date, purpose: F.purpose };
@@ -2997,11 +3062,13 @@ function viewFlights(v) {
   if ($('#fl-cancel')) $('#fl-cancel').onclick = reset;
   if ($('#fl-clear')) $('#fl-clear').onclick = reset;
 
+  if ($('#fl-merge')) $('#fl-merge').onclick = () => { const n = mergeDuplicates(T.flights); if (!n) return; markDirty(); render(); toast(`Merged ${n} duplicate${n === 1 ? '' : 's'}. Publish to save.`); };
+
   // ── List ──
   const renderList = () => {
     const q = fold(FL_FILTER.trim()), terms = q.split(/\s+/).filter(Boolean);
     const rows = T.flights.map((f, i) => ({ f, i })).filter(({ f }) => { if (!terms.length) return true;
-      const hay = fold([f.date, f.no, f.from?.iata, f.to?.iata, f.from?.city, f.to?.city, f.airline?.name, f.airline?.iata, Aviation.typeName(f.ac, 'en', f.acText), f.ac, f.reg, f.seat, f.note, f.purpose].join(' '));
+      const hay = fold([f.date, f.no, f.from?.iata, f.to?.iata, f.from?.city, f.to?.city, f.airline?.name, f.airline?.iata, Aviation.typeName(f.ac, 'en', f.acText), f.ac, f.reg, f.seat, f.note, f.purpose, f.dep, f.arr].join(' '));
       return terms.every(t => hay.includes(t)); })
       .sort((a, b) => String(b.f.date).localeCompare(String(a.f.date)));
     $('#fl-filter-n').textContent = terms.length ? `${rows.length} of ${T.flights.length}` : '';
@@ -3012,12 +3079,12 @@ function viewFlights(v) {
       if (y !== yr) { if (yr !== null) html += '</div>'; yr = y; const n = rows.filter(r => String(r.f.date).startsWith(y)).length; html += `<div class="fl-year"><div class="fl-yh">${esc(y)} <span class="hint" style="display:inline">${n} flight${n === 1 ? '' : 's'}</span></div>`; }
       const km = Math.round(Aviation.distKm(f.from, f.to));
       html += `<div class="fl-item${FL_EDIT === f.id ? ' editing' : ''}"><span class="mono fl-d">${esc(f.date.slice(5))}</span><span class="mono fl-n">${esc(f.no || '—')}</span>
-        <span class="fl-r"><b class="mono">${esc(f.from?.iata)}</b> → <b class="mono">${esc(f.to?.iata)}</b> <span class="hint" style="display:inline">${esc(f.from?.city || '')} – ${esc(f.to?.city || '')}</span></span>
-        <span class="fl-m">${esc(f.airline?.name || '')}${f.ac || f.acText ? ' · ' + esc(Aviation.typeName(f.ac, 'en', f.acText)) : ''} · ${km.toLocaleString('en')} km${f.purpose === 'academic' ? ' <span class="pill acad">academic</span>' : ''}</span>
+        <span class="fl-r"><b class="mono">${esc(f.from?.iata)}</b> → <b class="mono">${esc(f.to?.iata)}</b> <span class="hint" style="display:inline">${esc(Aviation.airportName(f.from, 'en'))} – ${esc(Aviation.airportName(f.to, 'en'))}</span></span>
+        <span class="fl-m">${esc(f.airline?.name || '')}${f.ac || f.acText ? ' · ' + esc(Aviation.typeName(f.ac, 'en', f.acText)) : ''} · ${km.toLocaleString('en')} km${f.dep || f.arr ? ` · <span class="mono">${esc(f.dep || '—')}→${esc(f.arr || '—')}</span>` : ''}${f.fare ? ` · ${esc(f.fare.toLocaleString('en'))} ${esc(f.cur || '')}` : ''}${f.age ? ` · ${esc(f.age)} yrs` : ''}${f.purpose === 'academic' ? ' <span class="pill acad">academic</span>' : ''}</span>
         <span class="fl-t"><button class="btn sm" data-fl-edit="${i}">Edit</button><button class="btn sm danger" data-fl-del="${i}" title="Delete" aria-label="Delete">✕</button></span></div>`;
     });
     $('#fl-list').innerHTML = html + '</div>';
-    $('#fl-list').querySelectorAll('[data-fl-edit]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flEdit]; FL_EDIT = f.id; FL_FORM = JSON.parse(JSON.stringify({ ...flBlank(), ...f })); render(); requestAnimationFrame(() => $('#fl-form').scrollIntoView({ behavior: 'smooth', block: 'start' })); });
+    $('#fl-list').querySelectorAll('[data-fl-edit]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flEdit]; FL_EDIT = f.id; FL_FORM = JSON.parse(JSON.stringify({ ...flBlank(), ...f, cur: f.cur || flBlank().cur })); render(); requestAnimationFrame(() => $('#fl-form').scrollIntoView({ behavior: 'smooth', block: 'start' })); });
     $('#fl-list').querySelectorAll('[data-fl-del]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flDel]; if (!confirm(`Delete ${f.date} ${f.no || ''} ${flRoute(f)}?`)) return; T.flights.splice(+b.dataset.flDel, 1); if (FL_EDIT === f.id) { FL_EDIT = null; FL_FORM = flBlank(); } markDirty(); render(); });
   };
   renderList();
@@ -3054,11 +3121,13 @@ function importFlightsCsv(text, flights) {
   const col = (...names) => head.findIndex(h => names.includes(h));
   const C = { date: col('date'), no: col('flightnumber', 'flight', 'flightno', 'flightnr'), from: col('from', 'origin', 'departure', 'dep'), to: col('to', 'destination', 'arrival', 'arr'),
     al: col('airline', 'carrier'), ac: col('aircraft', 'aircrafttype', 'type', 'equipment'), reg: col('registration', 'reg', 'tail'), seat: col('seat', 'seatnumber'),
-    cls: col('class', 'flightclass', 'cabin'), pur: col('reason', 'flightreason', 'purpose'), dur: col('duration', 'flighttime', 'time'), note: col('note', 'notes', 'comment') };
+    cls: col('class', 'flightclass', 'cabin'), pur: col('reason', 'flightreason', 'purpose'), dur: col('duration', 'flighttime', 'time'), note: col('note', 'notes', 'comment'),
+    dep: col('deptime', 'departuretime', 'actualdeparture', 'actualdeparturetime', 'atd', 'takeoff', 'takeofftime', 'offblock'), arr: col('arrtime', 'arrivaltime', 'actualarrival', 'actualarrivaltime', 'ata', 'landing', 'landingtime', 'onblock'),
+    fare: col('fare', 'price', 'ticketprice', 'cost', 'farepaid'), cur: col('currency', 'cur'), age: col('aircraftage', 'age', 'planeage') };
   if (C.date < 0 || C.from < 0 || C.to < 0) return { added: 0, msg: 'The header needs at least Date, From and To columns.' };
   const ap = s => { s = String(s || '').trim(); const m = /\(([A-Z]{3})\s*[\/)]/.exec(s) || /^([A-Z]{3})$/.exec(s.toUpperCase()) || /\b([A-Z]{3})\b/.exec(s); return m ? AVDB.byIata.get(m[1].toUpperCase()) : null; };
-  const seen = new Set(flights.map(f => [f.date, f.no, f.from?.iata, f.to?.iata].join('|')));
-  let added = 0, skipped = 0; const bad = [];
+  const byKey = new Map(flights.map(f => [flKey(f), f]));
+  let added = 0, skipped = 0, updated = 0; const bad = [];
   rows.slice(1).forEach((r, n) => {
     const g = k => C[k] >= 0 ? String(r[C[k]] || '').trim() : '';
     const dm = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(g('date')) || /(\d{1,2})[./](\d{1,2})[./](\d{4})/.exec(g('date'));
@@ -3066,7 +3135,13 @@ function importFlightsCsv(text, flights) {
     const a = ap(g('from')), b = ap(g('to'));
     if (!date || !a || !b) { bad.push(n + 2); return; }
     const no = g('no').toUpperCase().replace(/\s+/g, '');
-    const key = [date, no, a.iata, b.iata].join('|'); if (seen.has(key)) { skipped++; return; } seen.add(key);
+    const fp = parseFare(g('fare') + ' ' + g('cur')), extra = { dep: parseTime(g('dep')) || '', arr: parseTime(g('arr')) || '', fare: fp.fare, cur: fp.fare ? (fp.cur || 'CNY') : '', age: g('age') ? parseAge(g('age'), date) : null };
+    const old = byKey.get([date, flNo(no), a.iata, b.iata].join('|'));
+    if (old) {   // already logged: the row's filled-in cells update it
+      const upd = { ...extra, reg: g('reg').toUpperCase(), seat: g('seat').toUpperCase(), dur: parseDur(g('dur')), note: g('note') };
+      let ch = false; Object.entries(upd).forEach(([k, v]) => { if (!flEmpty(v) && old[k] !== v) { old[k] = v; ch = true; } });
+      ch ? updated++ : skipped++; return;
+    }
     const alS = g('al'), alCode = (/\(([A-Z0-9]{2})\s*[\/)]/.exec(alS) || [])[1] || (/^[A-Z0-9]{2}\d/.test(no) ? no.slice(0, 2) : '');
     const alDb = AVDB.airlines.find(x => x.iata === alCode && (!alS || fold(alS).includes(fold(x.name).split(' ')[0]))) || AVDB.airlines.find(x => alS && fold(x.name) === fold(alS.replace(/\s*\(.*$/, '')));
     const acS = g('ac'), acCode = (/\(([A-Z0-9]{3,4})\)/.exec(acS) || [])[1] || acS.toUpperCase();
@@ -3075,10 +3150,10 @@ function importFlightsCsv(text, flights) {
     flights.push({ id: 'fl-' + rid(), date, no, airline: alDb ? alRecord(alDb) : (alS ? { iata: '', icao: '', name: alS.replace(/\s*\(.*$/, ''), zh: '' } : null),
       from: apRecord(a), to: apRecord(b), ac: ty ? ty.code : '', acText: ty ? '' : acS, reg: g('reg').toUpperCase(), seat: g('seat').toUpperCase(),
       cls: /first|^3$/.test(clsS) ? 'first' : /business|^2$/.test(clsS) ? 'business' : /premium|\+|^4$/.test(clsS) ? 'premium' : /econ|^1$/.test(clsS) ? 'economy' : '',
-      purpose: /academ|conference|business|work|^2$/.test(purS) ? 'academic' : 'personal', dur: parseDur(g('dur')), note: g('note') });
-    added++;
+      purpose: /academ|conference|business|work|^2$/.test(purS) ? 'academic' : 'personal', dur: parseDur(g('dur')), note: g('note'), ...extra });
+    byKey.set(flKey(flights[flights.length - 1]), flights[flights.length - 1]); added++;
   });
-  return { added, msg: `Imported ${added} flight${added === 1 ? '' : 's'}${skipped ? `, ${skipped} already in the list` : ''}${bad.length ? `; rows ${bad.slice(0, 8).join(', ')}${bad.length > 8 ? '…' : ''} skipped (date or airport not recognised)` : ''}.` };
+  return { added: added + updated, msg: `Imported ${added} flight${added === 1 ? '' : 's'}${updated ? `, updated ${updated} already in the list` : ''}${skipped ? `, ${skipped} already in the list unchanged` : ''}${bad.length ? `; rows ${bad.slice(0, 8).join(', ')}${bad.length > 8 ? '…' : ''} skipped (date or airport not recognised)` : ''}.` };
 }
 
 function viewFootprints(v, introOverride) {
