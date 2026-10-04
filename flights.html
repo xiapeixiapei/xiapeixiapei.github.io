@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610042027"></script>
-<script src="fleet3d.js?v=202610042027"></script>
+<script src="aviation.js?v=202610042130"></script>
+<script src="fleet3d.js?v=202610042130"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -254,6 +254,13 @@
   .ac-code { position: absolute; z-index: 1; left: 0.6rem; top: 0.5rem; font-family: var(--f-mono); font-size: 0.75rem; color: var(--cyan); background: var(--glass); border: 1px solid var(--line-2); padding: 0.05rem 0.4rem; border-radius: 2px; }
   .ac-n { position: absolute; z-index: 1; right: 0.6rem; bottom: 0.35rem; font-family: var(--f-mono); font-weight: 600; font-size: 1.5rem; color: var(--ink-strong); text-shadow: 0 0 12px rgba(var(--cyan-rgb), var(--glow)); }
   .ac-n small { font-size: 0.55em; color: var(--muted); }
+  .ac.locked { border-style: dashed; }
+  .ac.locked .ac-name { color: var(--muted); }
+  .ac-lock { position: absolute; z-index: 1; right: 0.6rem; bottom: 0.5rem; display: inline-flex; align-items: center; gap: 0.3rem; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); background: var(--glass); border: 1px dashed var(--line-2); padding: 0.1rem 0.45rem; border-radius: 2px; }
+  .ac-lock svg { width: 0.85em; height: 0.85em; }
+  .xbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin: 0 0 0.9rem; }
+  .sec-link { margin-left: auto; font-size: 0.78rem; color: var(--cyan); text-decoration: none; white-space: nowrap; }
+  .sec-link:hover { text-decoration: underline; }
   .ac-body { padding: 0.7rem 0.9rem 0.85rem; display: flex; flex-direction: column; gap: 0.15rem; }
   .ac-name { font-family: var(--f-hud); font-weight: 600; font-size: 1.08rem; }
   .ac-meta { font-size: 0.84rem; color: var(--muted); }
@@ -517,7 +524,7 @@
       </footer>    </main>
     <aside class="col right">
       <section class="sec-fleet">
-        <h2 class="sec"><span data-en="Hangar" data-zh="机库">Hangar</span><span class="kicker" data-en="Hover to rotate · click to inspect" data-zh="悬停旋转 · 点击查看">Hover to rotate · click to inspect</span></h2>
+        <h2 class="sec"><span data-en="Hangar" data-zh="机库">Hangar</span><span class="kicker" data-en="Hover to rotate · click to inspect" data-zh="悬停旋转 · 点击查看">Hover to rotate · click to inspect</span><a class="dl sec-link" href="#explore" data-en="Explore all types ›" data-zh="机库探索 ›">Explore all types ›</a></h2>
         <button type="button" class="chip m-only" id="fleet-ftog" data-en="Filter the hangar" data-zh="筛选机库">Filter the hangar</button>
         <div class="fleet-filters" id="fleet-filters"></div>
         <div class="fleet" id="fleet"></div>
@@ -528,7 +535,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
-<script src="map-base.js?v=202610042027"></script>
+<script src="map-base.js?v=202610042130"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -845,6 +852,7 @@ function renderHub(list) {
     tile('#list=airlines', `<span class="stack" id="hub-tails"></span>`, als.length, zh ? '航司榜' : 'Airlines'),
     tile('#list=airports', HUB_I.airports, new Set(list.flatMap(f => [f.from.iata, f.to.iata])).size, zh ? '机场' : 'Airports'),
     tile('#records', HUB_I.records, '', zh ? '飞行纪录' : 'Records'),
+    tile('#explore', LOCK_I, A.TYPES.length, zh ? '机库探索' : 'Explore'),
   ].join('');
   // the first three airline tails as the Airlines tile's picture
   const top = als.slice(0, 3).map(r => [r.key, r.f.airline]);
@@ -913,7 +921,7 @@ function fleetTypes(list) {
   });
 }
 function livChips(t, cur) {
-  return t.als.map((a, i) => `<button type="button" class="liv${i === cur ? ' on' : ''}" data-liv="${i}" title="${esc(a.label)}">${esc(a.label)}<i>${a.n}</i></button>`).join('');
+  return t.als.map((a, i) => `<button type="button" class="liv${i === cur ? ' on' : ''}" data-liv="${i}" title="${esc(a.label)}">${esc(a.label)}${a.n ? `<i>${a.n}</i>` : ``}</button>`).join('');
 }
 function renderFleet(list) {
   renderFleetFilters(list);
@@ -950,12 +958,46 @@ function mountFleet(host, list) {
     });
   });
 }
+// Hangar explorer: every type in the aircraft database, flown ones first, the rest locked; one livery picker dresses them all
+let X_AL = '';
+function mountExplore(host, list) {
+  const zh = LANG === 'zh', flown = new Map(fleetTypes(list).map(t => [t.code, t]));
+  const als = (window.Fleet3D?.airlines?.() || []).map(a => ({ ...a, label: zh ? (a.zh || a.name) : a.name })).sort((a, b) => a.label.localeCompare(b.label, zh ? 'zh' : 'en'));
+  const types = A.TYPES.map(ty => { const f = flown.get(ty.code); return { code: ty.code, key: ty.code, label: A.typeName(ty.code, LANG), n: f?.n || 0, km: f?.km || 0, als: f?.als || [], ty }; })
+    .sort((a, b) => b.n - a.n || a.ty.mfr.localeCompare(b.ty.mfr) || a.ty.len - b.ty.len);
+  const sel = $('#x-al'), sum = $('#x-sum');
+  if (sel && !sel.children.length) {
+    sel.innerHTML = `<option value="">${esc(zh ? '原始涂装（坐过的航司 / 厂家涂装）' : 'As flown (airline, or house colours)')}</option>${als.map(a => `<option value="${esc(a.iata)}">${esc(a.label)} (${esc(a.iata)})</option>`).join('')}`;
+    sel.value = X_AL;
+    sel.onchange = () => { X_AL = sel.value; host.querySelectorAll('.ac').forEach(card => Fleet3D.setAirline(card.querySelector('.ac-3d'), pick(types[+card.dataset.t]))); };
+  }
+  const nDone = types.filter(t => t.n).length;
+  if (sum) sum.textContent = zh ? `已解锁 ${nDone} / ${types.length} 种机型 · ${als.length} 套航司涂装` : `${nDone} of ${types.length} types unlocked · ${als.length} airline liveries`;
+  const alOf = iata => { const a = als.find(x => x.iata === iata); return a ? { iata: a.iata, name: a.name } : null; };
+  const pick = t => X_AL ? alOf(X_AL) : t.als[0]?.al;   // the chosen livery, else what you actually flew (house colours when nothing)
+  const ref = Math.max(...types.map(t => Math.max(t.ty.len, t.ty.span)));
+  host.innerHTML = types.map((t, ti) => `<div class="hud ac${t.n ? '' : ' locked'}" data-t="${ti}"><div class="ac-pic">${A.silhouette(t.ty.body || 'narrow')}<canvas class="ac-3d" aria-label="${esc(zh ? '三维模型：' : '3D model: ')}${esc(t.label)}"></canvas><span class="ac-code">${esc(t.code)}</span><button type="button" class="ac-open" aria-label="${esc(zh ? '打开三维查看器' : 'Open the 3D viewer')}">${OPEN_ICON}</button>${t.n ? `<span class="ac-n">${t.n}<small>×</small></span>` : `<span class="ac-lock">${LOCK_I}${esc(zh ? '未解锁' : 'Locked')}</span>`}</div>
+      <div class="ac-body"><div class="ac-name">${t.n ? `<a class="dl" href="#ac=${esc(t.key)}">${esc(t.label)}</a>` : esc(t.label)}</div><div class="ac-meta">${esc(A.mfrName(t.ty.mfr, LANG))} · ${t.ty.len} m · ${t.ty.seats} ${zh ? '座' : 'seats'}${t.n ? ` · ${nf(t.km)} km` : ''}</div></div></div>`).join('');
+  window.Fleet3D?.load().then(ok => {
+    if (!ok) return;
+    Fleet3D.setRef(ref);
+    host.classList.add('is3d');
+    host.querySelectorAll('.ac').forEach(card => {
+      const t = types[+card.dataset.t], cv = card.querySelector('.ac-3d');
+      Fleet3D.card(cv, { type: t.code, airline: pick(t) });
+      const open = () => { const al = pick(t); openViewer({ ...t, als: al ? [{ al, n: t.n, label: zh ? A.airlineName(al, 'zh') : (Fleet3D.liveryName(al.iata, 'en') || al.name) }] : [] }, 0); };
+      card.querySelector('.ac-open').onclick = open;
+      cv.addEventListener('click', () => { if (cv.dataset.dragged !== '1') open(); });
+    });
+  });
+}
+const LOCK_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="1.5"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
 // One line of real dimensions: 66.8 m long · 64.8 m span · 315 seats
 const specLine = ty => LANG === 'zh' ? `全长 ${ty.len} m · 翼展 ${ty.span} m · 高 ${ty.height} m · ${ty.seats} 座 · 航程 ${nf(ty.range)} km · 首飞 ${ty.year}` : `${ty.len} m long · ${ty.span} m span · ${ty.height} m tall · ${ty.seats} seats · ${nf(ty.range)} km range · first flew ${ty.year}`;
 function openViewer(t, cur) {
   const ty = A.type(t.code), box = document.createElement('div');
   box.className = 'v3d'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', t.label);
-  box.innerHTML = `<div class="v3d-box hud"><div class="v3d-head"><div><p class="kicker">${esc(t.code || tr('unknownType'))}</p><h3>${esc(t.label)}</h3><div class="ac-meta">${ty ? esc(A.mfrName(ty.mfr, LANG)) + ' · ' : ''}${t.n} ${LANG === 'zh' ? '次' : (t.n === 1 ? 'flight' : 'flights')} · ${nf(t.km)} km</div>${ty ? `<div class="ac-meta">${esc(specLine(ty))}</div>` : ''}</div>
+  box.innerHTML = `<div class="v3d-box hud"><div class="v3d-head"><div><p class="kicker">${esc(t.code || tr('unknownType'))}</p><h3>${esc(t.label)}</h3><div class="ac-meta">${ty ? esc(A.mfrName(ty.mfr, LANG)) + ' · ' : ''}${t.n ? `${t.n} ${LANG === 'zh' ? '次' : (t.n === 1 ? 'flight' : 'flights')} · ${nf(t.km)} km` : (LANG === 'zh' ? '尚未解锁 · 还没坐过这个机型' : 'Not unlocked yet · never flown')}</div>${ty ? `<div class="ac-meta">${esc(specLine(ty))}</div>` : ''}</div>
     <button type="button" class="icon-btn v3d-x" aria-label="${LANG === 'zh' ? '关闭' : 'Close'}">✕</button></div>
     <div class="v3d-stage"></div>
     <div class="v3d-foot"><div class="ac-livs">${livChips(t, cur)}</div><span>${LANG === 'zh' ? '拖动旋转 · 滚轮或双指缩放' : 'Drag to rotate · scroll or pinch to zoom'}</span></div></div>`;
@@ -1049,7 +1091,7 @@ $('#q').addEventListener('input', e => { Q = e.target.value; renderLog(scoped())
 // Each is a plain link, so it opens in the same view or (middle-click) in a new tab; the hash is the state.
 let DMAP = null;
 const DETAIL_KINDS = { al: 'airlines', ap: 'airports', cc: 'countries', ac: 'types', rt: 'routes' };
-function detailOf(hash) { if (/^#(log|hangar|records)$/.test(hash || '')) return { kind: 'page', key: hash.slice(1) }; const m = /^#(al|ap|cc|ac|rt|list)=(.+)$/.exec(hash || ''); return m ? { kind: m[1], key: decodeURIComponent(m[2]) } : null; }
+function detailOf(hash) { if (/^#(log|hangar|records|explore)$/.test(hash || '')) return { kind: 'page', key: hash.slice(1) }; const m = /^#(al|ap|cc|ac|rt|list)=(.+)$/.exec(hash || ''); return m ? { kind: m[1], key: decodeURIComponent(m[2]) } : null; }
 const inDetail = (d, f) => d.kind === 'al' ? alKey(f) === d.key : d.kind === 'ap' ? (f.from.iata === d.key || f.to.iata === d.key) : d.kind === 'cc' ? (A.statCC(f.from.cc) === d.key || A.statCC(f.to.cc) === d.key)
   : d.kind === 'ac' ? acKey(f) === d.key : d.kind === 'rt' ? routeKey(f) === d.key : true;
 function closeDetail() {
@@ -1068,7 +1110,7 @@ function renderDetail() {
   else if (d.kind === 'cc') { title = A.countryName(d.key, LANG); sub = zh ? '在该国的起降记录' : 'Take-offs and landings in this country'; emblem = `<img class="emblem" src="https://flagcdn.com/w80/${d.key.toLowerCase()}.png" alt="">`; }
   else if (d.kind === 'ac') { title = f0 ? acName(f0) : d.key; const ty = A.type(d.key); sub = ty ? `${ty.code} · ${specLine(ty)}` : ''; }
   else if (d.kind === 'rt') { const [a, b] = d.key.split('-'); const fa = f0 ? (f0.from.iata === a ? f0.from : f0.to) : null, fb = f0 ? (f0.from.iata === b ? f0.from : f0.to) : null; title = `${a} ⇄ ${b}`; sub = fa && fb ? `${apName(fa)} – ${apName(fb)} · ${nf(A.distKm(fa, fb))} km` : ''; }
-  else if (d.kind === 'page') { title = { log: zh ? '飞行日志' : 'Flight log', hangar: zh ? '机库' : 'Hangar', records: zh ? '飞行纪录' : 'Records' }[d.key]; sub = d.key === 'hangar' ? (zh ? '悬停旋转 · 点击查看' : 'Hover to rotate · click to inspect') : ''; }
+  else if (d.kind === 'page') { title = { log: zh ? '飞行日志' : 'Flight log', hangar: zh ? '机库' : 'Hangar', records: zh ? '飞行纪录' : 'Records', explore: zh ? '机库探索' : 'Explore the hangar' }[d.key]; sub = d.key === 'hangar' ? (zh ? '悬停旋转 · 点击查看' : 'Hover to rotate · click to inspect') : d.key === 'explore' ? (zh ? '数据库里的全部机型 · 虚线卡片尚未解锁 · 可为任意机型换上任意航司涂装' : 'Every type in the database · dashed cards are not flown yet · dress any type in any airline\'s livery') : ''; }
   else { title = tr(d.key); sub = zh ? '点击任意一项查看详情' : 'Pick one for its details'; }
   const km = list.reduce((s, f) => s + f.km, 0), min = list.reduce((s, f) => s + f.min, 0), dates = list.map(f => f.date).sort();
   const nAcad = list.filter(f => f.purpose === 'academic').length, scopeNote = YEAR !== 'all' || PURPOSE !== 'all' ? (zh ? '（当前筛选：' : ' (filtered: ') + [YEAR !== 'all' ? YEAR : '', PURPOSE !== 'all' ? tr(PURPOSE) : ''].filter(Boolean).join(' · ') + (zh ? '）' : ')') : '';
@@ -1099,7 +1141,7 @@ function renderDetail() {
       return `<a class="hud dl" href="#${kindOf}=${esc(encodeURIComponent(r.key))}">${lead}<span class="nm">${esc(name)}${small ? `<small>${esc(small)}</small>` : ''}</span><span class="c">${r.n} ${zh ? '次' : '×'} · ${nf(r.km)} km</span></a>`; }).join('')}</div>`;
   }
   const rows = [...list].sort((a, b) => String(b.date).localeCompare(String(a.date)));
-  const pageHtml = d.kind !== 'page' ? '' : d.key === 'records' ? `<div class="records">${recordsHtml(list)}</div>` : d.key === 'hangar' ? `<div class="fleet" id="dfleet"></div>`
+  const pageHtml = d.kind !== 'page' ? '' : d.key === 'records' ? `<div class="records">${recordsHtml(list)}</div>` : d.key === 'hangar' ? `<div class="fleet" id="dfleet"></div>` : d.key === 'explore' ? `<div class="xbar"><select class="chip fsel" id="x-al" aria-label="${esc(zh ? '涂装' : 'Livery')}"></select><span class="kicker" id="x-sum"></span></div><div class="fleet" id="xfleet"></div>`
     : `<div class="hud log"><table><thead><tr><th>${esc(zh ? '日期' : 'Date')}</th><th>${esc(zh ? '航班' : 'Flight')}</th><th>${esc(zh ? '航线' : 'Route')}</th><th class="col-x">${esc(zh ? '航空公司' : 'Airline')}</th><th>${esc(zh ? '机型' : 'Aircraft')}</th><th class="num">${esc(zh ? '距离' : 'Distance')}</th><th class="num col-x">${esc(zh ? '时长' : 'Time')}</th></tr></thead><tbody>${rows.length ? rowsHtml(rows, false) : `<tr><td colspan="7" class="empty">${esc(tr('none'))}</td></tr>`}</tbody></table></div>`;
   el.innerHTML = `<div class="detail-top"><button type="button" class="icon-btn" id="detail-back" aria-label="${esc(tr('back'))}" title="${esc(tr('back'))}">←</button>
       <div class="crumb"><span class="kicker">${esc(d.kind === 'list' ? tr('details') : tr(DETAIL_KINDS[d.kind]))}</span><b>${esc(title)}</b></div>
@@ -1128,6 +1170,7 @@ function renderDetail() {
   if (d.kind === 'al' && f0) paintTails([[d.key, f0.airline]]);
   if (d.kind === 'list' && d.key === 'airlines') paintTails(tally(list, alKey, k => k).map(r => [r.key, r.f.airline]));
   if (d.kind === 'page' && d.key === 'hangar') mountFleet($('#dfleet'), list);
+  if (d.kind === 'page' && d.key === 'explore') mountExplore($('#xfleet'), list);
 }
 addEventListener('hashchange', () => { if (!$('#app').hidden) renderDetail(); });
 document.addEventListener('click', e => { const a = e.target.closest('a.dl'); if (a && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0 && a.getAttribute('href')?.startsWith('#')) { e.preventDefault(); const h = a.getAttribute('href'); if (location.hash !== h) history.pushState({ fromPage: !$('#detail') || history.state?.fromPage }, '', h); renderDetail(); } });
