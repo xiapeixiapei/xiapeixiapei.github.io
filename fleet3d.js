@@ -145,11 +145,9 @@
     QR: { img: 'QR', name: 'Qatar Airways', zh: '卡塔尔航空', body: '#b6b8ba', belly: '#f1f1f2', engine: '#5c0632', lip: '#c9c9cb', winglet: '#5c0632', tail: 'qr',
       under: P => { P.below(0.33, '#f1f1f2'); },
       over: P => { P.title('QATAR', 0.1, tv(0.1), 0.1, { col: '#5C0631', f: SERIF, w: 700, sp: 0.04 }); } },
-    '9C': { name: 'Spring Airlines', zh: '春秋航空', belly: '#d9dde2', engine: W, winglet: '#1f9d55', tail: '9c',
-      under: P => {   // green lower fuselage rising over the rear fuselage
-        const s = u => Math.max(0, Math.min(1, (u - 0.55) / 0.45)), vb = u => 0.31 - 0.26 * s(u) ** 1.4 + 0.1 * Math.max(0, (0.1 - u) / 0.1) ** 1.5;
-        P.ribbon(vb, () => 0.5, -0.01, 1.01, '#1f9d55'); },
-      over: P => { const a = P.title([{ logo: 'springbird', col: '#1f9d55', s: 1.3, dy: -0.05 }, { gap: 0.1 }, { t: '春秋航空', w: 600, cjk: 1 }], 0.11, tv(0.05), 0.05, { col: '#1f9d55', cjk: 1 }); P.title('Spring Airlines', a[1] + 0.03, tv(0.046), 0.046, { col: '#1f9d55', w: 700 }); } },
+    '9C': { img: '9C', overOnArt: true, name: 'Spring Airlines', zh: '春秋航空', belly: '#e9ebee', engine: W, lip: '#c9d0d8', winglet: '#1e9646', tail: '9c',
+      under: P => { P.below(0.42, '#e9ebee'); },
+      over: P => { const a = P.title('春秋航空', 0.12, tv(0.07), 0.07, { col: '#108c54', w: 700, cjk: 1, sp: 0.08 }); P.title('SPRING AIRLINES', a[0] + 0.01, 0.17, 0.016, { col: '#108c54', w: 700, sp: 0.1 }); } },
     CN: { name: 'Grand China Air', zh: '大新华航空', engine: W, winglet: '#c8102e', tail: 'cn',
       under: P => { const s = u => Math.max(0, Math.min(1, (u - 0.17) / 0.83)), rt = u => 0.45 - 0.25 * s(u) ** 0.6 - 0.2 * s(u) ** 4, rb = u => 0.45 - 0.17 * s(u) ** 0.5, gb = u => rb(u) + 0.004 + 0.03 * s(u) ** 0.5;
         P.ribbon(rb, gb, 0.17, 1, '#e0a526'); P.ribbon(rt, rb, 0.17, 1, '#c8102e'); },
@@ -475,7 +473,7 @@
       taper(x, [[-0.3, 0.36], [0.0, 0.16], [0.3, 0.2], [0.5, 0.42]], 0.02, 0.07, 0.0); taper(x, [[-0.52, -0.22], [-0.6, -0.34], [-0.52, -0.46], [-0.4, -0.5]], 0.06, 0.04, 0.0); x.restore(); },
     ky(x, w, h, f) { bg(x, w, h, '#C8102E'); const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy + f.s * 0.05); x.scale(m, 1); LOGO.peacock(x, 0, 0, f.s * 1.15); x.restore(); },
     gj(x, w, h, f) { bg(x, w, h, '#8EC8EB'); const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy - f.s * 0.05); x.scale(m, 1); LOGO.dragon(x, 0, 0, f.s * 1.05); x.restore(); },
-    '9c'(x, w, h, f) { bg(x, w, h, '#1f9d55'); const m = f.m ? -1 : 1; x.save(); x.translate(f.cx, f.cy); x.scale(m, 1); LOGO.springbird(x, 0, 0, f.s * 1.2, '#ffffff'); x.restore(); },
+    '9c'(x, w, h, f) { bg(x, w, h, '#1e9646'); band(x, f, 0.6, 0.8, 0.82, 1.02, '#8cc846'); band(x, f, 0.8, 0.9, 0.95, 1.05, '#e6d728'); disc(x, f.cx, f.cy - f.s * 0.15, f.s * 0.42, '#f5f7f5'); },
     cn(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.1, '#e0a526'); },
     gen(x, w, h, f, liv) { bg(x, w, h, '#c9d1dc'); if (liv.code) lab(x, f, liv.code, f.cx, f.cy, f.s * 0.5, '#2b3440'); },
   };
