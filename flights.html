@@ -356,7 +356,7 @@
   <div class="gate-card hud">
     <div class="gate-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
     <p class="kicker" data-en="Flight log" data-zh="飞行记录">Flight log</p>
-    <h1>My Air Times</h1>
+    <h1 data-en="My Air Times" data-zh="云间岁月">My Air Times</h1>
     <p class="lead" data-en="A private page. Enter the travel password to open the flight log." data-zh="这是一个私密页面，请输入旅行足迹的密码查看飞行记录。">A private page. Enter the travel password to open the flight log.</p>
     <form id="f-gate" autocomplete="on">
       <input type="text" name="username" value="travel" autocomplete="username" hidden>
@@ -376,7 +376,7 @@
     <aside class="col side">
       <section class="hero sec-hero">
         <p class="kicker" data-en="Flight log · personal record" data-zh="飞行记录 · 个人档案">Flight log · personal record</p>
-        <h1>My Air Times</h1>
+        <h1 data-en="My Air Times" data-zh="云间岁月">My Air Times</h1>
         <p class="sub" id="sub"></p>
       </section>
       <div class="filters sec-filters">
@@ -880,7 +880,7 @@ function applyLang(lang) {
   document.querySelectorAll('[data-en][data-zh]').forEach(el => { el.textContent = el.getAttribute('data-' + lang); });
   document.querySelectorAll('[data-tip-en]').forEach(el => { el.title = el.getAttribute('data-tip-' + lang); });
   document.querySelectorAll('[data-ph-en]').forEach(el => { el.placeholder = el.getAttribute('data-ph-' + lang); });
-  const o = window.SITE_OWNER?.[lang]; document.title = (lang === 'zh' ? '飞行记录 · My Air Times' : 'My Air Times') + (o ? ' | ' + o : '');
+  const o = window.SITE_OWNER?.[lang]; document.title = (lang === 'zh' ? '云间岁月 · 飞行记录' : 'My Air Times') + (o ? ' | ' + o : '');
   if (MAP) MapBase.setLang(lang);
   paintThemeBtn();
   if (!$('#app').hidden) renderAll();
@@ -954,7 +954,7 @@ fetch('content.json', { cache: 'no-cache' }).then(r => r.json()).then(c => {
   const p = c.profile || {}; window.SITE_OWNER = { en: p.name_en || '', zh: p.name_zh || p.name_en || '' };
   document.querySelectorAll('.site-owner').forEach(el => { el.textContent = p.name_en || ''; });
   const lang = typeof LANG !== 'undefined' ? LANG : 'en', o = window.SITE_OWNER[lang];
-  document.title = (lang === 'zh' ? '飞行记录 · My Air Times' : 'My Air Times') + (o ? ' | ' + o : '');
+  document.title = (lang === 'zh' ? '云间岁月 · 飞行记录' : 'My Air Times') + (o ? ' | ' + o : '');
   OWNER.en = p.name_en || ''; OWNER.zh = p.name_zh || p.name_en || '';
   const LINK_I = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>';
   (p.links || []).forEach(l => { if (l.url && l.label && !OWNER.links.some(x => x[0] === l.url)) OWNER.links.push([l.url, l.label, l.label, LINK_I]); });
