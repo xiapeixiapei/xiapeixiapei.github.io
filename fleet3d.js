@@ -12,7 +12,8 @@
  *
  * Usage: Fleet3D.load().then(ok => …); Fleet3D.card(canvas, { type, airline }); Fleet3D.setAirline(canvas, al);
  *        Fleet3D.setTheme('light' | 'dark'); Fleet3D.viewer(host, { type, airline }) → { setAirline, setTheme, destroy };
- *        Fleet3D.liveryName(iata, lang); Fleet3D.sprite({ type, airline }) → data URL of a top-down view (route animation)
+ *        Fleet3D.liveryName(iata, lang); Fleet3D.sprite({ type, airline }) → data URL of a top-down view;
+ *        Fleet3D.flyer({ type, airline }) → { canvas, draw(heading, alt), destroy } (the live model of the route animation)
  */
 (function () {
   'use strict';
@@ -635,6 +636,30 @@
       R0.setSize(px, px, false); R0.render(sc, cam); const url = R0.domElement.toDataURL('image/png');
       R0.setSize(RW, RH, false); dispose(m); dispose(sc);
       SPRITES.set(key, url); return url;
+    },
+    // Live model for the route animation: its own small renderer on a transparent canvas, seen from above and a little
+    // from the south so the livery shows. draw(heading, alt): heading is the screen angle of travel (radians, 0 = east,
+    // clockwise, as atan2 of screen y over x); alt 0..1 lifts the model (bigger, banked shadow) mid-flight.
+    flyer({ type, airline }, css = 150) {
+      const dpr = Math.min(2, window.devicePixelRatio || 1), cv = cnv(Math.round(css * dpr), Math.round(css * dpr));
+      cv.style.width = cv.style.height = css + 'px';
+      const rnd = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: 'low-power' });
+      rnd.setPixelRatio(1); rnd.setSize(cv.width, cv.height, false); rnd.outputColorSpace = T.SRGBColorSpace; rnd.toneMapping = T.ACESFilmicToneMapping; rnd.toneMappingExposure = 1.1;
+      const sc = new T.Scene(); sc.add(new T.HemisphereLight('#ffffff', '#8a97a8', 1.45));
+      const sun = new T.DirectionalLight('#ffffff', 1.7); sun.position.set(-1.5, 4, 2.5); sc.add(sun);
+      const cam = new T.PerspectiveCamera(24, 1, 0.1, 40); cam.position.set(0, 5.3, 4.9); cam.up.set(0, 0, -1); cam.lookAt(0, 0, 0);
+      const model = buildAircraft(type, airline), pivot = new T.Group(); pivot.add(model); sc.add(pivot);
+      return {
+        canvas: cv,
+        draw(heading, alt = 1, now = performance.now()) {
+          // nose is −x in model space; a yaw of π − heading points it along the screen direction (screen y = world +z)
+          pivot.rotation.set(0, Math.PI - heading, 0);
+          pivot.scale.setScalar(0.62 + 0.38 * alt);
+          model.traverse(o => { if (o.userData.spin) o.userData.spin.rotation.x = now * 0.02; });
+          rnd.render(sc, cam);
+        },
+        destroy() { dispose(model); dispose(sc); rnd.dispose(); rnd.forceContextLoss?.(); cv.remove(); },
+      };
     },
     // Full-size viewer with its own renderer: slow rotation, drag to turn, wheel / pinch to zoom
     viewer(host, { type, airline, yaw = YAW0, zoom = 1 }) {

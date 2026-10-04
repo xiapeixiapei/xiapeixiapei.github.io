@@ -2,7 +2,7 @@
  *
  * - Aircraft types: ICAO type designator → name, manufacturer, body class (the 3D models in
  *   fleet3d.js are built from each type's dimensions; a blueprint silhouette is the fallback).
- * - Chinese names for common airlines and manufacturers.
+ * - Chinese names for common airlines and manufacturers; the usual names of airports (Aviation.airportName).
  * - Great-circle distance, estimated flight time and great-circle paths for the map.
  *
  * Usage: window.Aviation.type('B77W'), Aviation.typeName(code, lang), Aviation.silhouette(kind), …
@@ -76,6 +76,79 @@
     QF: '澳洲航空', NZ: '新西兰航空', AA: '美国航空', UA: '美国联合航空', DL: '达美航空', AC: '加拿大航空', ET: '埃塞俄比亚航空',
   };
 
+  // ── Airports: the names people actually use ("Beijing Capital", "北京首都"), not the official long form ──
+  const AP_NAMES = {
+    // Mainland China, Hong Kong, Macau, Taiwan
+    PEK: ['Beijing Capital', '北京首都'], PKX: ['Beijing Daxing', '北京大兴'], PVG: ['Shanghai Pudong', '上海浦东'], SHA: ['Shanghai Hongqiao', '上海虹桥'],
+    CAN: ['Guangzhou Baiyun', '广州白云'], SZX: ["Shenzhen Bao'an", '深圳宝安'], CTU: ['Chengdu Shuangliu', '成都双流'], TFU: ['Chengdu Tianfu', '成都天府'],
+    CKG: ['Chongqing Jiangbei', '重庆江北'], KMG: ['Kunming Changshui', '昆明长水'], XIY: ["Xi'an Xianyang", '西安咸阳'], HGH: ['Hangzhou Xiaoshan', '杭州萧山'],
+    NKG: ['Nanjing Lukou', '南京禄口'], WUH: ['Wuhan Tianhe', '武汉天河'], CSX: ['Changsha Huanghua', '长沙黄花'], XMN: ['Xiamen Gaoqi', '厦门高崎'],
+    FOC: ['Fuzhou Changle', '福州长乐'], TAO: ['Qingdao Jiaodong', '青岛胶东'], TNA: ['Jinan Yaoqiang', '济南遥墙'], CGO: ['Zhengzhou Xinzheng', '郑州新郑'],
+    TSN: ['Tianjin Binhai', '天津滨海'], SHE: ['Shenyang Taoxian', '沈阳桃仙'], DLC: ['Dalian Zhoushuizi', '大连周水子'], HRB: ['Harbin Taiping', '哈尔滨太平'],
+    CGQ: ['Changchun Longjia', '长春龙嘉'], URC: ['Ürümqi Tianshan', '乌鲁木齐天山'], LHW: ['Lanzhou Zhongchuan', '兰州中川'], KWE: ['Guiyang Longdongbao', '贵阳龙洞堡'],
+    NNG: ['Nanning Wuxu', '南宁吴圩'], KWL: ['Guilin Liangjiang', '桂林两江'], HAK: ['Haikou Meilan', '海口美兰'], SYX: ['Sanya Phoenix', '三亚凤凰'],
+    HFE: ['Hefei Xinqiao', '合肥新桥'], KHN: ['Nanchang Changbei', '南昌昌北'], TYN: ['Taiyuan Wusu', '太原武宿'], SJW: ['Shijiazhuang Zhengding', '石家庄正定'],
+    HET: ['Hohhot Baita', '呼和浩特白塔'], INC: ['Yinchuan Hedong', '银川河东'], XNN: ['Xining Caojiabao', '西宁曹家堡'], LXA: ['Lhasa Gonggar', '拉萨贡嘎'],
+    WNZ: ['Wenzhou Longwan', '温州龙湾'], NGB: ['Ningbo Lishe', '宁波栎社'], JJN: ['Quanzhou Jinjiang', '泉州晋江'], ZUH: ['Zhuhai Jinwan', '珠海金湾'],
+    SWA: ['Jieyang Chaoshan', '揭阳潮汕'], YNT: ['Yantai Penglai', '烟台蓬莱'], WEH: ['Weihai Dashuibo', '威海大水泊'], LJG: ['Lijiang Sanyi', '丽江三义'],
+    JHG: ['Xishuangbanna Gasa', '西双版纳嘎洒'], DLU: ['Dali', '大理'], DYG: ['Zhangjiajie Hehua', '张家界荷花'], CZX: ['Changzhou Benniu', '常州奔牛'],
+    WUX: ['Wuxi Shuofang', '无锡硕放'], NTG: ['Nantong Xingdong', '南通兴东'], YTY: ['Yangzhou Taizhou', '扬州泰州'], XUZ: ['Xuzhou Guanyin', '徐州观音'],
+    YIW: ['Yiwu', '义乌'], HSN: ['Zhoushan Putuoshan', '舟山普陀山'], YIH: ['Yichang Sanxia', '宜昌三峡'], TXN: ['Huangshan Tunxi', '黄山屯溪'],
+    JZH: ['Jiuzhai Huanglong', '九寨黄龙'], KHG: ['Kashgar', '喀什'], BAV: ['Baotou', '包头'], DSN: ['Ordos Ejin Horo', '鄂尔多斯伊金霍洛'], HLD: ['Hailar Dongshan', '海拉尔东山'],
+    LYI: ['Linyi Qiyang', '临沂启阳'], ZHA: ['Zhanjiang Wuchuan', '湛江吴川'], MIG: ['Mianyang Nanjiao', '绵阳南郊'], LZO: ['Luzhou Yunlong', '泸州云龙'],
+    HKG: ['Hong Kong', '香港'], MFM: ['Macau', '澳门'], TPE: ['Taipei Taoyuan', '台北桃园'], TSA: ['Taipei Songshan', '台北松山'], KHH: ['Kaohsiung', '高雄'],
+    // Rest of Asia, Middle East, Russia
+    HND: ['Tokyo Haneda', '东京羽田'], NRT: ['Tokyo Narita', '东京成田'], KIX: ['Osaka Kansai', '大阪关西'], ITM: ['Osaka Itami', '大阪伊丹'],
+    NGO: ['Nagoya Chubu', '名古屋中部'], CTS: ['Sapporo New Chitose', '札幌新千岁'], FUK: ['Fukuoka', '福冈'], OKA: ['Okinawa Naha', '冲绳那霸'],
+    ICN: ['Seoul Incheon', '首尔仁川'], GMP: ['Seoul Gimpo', '首尔金浦'], PUS: ['Busan Gimhae', '釜山金海'], CJU: ['Jeju', '济州'],
+    SIN: ['Singapore Changi', '新加坡樟宜'], BKK: ['Bangkok Suvarnabhumi', '曼谷素万那普'], DMK: ['Bangkok Don Mueang', '曼谷廊曼'], HKT: ['Phuket', '普吉'],
+    CNX: ['Chiang Mai', '清迈'], KUL: ['Kuala Lumpur', '吉隆坡'], CGK: ['Jakarta Soekarno–Hatta', '雅加达苏加诺-哈达'], DPS: ['Bali Denpasar', '巴厘岛登巴萨'],
+    MNL: ['Manila', '马尼拉'], SGN: ['Ho Chi Minh City Tan Son Nhat', '胡志明市新山一'], HAN: ['Hanoi Noi Bai', '河内内排'], DAD: ['Da Nang', '岘港'],
+    PNH: ['Phnom Penh', '金边'], REP: ['Siem Reap', '暹粒'], RGN: ['Yangon', '仰光'], KTM: ['Kathmandu', '加德满都'], CMB: ['Colombo', '科伦坡'], MLE: ['Malé', '马累'],
+    DEL: ['Delhi', '德里'], BOM: ['Mumbai', '孟买'], ULN: ['Ulaanbaatar', '乌兰巴托'], ALA: ['Almaty', '阿拉木图'], TAS: ['Tashkent', '塔什干'],
+    DXB: ['Dubai', '迪拜'], DWC: ['Dubai World Central', '迪拜世界中心'], AUH: ['Abu Dhabi', '阿布扎比'], DOH: ['Doha Hamad', '多哈哈马德'],
+    IST: ['Istanbul', '伊斯坦布尔'], SAW: ['Istanbul Sabiha Gökçen', '伊斯坦布尔萨比哈·格克琴'], TLV: ['Tel Aviv Ben Gurion', '特拉维夫本·古里安'], CAI: ['Cairo', '开罗'],
+    SVO: ['Moscow Sheremetyevo', '莫斯科谢列梅捷沃'], DME: ['Moscow Domodedovo', '莫斯科多莫杰多沃'], VKO: ['Moscow Vnukovo', '莫斯科伏努科沃'], LED: ['St Petersburg Pulkovo', '圣彼得堡普尔科沃'],
+    // Europe
+    AMS: ['Amsterdam Schiphol', '阿姆斯特丹史基浦'], EIN: ['Eindhoven', '埃因霍温'], RTM: ['Rotterdam The Hague', '鹿特丹海牙'], GRQ: ['Groningen Eelde', '格罗宁根伊尔德'],
+    LHR: ['London Heathrow', '伦敦希思罗'], LGW: ['London Gatwick', '伦敦盖特威克'], STN: ['London Stansted', '伦敦斯坦斯特德'], LTN: ['London Luton', '伦敦卢顿'], LCY: ['London City', '伦敦城市'],
+    MAN: ['Manchester', '曼彻斯特'], EDI: ['Edinburgh', '爱丁堡'], DUB: ['Dublin', '都柏林'],
+    CDG: ['Paris Charles de Gaulle', '巴黎戴高乐'], ORY: ['Paris Orly', '巴黎奥利'], BVA: ['Paris Beauvais', '巴黎博韦'], LYS: ['Lyon Saint-Exupéry', '里昂圣埃克苏佩里'],
+    NCE: ["Nice Côte d'Azur", '尼斯蔚蓝海岸'], MRS: ['Marseille Provence', '马赛普罗旺斯'], TLS: ['Toulouse Blagnac', '图卢兹布拉尼亚克'], MPL: ['Montpellier', '蒙彼利埃'], BOD: ['Bordeaux', '波尔多'],
+    FRA: ['Frankfurt', '法兰克福'], MUC: ['Munich', '慕尼黑'], BER: ['Berlin Brandenburg', '柏林勃兰登堡'], DUS: ['Düsseldorf', '杜塞尔多夫'], HAM: ['Hamburg', '汉堡'],
+    CGN: ['Cologne Bonn', '科隆/波恩'], STR: ['Stuttgart', '斯图加特'], BRU: ['Brussels', '布鲁塞尔'], CRL: ['Brussels Charleroi', '布鲁塞尔沙勒罗瓦'], LUX: ['Luxembourg', '卢森堡'],
+    ZRH: ['Zurich', '苏黎世'], GVA: ['Geneva', '日内瓦'], BSL: ['Basel-Mulhouse', '巴塞尔-米卢斯'], VIE: ['Vienna', '维也纳'], PRG: ['Prague', '布拉格'],
+    BUD: ['Budapest', '布达佩斯'], WAW: ['Warsaw Chopin', '华沙肖邦'], KRK: ['Kraków', '克拉科夫'], CPH: ['Copenhagen', '哥本哈根'], ARN: ['Stockholm Arlanda', '斯德哥尔摩阿兰达'],
+    OSL: ['Oslo Gardermoen', '奥斯陆加勒穆恩'], HEL: ['Helsinki', '赫尔辛基'], KEF: ['Reykjavík Keflavík', '雷克雅未克凯夫拉维克'],
+    MAD: ['Madrid Barajas', '马德里巴拉哈斯'], BCN: ['Barcelona El Prat', '巴塞罗那埃尔普拉特'], SVQ: ['Seville', '塞维利亚'], AGP: ['Málaga', '马拉加'], VLC: ['Valencia', '瓦伦西亚'],
+    PMI: ['Palma de Mallorca', '帕尔马'], LIS: ['Lisbon', '里斯本'], OPO: ['Porto', '波尔图'], FCO: ['Rome Fiumicino', '罗马菲乌米奇诺'], CIA: ['Rome Ciampino', '罗马钱皮诺'],
+    MXP: ['Milan Malpensa', '米兰马尔彭萨'], LIN: ['Milan Linate', '米兰利纳特'], BGY: ['Milan Bergamo', '米兰贝加莫'], VCE: ['Venice Marco Polo', '威尼斯马可波罗'],
+    NAP: ['Naples', '那不勒斯'], FLR: ['Florence', '佛罗伦萨'], BLQ: ['Bologna', '博洛尼亚'], ATH: ['Athens', '雅典'],
+    // Americas, Oceania, Africa
+    JFK: ['New York JFK', '纽约肯尼迪'], EWR: ['Newark', '纽瓦克'], LGA: ['New York LaGuardia', '纽约拉瓜迪亚'], LAX: ['Los Angeles', '洛杉矶'], SFO: ['San Francisco', '旧金山'],
+    SEA: ['Seattle–Tacoma', '西雅图'], ORD: ["Chicago O'Hare", '芝加哥奥黑尔'], BOS: ['Boston Logan', '波士顿洛根'], IAD: ['Washington Dulles', '华盛顿杜勒斯'], DCA: ['Washington Reagan', '华盛顿里根'],
+    ATL: ['Atlanta', '亚特兰大'], DFW: ['Dallas/Fort Worth', '达拉斯-沃斯堡'], IAH: ['Houston Bush', '休斯敦布什'], MIA: ['Miami', '迈阿密'], LAS: ['Las Vegas', '拉斯维加斯'], DEN: ['Denver', '丹佛'],
+    HNL: ['Honolulu', '檀香山'], YVR: ['Vancouver', '温哥华'], YYZ: ['Toronto Pearson', '多伦多皮尔逊'], YUL: ['Montréal Trudeau', '蒙特利尔特鲁多'], MEX: ['Mexico City', '墨西哥城'],
+    GRU: ['São Paulo Guarulhos', '圣保罗瓜鲁柳斯'], SYD: ['Sydney', '悉尼'], MEL: ['Melbourne', '墨尔本'], BNE: ['Brisbane', '布里斯班'], PER: ['Perth', '珀斯'], AKL: ['Auckland', '奥克兰'],
+    JNB: ['Johannesburg', '约翰内斯堡'], ADD: ['Addis Ababa', '亚的斯亚贝巴'], NBO: ['Nairobi', '内罗毕'],
+  };
+  // Name for any other airport: the official name without "International Airport" and the like (a lone surname gets its city)
+  function shortAirportName(ap) {
+    const city = String(ap.city || '').trim();
+    let n = String(ap.name || '').replace(/\b(International|Intl\.?|Regional|Municipal)\b/gi, '').replace(/\b(Airport|Airfield|Aeroporto|Aéroport|Aeropuerto|Flughafen|Luchthaven|Lufthavn|Flygplats|Lotnisko)\b/gi, '')
+      .replace(/\s*[-–]\s*$/, '').replace(/\s{2,}/g, ' ').trim();
+    if (!n) return city || ap.iata || '';
+    const f4 = x => x.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 4);
+    if (city && n.split(/[\s-]+/).length === 1 && f4(n) !== f4(city)) n = `${city} ${n}`;   // "Kotoka" becomes "Accra Kotoka"
+    return n;
+  }
+  function airportName(ap, lang) {
+    if (!ap) return '';
+    const k = AP_NAMES[String(ap.iata || '').toUpperCase()];
+    if (k) return lang === 'zh' ? k[1] : k[0];
+    return lang === 'zh' && ap.city_zh ? ap.city_zh : shortAirportName(ap);
+  }
+
   // ── Distance and time ──
   const R = 6371.0088, rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
   function distKm(a, b) {
@@ -143,5 +216,5 @@
       <path d="${wing}"/><path d="${tail}"/><path d="${fus}"/><g>${engines}</g></svg>`;
   }
 
-  window.Aviation = { TYPES, type, typeName, mfrName, airlineName, AIRLINE_ZH, countryName, statCC, distKm, estMinutes, greatCircle, silhouette };
+  window.Aviation = { TYPES, type, typeName, mfrName, airlineName, airportName, AIRLINE_ZH, countryName, statCC, distKm, estMinutes, greatCircle, silhouette };
 })();
