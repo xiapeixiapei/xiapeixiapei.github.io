@@ -83,6 +83,9 @@
       over: P => { P.logo('mfegret', 0.155, 0.145, 0.07, '#1a5fae');
         const a = P.title('厦门航空', 0.19, 0.145, 0.04, { col: '#1a5fae', w: 600, cjk: 1, sp: 0.12 });
         P.title([{ t: 'XIAMEN', w: 800 }, { t: 'AIR', w: 400 }], a[1] + 0.012, 0.145, 0.038, { col: '#1a5fae' }); } },
+    GT: { name: 'Air Guilin', zh: '桂林航空', engine: W, lip: '#c9d0d8', winglet: '#1a44b8', tail: 'gt',
+      over: P => { const a = P.title([{ logo: 'guilin', col: '#1f4fc0' }], 0.14, tv(0.05), 0.05); const b = P.title('桂林航空', a[1] + 0.01, tv(0.05), 0.05, { col: '#1f4fc0', w: 700, cjk: 1, sp: 0.1 });
+        P.title('Air Guilin', b[1] + 0.015, tv(0.052), 0.052, { col: '#1f4fc0', w: 700, i: 1 }); } },
     HU: { img: 'HU', name: 'Hainan Airlines', zh: '海南航空', engine: W, winglet: '#c8102e', tail: 'hu',
       under: P => {   // red and gold ribbon from the tail, sweeping down under the windows to a point below the forward cabin
         const s = u => Math.max(0, Math.min(1, (u - 0.17) / 0.83));
@@ -388,6 +391,15 @@
       x.lineWidth = 0.045; [-0.12, 0.0, 0.12, 0.24].forEach((a, i) => { x.beginPath(); x.moveTo(a, -0.22 + i * 0.01); x.lineTo(a - 0.02, 0.14 + i * 0.08); x.stroke(); });
       x.restore();
     },
+    guilin(x, cx, cy, s, col = '#1f4fc0') {   // Air Guilin: karst peaks over the Li River, with a red and an orange ribbon sweeping through
+      x.save(); x.translate(cx, cy); x.scale(s, s);
+      x.fillStyle = col; x.beginPath(); x.moveTo(-0.5, 0.22); x.bezierCurveTo(-0.38, 0.0, -0.3, -0.34, -0.14, -0.46); x.bezierCurveTo(-0.02, -0.3, 0.06, -0.1, 0.14, 0.02);
+      x.bezierCurveTo(0.22, -0.14, 0.3, -0.26, 0.38, -0.3); x.bezierCurveTo(0.44, -0.12, 0.48, 0.06, 0.5, 0.22); x.closePath(); x.fill();
+      x.lineCap = 'round'; x.strokeStyle = '#e23b2e'; x.lineWidth = 0.09; x.beginPath(); x.moveTo(-0.48, 0.1); x.bezierCurveTo(-0.2, 0.3, 0.1, 0.3, 0.5, -0.02); x.stroke();
+      x.strokeStyle = '#f39a1e'; x.lineWidth = 0.075; x.beginPath(); x.moveTo(-0.44, 0.24); x.bezierCurveTo(-0.16, 0.42, 0.14, 0.4, 0.5, 0.14); x.stroke();
+      x.globalAlpha = 0.55; x.fillStyle = col; x.beginPath(); x.moveTo(-0.3, 0.36); x.bezierCurveTo(-0.14, 0.5, 0.1, 0.52, 0.34, 0.4); x.bezierCurveTo(0.14, 0.44, -0.1, 0.44, -0.3, 0.36); x.closePath(); x.fill();
+      x.restore();
+    },
     hna(x, cx, cy, s, col = '#c8102e') {   // Hainan: stylised roc (concentric arcs over a curl)
       x.save(); x.translate(cx, cy); x.scale(s, s); x.strokeStyle = col; x.lineCap = 'round';
       [0.42, 0.32, 0.22].forEach((r, i) => { x.lineWidth = 0.07 - i * 0.012; x.beginPath(); x.arc(0.08, 0.1, r, Math.PI * 1.02, Math.PI * 1.75); x.stroke(); });
@@ -429,6 +441,7 @@
     cz(x, w, h, f) { bg(x, w, h, '#1793d1'); LOGO.kapok(x, f.cx, f.cy - f.s * 0.04, f.s * 0.95); },
     mu(x, w, h, f) { bg(x, w, h, '#fbfbfc'); along(x, f, 0.62, 0.635, '#1F2F7A'); LOGO.swallow(x, f.cx, f.cy - f.s * 0.05, f.s * 1.1); },
     mf(x, w, h, f) { bg(x, w, h, '#1f86d0'); LOGO.mfegret(x, f.cx, f.cy + f.s * 0.05, f.s * 1.3); },
+    gt(x, w, h, f) { bg(x, w, h, '#1a44b8'); LOGO.guilin(x, f.cx + f.s * 0.02, f.cy - f.s * 0.02, f.s * 1.05, '#ffffff'); },
     hu(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.1, '#e0a526'); },
     '3u'(x, w, h, f) { bg(x, w, h, '#c8102e'); x.strokeStyle = '#f5c400'; x.lineWidth = f.s * 0.06; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(f.cx - f.s * 0.2 + i * f.s * 0.13, f.cy + f.s * 0.35 - i * f.s * 0.12, f.s * 0.45, Math.PI * 1.15, Math.PI * 1.75); x.stroke(); } },
     zh(x, w, h, f) { bg(x, w, h, '#c8102e'); disc(x, f.cx, f.cy, f.s * 0.4, '#f2b632'); LOGO.egret(x, f.cx, f.cy, f.s * 0.55, '#c8102e'); },
