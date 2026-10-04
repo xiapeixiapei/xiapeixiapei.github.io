@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610041921"></script>
-<script src="fleet3d.js?v=202610041921"></script>
+<script src="aviation.js?v=202610041926"></script>
+<script src="fleet3d.js?v=202610041926"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -377,7 +377,7 @@
   <div class="top-bar-inner">
     <a href="index.html" class="back-link"><span class="back-arrow">←</span> <span class="site-owner">Home</span></a>
     <div class="bar-right">
-      <a class="icon-btn" href="travel.html" data-tip-en="Travel map" data-tip-zh="旅行足迹" title="Travel map" aria-label="Travel map">
+      <a class="icon-btn" href="travel.html" data-tip-en="Life in Passage" data-tip-zh="山河逆旅" title="Life in Passage" aria-label="Life in Passage">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
       </a>
       <button class="icon-btn" id="btn-lock" hidden data-tip-en="Lock this page" data-tip-zh="锁定页面" title="Lock this page" aria-label="Lock">
@@ -401,7 +401,7 @@
     <div class="gate-icon"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></div>
     <p class="kicker" data-en="Flight log" data-zh="飞行记录">Flight log</p>
     <h1 data-en="My Air Times" data-zh="云间岁月">My Air Times</h1>
-    <p class="lead" data-en="A private page. Enter the travel password to open the flight log." data-zh="这是一个私密页面，请输入旅行足迹的密码查看飞行记录。">A private page. Enter the travel password to open the flight log.</p>
+    <p class="lead" data-en="A private page. Enter the travel password to open the flight log." data-zh="这是一个私密页面，请输入山河逆旅的密码查看飞行记录。">A private page. Enter the travel password to open the flight log.</p>
     <form id="f-gate" autocomplete="on">
       <input type="text" name="username" value="travel" autocomplete="username" hidden>
       <label for="pw" data-en="Password" data-zh="密码">Password</label>
@@ -475,7 +475,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
-<script src="map-base.js?v=202610041921"></script>
+<script src="map-base.js?v=202610041926"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
