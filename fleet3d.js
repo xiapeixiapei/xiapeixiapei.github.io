@@ -60,17 +60,17 @@
   const ROUND = '"Arial Rounded MT Bold", "Varela Round", Nunito, "Helvetica Neue", Arial, sans-serif';
   const tv = hv => 0.184 - hv * 0.56;   // v of a title of cap height hv, sitting just above the windows
   const LIV = {
-    CA: { name: 'Air China', zh: '中国国际航空', belly: '#a6aaaf', engine: '#b9bdc2', lip: '#d5d9de', winglet: '#f2f3f5', tail: 'ca',
+    CA: { img: 'CA', name: 'Air China', zh: '中国国际航空', belly: '#a6aaaf', engine: '#b9bdc2', lip: '#d5d9de', winglet: '#f2f3f5', tail: 'ca',
       under: P => {   // grey belly; a single blue cheatline right under the windows, lifting into the fin root at the tail
         P.below(0.34, '#a6aaaf');
         const s = u => Math.max(0, (u - 0.8) / 0.2), top = u => 0.229 - 0.17 * s(u) ** 1.6, th = u => 0.02 + 0.03 * s(u) ** 1.5;
         P.ribbon(top, u => top(u) + th(u), -0.01, 1.01, '#0E4B7D'); },
       over: P => { const a = P.title([{ flag: 'cn' }], 0.12, tv(0.036), 0.036); P.title([{ t: 'AIR CHINA', i: 1, w: 900 }], a[1] + 0.012, tv(0.046), 0.046, { col: '#111' });
         P.title('中国国际航空公司', 0.4, tv(0.06), 0.06, { col: '#111', f: KAI, w: 400, cjk: 1, sp: 0.45 }); } },
-    CZ: { name: 'China Southern', zh: '中国南方航空', engine: W, winglet: '#1793d1', tail: 'cz',
+    CZ: { img: 'CZ', name: 'China Southern', zh: '中国南方航空', engine: W, winglet: '#1793d1', tail: 'cz',
       under: P => { P.band(0.219, 0.225, '#1aa0dc', 0.012, 0.955); P.band(0.229, 0.241, '#0c2c66', 0.012, 0.955); P.band(0.246, 0.25, '#1aa0dc', 0.012, 0.955); },
       over: P => { const a = P.title('中国南方航空', 0.12, tv(0.05), 0.05, { col: '#14284b', w: 500, cjk: 1, sp: 0.3 }); P.title('CHINA SOUTHERN', a[1] + 0.03, tv(0.048), 0.048, { col: '#14284b', f: OPTIMA, w: 600 }); } },
-    MU: { name: 'China Eastern', zh: '中国东方航空', engine: W, winglet: '#f2f3f5', tail: 'mu',
+    MU: { img: 'MU', name: 'China Eastern', zh: '中国东方航空', engine: W, winglet: '#f2f3f5', tail: 'mu',
       under: P => { P.below(0.42, '#d9dde2'); },
       over: P => { const a = P.title('中國東方航空', 0.1, tv(0.05), 0.05, { col: '#B70109', w: 500, cjk: 1, sp: 0.12 }); P.title('CHINA EASTERN', a[1] + 0.03, tv(0.048), 0.048, { col: '#1F2F7A', w: 800 }); } },
     MF: { name: 'Xiamen Air', zh: '厦门航空', belly: '#1f7fcc', engine: W, winglet: '#1f86d0', tail: 'mf',
@@ -93,7 +93,7 @@
     '3U': { name: 'Sichuan Airlines', zh: '四川航空', engine: W, winglet: '#c8102e', tail: '3u', text: ['四川航空', 'SICHUAN AIRLINES'], textColor: '#b5121b' },
     ZH: { name: 'Shenzhen Airlines', zh: '深圳航空', engine: W, winglet: '#c8102e', tail: 'zh', text: ['深圳航空', 'SHENZHEN AIRLINES'], textColor: '#b5121b' },
     FM: { name: 'Shanghai Airlines', zh: '上海航空', engine: W, winglet: '#c8102e', tail: 'fm', text: ['上海航空', 'SHANGHAI AIRLINES'], textColor: '#b5121b' },
-    KL: { name: 'KLM', zh: '荷兰皇家航空', body: '#dfe2e6', belly: '#dfe2e6', engine: '#dfe2e6', lip: '#c9d0d8', winglet: '#00a1de', tail: 'klm',
+    KL: { img: 'KL', name: 'KLM', zh: '荷兰皇家航空', body: '#dfe2e6', belly: '#dfe2e6', engine: '#dfe2e6', lip: '#c9d0d8', winglet: '#00a1de', tail: 'klm',
       under: P => { P.band(0, 0.262, '#00a1de'); P.band(0.262, 0.268, '#13286b', 0.004, 0.99); },
       over: P => { P.title([{ t: 'KLM', w: 900, above: { logo: 'klm', s: 0.9, dy: 1.15 } }, { gap: 0.25 }, { t: 'Royal Dutch Airlines', s: 0.42, w: 500, dy: 0.06 }], 0.09, tv(0.04) + 0.006, 0.04, { col: '#fff' }); } },
     AF: { name: 'Air France', zh: '法国航空', engine: W, winglet: '#002157', tail: 'af',
@@ -103,7 +103,7 @@
       over: P => { P.title('Lufthansa', 0.11, tv(0.078), 0.078, { col: '#0a1d4f', w: 800 }); } },
     AY: { name: 'Finnair', zh: '芬兰航空', engine: W, winglet: '#0b86c8', tail: 'ay',
       over: P => { P.title([{ t: 'FINNAIR', i: 1, w: 900, sp: 0.06 }], 0.09, tv(0.066), 0.066, { col: '#0b86c8' }); } },
-    BA: { name: 'British Airways', zh: '英国航空', belly: '#001F4E', engine: W, lip: '#c9d0d8', winglet: '#D52B1E', tail: 'ba',
+    BA: { img: 'BA', name: 'British Airways', zh: '英国航空', belly: '#001F4E', engine: W, lip: '#c9d0d8', winglet: '#D52B1E', tail: 'ba',
       under: P => {   // midnight blue over the whole lower half, thinning towards the nose; the red-and-blue Speedmarque ribbon under the cockpit
         const vb = u => 0.262 + 0.14 * Math.max(0, (0.14 - u) / 0.14) ** 1.4; P.ribbon(vb, () => 0.5, -0.01, 1.01, '#001F4E');
         P.ribbon(u => 0.2 - 0.06 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.04) / 0.11))), u => 0.2 - 0.06 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.04) / 0.11))) + 0.012 * Math.sin(Math.PI * Math.max(0, Math.min(1, (u - 0.04) / 0.11))), 0.04, 0.15, '#D52B1E');
@@ -119,7 +119,7 @@
       over: P => { P.title('Emirates', 0.28, tv(0.07), 0.07, { col: '#9a7b2f', f: SERIF, w: 700 }); } },
     TK: { name: 'Turkish Airlines', zh: '土耳其航空', engine: '#e9ecef', winglet: '#c8102e', tail: 'tk',
       over: P => { const a = P.title('TURKISH AIRLINES', 0.12, tv(0.048), 0.048, { col: '#1b4f9c', w: 800 }); P.title([{ flag: 'tr' }], a[1] + 0.02, tv(0.03), 0.03); } },
-    NH: { name: 'ANA', zh: '全日空', belly: '#e4e6e9', engine: '#e4e6e9', winglet: '#1d3c97', tail: 'nh',
+    NH: { img: 'NH', name: 'ANA', zh: '全日空', belly: '#e4e6e9', engine: '#e4e6e9', winglet: '#1d3c97', tail: 'nh',
       under: P => {   // Triton blue and Mohican blue bands: under the windows at the front, sweeping up the rear fuselage into the fin
         const s = u => Math.max(0, Math.min(1, (u - 0.06) / 0.94)), c = u => 0.272 - 0.21 * s(u) ** 1.35, th = u => 0.005 + 0.05 * s(u) ** 1.6;
         P.below(0.3, '#e4e6e9');
@@ -128,30 +128,30 @@
         P.ribbon(u => Math.max(0, c(u) - th(u) - 0.016 * s(u) ** 2), u => c(u) - th(u), 0.5, 1.01, '#00a0e9'); },
       over: P => { const a = P.title([{ t: 'ANA', i: 1, w: 900 }, { gap: 0.05 }, { slash: '#1d3c97' }], 0.12, tv(0.052), 0.052, { col: '#1d3c97' });
         const b = P.title([{ t: 'Inspiration of JAPAN', w: 500 }], a[1] + 0.012, tv(0.024), 0.024, { col: '#1d3c97' }); P.title([{ flag: 'jp' }], b[1] + 0.01, tv(0.024), 0.024); } },
-    TO: { name: 'Transavia', zh: '泛航航空', engine: W, winglet: '#00d26a', tail: 'to',
+    TO: { img: 'TO', name: 'Transavia', zh: '泛航航空', engine: W, winglet: '#00d26a', tail: 'to',
       over: P => { P.title([{ t: 'transavia', w: 800, sp: -0.02 }], 0.15, tv(0.1) + 0.004, 0.1, { col: '#00d26a', f: ROUND }); } },
-    HV: { name: 'Transavia', zh: '泛航航空', engine: W, winglet: '#00d26a', tail: 'to', over: P => LIV.TO.over(P) },
-    OS: { name: 'Austrian', zh: '奥地利航空', engine: W, winglet: '#d8001a', tail: 'os',
+    HV: { img: 'TO', name: 'Transavia', zh: '泛航航空', engine: W, winglet: '#00d26a', tail: 'to', over: P => LIV.TO.over(P) },
+    OS: { img: 'OS', name: 'Austrian', zh: '奥地利航空', engine: W, winglet: '#d8001a', tail: 'os',
       over: P => { const a = P.title([{ logo: 'osarrow', col: '#d8001a', s: 1.25, dy: -0.05 }], 0.1, tv(0.06), 0.06); P.title('Austrian', a[1] + 0.006, tv(0.064), 0.064, { col: '#d8001a', f: SERIF, w: 400 }); } },
-    FR: { name: 'Ryanair', zh: '瑞安航空', belly: '#073590', engine: '#073590', lip: '#c9d0d8', winglet: '#073590', tail: 'fr',
+    FR: { img: 'FR', name: 'Ryanair', zh: '瑞安航空', belly: '#073590', engine: '#073590', lip: '#c9d0d8', winglet: '#073590', tail: 'fr',
       under: P => {   // navy belly under a yellow line that dips at the nose and rises towards the tail
         const vb = u => 0.246 + 0.17 * Math.max(0, (0.13 - u) / 0.13) ** 1.6 - 0.035 * Math.max(0, (u - 0.8) / 0.2) ** 1.3;
         P.ribbon(vb, () => 0.5, -0.01, 1.01, '#073590'); P.ribbon(u => vb(u) - 0.009, vb, -0.01, 1.01, '#f1c933'); },
       over: P => { const a = P.title([{ logo: 'harp', col: '#073590', s: 1.35 }], 0.15, tv(0.082), 0.082); P.title([{ t: 'RYANAIR', w: 900, sp: 0.04 }], a[1] + 0.008, tv(0.082), 0.082, { col: '#073590', f: '"Arial Black", ' + FONT }); } },
-    VY: { name: 'Vueling', zh: '伏林航空', engine: '#ffcc00', lip: '#d5d9de', winglet: '#ffcc00', tail: 'vy',
+    VY: { img: 'VY', name: 'Vueling', zh: '伏林航空', engine: '#ffcc00', lip: '#d5d9de', winglet: '#ffcc00', tail: 'vy',
       under: P => {   // the tail's grey dots spill onto the rear fuselage
         for (let u = 0.8; u < 1; u += 0.012) for (let v = 0.01; v < 0.2; v += 0.022) { const t = (u - 0.8) / 0.2 - v * 2.2; if (t > 0.05) P.dot(u, v, Math.min(0.009, 0.0095 * t), '#8f8f8f'); } },
       over: P => { P.title([{ t: 'vueling', col: '#6b6b6b', w: 700 }, { dot: '#ffcc00' }, { t: 'com', col: '#ffcc00', w: 700 }], 0.11, tv(0.05), 0.05, { f: ROUND }); } },
-    QR: { name: 'Qatar Airways', zh: '卡塔尔航空', body: '#b6b8ba', belly: '#f1f1f2', engine: '#5c0632', lip: '#c9c9cb', winglet: '#5c0632', tail: 'qr',
+    QR: { img: 'QR', name: 'Qatar Airways', zh: '卡塔尔航空', body: '#b6b8ba', belly: '#f1f1f2', engine: '#5c0632', lip: '#c9c9cb', winglet: '#5c0632', tail: 'qr',
       under: P => { P.below(0.33, '#f1f1f2'); },
       over: P => { P.title('QATAR', 0.1, tv(0.1), 0.1, { col: '#5C0631', f: SERIF, w: 700, sp: 0.04 }); } },
-    TV: { name: 'Tibet Airlines', zh: '西藏航空', engine: W, winglet: '#1E5AA8', tail: 'tv',
+    TV: { img: 'TV', name: 'Tibet Airlines', zh: '西藏航空', engine: W, winglet: '#1E5AA8', tail: 'tv',
       under: P => {   // the wavy four-colour "khata" ribbon: starts under the forward door, dips under the wing, climbs to the tail and thins out
         P.below(0.42, '#d9dde2');
         const s = u => Math.max(0, Math.min(1, (u - 0.08) / 0.9)), base = u => 0.265 + 0.07 * Math.sin(Math.PI * s(u)) - 0.12 * s(u) ** 3, sc = u => 1 - 0.7 * s(u) ** 3;
         [['#BB000D', 0.016], ['#D5BC00', 0.013], ['#2aa14b', 0.013], ['#1E5AA8', 0.017]].reduce((v, [col, th]) => { P.ribbon(u => base(u) + v * sc(u), u => base(u) + (v + th) * sc(u), 0.08, 1.01, col); return v + th; }, 0); },
       over: P => { const a = P.title('西藏航空', 0.12, tv(0.046), 0.046, { col: '#111', w: 600, cjk: 1, sp: 0.1 }); P.title('TIBET AIRLINES', a[1] + 0.025, tv(0.042), 0.042, { col: '#111', w: 700 }); } },
-    JD: { name: 'Capital Airlines', zh: '首都航空', belly: '#d9dde2', engine: W, winglet: '#E41720', tail: 'jd',
+    JD: { img: 'JD', name: 'Capital Airlines', zh: '首都航空', belly: '#d9dde2', engine: W, winglet: '#E41720', tail: 'jd',
       under: P => {   // the rear fuselage is red, the red climbing from the belly to the crown ahead of the fin, with a golden brush sweep along its edge
         P.below(0.44, '#d9dde2');
         const s = u => Math.max(0, Math.min(1, (u - 0.66) / 0.24)), edge = u => 0.5 - 0.5 * s(u) ** 1.3;
@@ -186,6 +186,21 @@
       under: P => { P.band(0.232, 0.244, '#0b2a6f', 0.02, 0.96); },
       over: P => { P.title([{ t: 'EMBRAER', w: 900, sp: 0.08 }], 0.12, tv(0.05), 0.05, { col: '#0b2a6f' }); } },
   };
+  // Baked livery textures (liveries/<key>.jpg in the fuselage UV layout, liveries/<key>-fin.jpg = port | starboard fin, LE→TE across, tip→root down),
+  // made from FlightGear community livery textures with tools/bake-livery.py. Loaded on demand; the painted scheme stands in until then.
+  const ART = new Map(), ART_WAIT = [];
+  function artOf(liv) { const a = liv.img && ART.get(liv.img); return a && a.ready ? a : null; }
+  function loadArt(liv) {
+    if (!liv.img) return Promise.resolve(null);
+    let a = ART.get(liv.img);
+    if (!a) {
+      a = { key: liv.img, fus: new Image(), fin: new Image(), ready: false, failed: false, p: null };
+      a.p = Promise.all([a.fus, a.fin].map((im, i) => new Promise(res => { im.onload = () => res(true); im.onerror = () => res(false); im.src = `liveries/${liv.img}${i ? '-fin' : ''}.jpg`; })))
+        .then(ok => { a.ready = ok.every(Boolean); a.failed = !a.ready; ART_WAIT.forEach(fn => fn(a.key)); return a.ready ? a : null; });
+      ART.set(liv.img, a);
+    }
+    return a.p;
+  }
   const liveryOf = (al, code) => {
     const k = String(al?.iata || '').toUpperCase();
     if (LIV[k]) return { key: k, ...LIV[k] };
@@ -449,8 +464,17 @@
     gen(x, w, h, f, liv) { bg(x, w, h, '#c9d1dc'); if (liv.code) lab(x, f, liv.code, f.cx, f.cy, f.s * 0.5, '#2b3440'); },
   };
   function paintTail(liv, mirror, F) {
-    const h = 512, w = Math.min(1024, Math.round(h * F.aspect)), c = cnv(w, h), x = c.getContext('2d');
-    (TAILS[liv.tail] || TAILS.gen)(x, w, h, finFrame(F, w, h, mirror), liv);
+    const h = 512, w = Math.min(1024, Math.round(h * F.aspect)), c = cnv(w, h), x = c.getContext('2d'), f = finFrame(F, w, h, mirror), art = artOf(liv);
+    if (art) {   // each row of the fin: the matching row of the baked fin, stretched from the leading to the trailing edge (the starboard side is seen mirrored)
+      const S = art.fin.naturalWidth / 2, SH = art.fin.naturalHeight; bg(x, w, h, '#e9ebee');
+      for (let y = 0; y < h; y++) {
+        const a = f.at(y / h), sy = Math.min(SH - 1, Math.floor(y / h * SH));
+        x.save(); if (mirror) { x.translate(a.xl + a.xt, 0); x.scale(-1, 1); }
+        x.drawImage(art.fin, mirror ? S : 0, sy, S, 1, a.xl - 2, y, a.xt - a.xl + 4, 1); x.restore();
+      }
+      return c;
+    }
+    (TAILS[liv.tail] || TAILS.gen)(x, w, h, f, liv);
     return c;
   }
 
@@ -480,12 +504,13 @@
         return [x0 / cw, (x0 + w) / cw];
       },
     };
-    x.fillStyle = liv.body || W; x.fillRect(0, 0, cw, ch);
-    if (liv.under) liv.under(P); else P.below(0.4, '#e3e7ec');
+    const art = artOf(liv);
+    if (art) x.drawImage(art.fus, 0, 0, cw, ch);
+    else { x.fillStyle = liv.body || W; x.fillRect(0, 0, cw, ch); if (liv.under) liv.under(P); else P.below(0.4, '#e3e7ec'); }
     // windows (both sides), cockpit, doors
     const winV = 0.205, winH = 0.022 * ch, winW = Math.max(3, 0.42 / L * cw);
     x.fillStyle = '#1d2733';
-    for (let u = 0.13; u < 0.82; u += 0.53 / L) {
+    for (let u = 0.13; !art && u < 0.82; u += 0.53 / L) {   // the baked textures carry their own windows and doors
       x.beginPath(); x.roundRect(u * cw, winV * ch - winH / 2, winW, winH, winW / 2); x.fill();
       x.beginPath(); x.roundRect(u * cw, (1 - winV) * ch - winH / 2, winW, winH, winW / 2); x.fill();
     }
@@ -497,6 +522,7 @@
       if (y < 0 || y > 1 || a < 0.06 || a > 0.66 - 0.12 * y || z < 0.025 || Math.abs(z - 0.42) < 0.02 || Math.abs(z - 0.74) < 0.02) continue;
       x.fillRect(px, py, cs, cs); x.fillRect(px, ch - py - cs, cs, cs);
     }
+    if (art) return c;
     x.strokeStyle = 'rgba(40,50,62,0.35)'; x.lineWidth = 2;
     [0.1, 0.42, 0.86].forEach(u => [0.19, 0.81].forEach(v => x.strokeRect(u * cw, (v - 0.045) * ch, 0.9 / L * cw, 0.11 * ch)));
     if (liv.over) liv.over(P);
@@ -676,9 +702,12 @@
     const ctx = cv.getContext('2d'); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(R0.domElement, 0, 0, cv.width, cv.height);
   }
   function enqueue(cv) { if (!QUEUE.includes(cv)) QUEUE.push(cv); if (QUEUE.length === 1) setTimeout(work, 0); }
+  // When a livery texture finishes loading, cards (and cached sprites) that use it are drawn again
+  ART_WAIT.push(key => { for (const [cv, st] of CARDS) { if (liveryOf(st.airline, st.type).img === key) { st.done = false; if (st.visible) enqueue(cv); } } for (const k of [...SPRITES.keys()]) if (k.split('|')[1] === key || liveryOf({ iata: k.split('|')[1] }).img === key) SPRITES.delete(k); });
   function work() {   // one snapshot per task, so a long hangar never blocks the page
     const cv = QUEUE.shift(); if (!cv) return;
     const st = CARDS.get(cv);
+    if (st) loadArt(liveryOf(st.airline, st.type));
     if (st && cv.isConnected && !st.done && HOVER?.cv !== cv) { const m = buildAircraft(st.type, st.airline, REF); draw(cv, m, st.yaw, st.pitch); dispose(m); st.done = true; }
     if (QUEUE.length) setTimeout(work, 16);
   }
@@ -714,6 +743,8 @@
       });
     },
     has: code => !!DIMS[String(code || '').toUpperCase()],
+    // Resolve once the baked livery texture for this airline is loaded (or at once when there is none)
+    prepare(airline, code) { return loadArt(liveryOf(airline, code)); },
     dims: code => { const [L, S, D] = dimsOf(String(code || '').toUpperCase()); return { L, S, D }; },
     // Hangar scale: the longest dimension (m) that should fill a card; models are drawn to scale against it
     setRef(m) { m = m > 0 ? m * 1.02 : 0; if (m === REF) return; REF = m; for (const [cv, st] of CARDS) { if (!cv.isConnected) { CARDS.delete(cv); IO?.unobserve(cv); continue; } st.done = false; if (st.visible) enqueue(cv); } },
@@ -727,6 +758,7 @@
       CARDS.set(cv, st); wireCard(cv, st); IO.observe(cv);
     },
     setAirline(cv, airline) { const st = CARDS.get(cv); if (!st) return; st.airline = airline; st.done = false; if (HOVER?.cv === cv) { stopHover(); startHover(cv); } else enqueue(cv); },
+    setView(cv, yaw, pitch = 0) { const st = CARDS.get(cv); if (!st) return; st.yaw = yaw; st.pitch = pitch; st.done = false; enqueue(cv); },
     setTheme(theme) {
       const t = theme === 'light' ? 'light' : 'dark';
       if (t === THEME) return;
@@ -780,7 +812,9 @@
       rnd.outputColorSpace = T.SRGBColorSpace; rnd.toneMapping = T.ACESFilmicToneMapping; rnd.toneMappingExposure = 1.05; rnd.setPixelRatio(Math.min(1.5, window.devicePixelRatio || 1));
       let scene = makeScene(THEME); const cam = new T.PerspectiveCamera(30, 1, 0.1, 50);
       const st = { yaw, pitch: 0, zoom, dragging: false };
-      let model = buildAircraft(type, airline); scene.add(model);
+      let model = buildAircraft(type, airline); scene.add(model); let alive = true;
+      const rebuild = al => { if (!alive) return; scene.remove(model); dispose(model); model = buildAircraft(type, al); scene.add(model); };
+      loadArt(liveryOf(airline, type)).then(a => { if (a) rebuild(airline); });
       const size = () => { const w = host.clientWidth, h = host.clientHeight; rnd.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); };
       size(); const ro = new ResizeObserver(size); ro.observe(host);
       let p0 = null;
@@ -798,9 +832,9 @@
         frameCamera(cam, st.zoom * Math.min(1, Math.max(0.58, cam.aspect / 1.3))); rnd.render(scene, cam); };
       raf = requestAnimationFrame(tick);
       return {
-        setAirline(al) { scene.remove(model); dispose(model); model = buildAircraft(type, al); scene.add(model); },
+        setAirline(al) { rebuild(al); loadArt(liveryOf(al, type)).then(a => { if (a) rebuild(al); }); },
         setTheme(t) { scene.remove(model); dispose(scene); scene = makeScene(t === 'light' ? 'light' : 'dark'); scene.add(model); },
-        destroy() { cancelAnimationFrame(raf); ro.disconnect(); dispose(model); dispose(scene); rnd.dispose(); rnd.forceContextLoss?.(); cv.remove(); },
+        destroy() { alive = false; cancelAnimationFrame(raf); ro.disconnect(); dispose(model); dispose(scene); rnd.dispose(); rnd.forceContextLoss?.(); cv.remove(); },
       };
     },
   };
