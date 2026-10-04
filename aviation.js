@@ -66,6 +66,7 @@
   // Chinese short names; everything else shows its English name in both languages
   const AIRLINE_ZH = {
     CA: '中国国际航空', MU: '中国东方航空', CZ: '中国南方航空', HU: '海南航空', '3U': '四川航空', ZH: '深圳航空', MF: '厦门航空',
+    CN: '大新华航空',
     FM: '上海航空', HO: '吉祥航空', '9C': '春秋航空', KN: '中国联合航空', SC: '山东航空', GS: '天津航空', JD: '首都航空', PN: '西部航空',
     TV: '西藏航空', EU: '成都航空', G5: '华夏航空', '8L': '祥鹏航空', BK: '奥凯航空', NS: '河北航空', GJ: '长龙航空', QW: '青岛航空', DR: '瑞丽航空',
     CX: '国泰航空', HX: '香港航空', UO: '香港快运', NX: '澳门航空', CI: '中华航空', BR: '长荣航空', JX: '星宇航空',
