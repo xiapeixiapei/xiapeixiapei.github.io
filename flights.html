@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610050040"></script>
-<script src="fleet3d.js?v=202610050040"></script>
+<script src="aviation.js?v=202610050110"></script>
+<script src="fleet3d.js?v=202610050110"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -199,6 +199,9 @@
   .fl-arrow { background: none; border: 0; pointer-events: none; }
   .fl-arrow span { display: block; width: 18px; height: 18px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)); }
   .fl-arrow.dim { opacity: 0.22; }
+  .fl-gliders { pointer-events: none; }
+  .fl-glider { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45)); }
+  .fl-glider.dim { opacity: 0.18 !important; }
   .fl-plane { background: none; border: 0; pointer-events: none; }
   .fl-plane img, .fl-plane-svg { display: block; width: 48px; height: 48px; filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.35)); }
   .fl-plane-svg { color: var(--cyan); padding: 12px; box-sizing: border-box; }
@@ -540,7 +543,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
 <script src="site-lang.js"></script>
-<script src="map-base.js?v=202610050040"></script>
+<script src="map-base.js?v=202610050110"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -690,33 +693,55 @@ function initMap() {
 const mapColors = () => document.documentElement.dataset.theme === 'light'
   ? { route: '#0a7ea6', acad: '#c77700', flow: '#ffffff', dot: '#0a7ea6', dotFill: '#ffffff', trail: ['#06b6d4', '#7c3aed', '#db2777'] }
   : { route: '#4de1ff', acad: '#ffb547', flow: '#ffffff', dot: '#4de1ff', dotFill: '#04111f', trail: ['#22d3ee', '#a78bfa', '#f472b6'] };
-// Direction arrows on a route: a chevron a little past the middle for a→b and, when flown the other way too, one a little
-// before the middle for b→a, so a two-way route reads "← →". Mercator is conformal, so the chevron's angle (from the
-// projected neighbours of its anchor point) holds at every zoom.
+// Direction arrows: a small glider travels each route from origin to destination (SVG <animateMotion> along the great-circle
+// path, so it costs no script time), fading in at take-off and out at landing; a route flown both ways gets one each way.
+// The gliders live in their own Leaflet SVG renderer, so they pan and zoom with the route lines; the paths are re-projected on
+// zoom and routes too short on screen go without. With reduced motion, a static chevron sits past the middle instead.
+const ARROWS = new WeakMap();   // map → { rend, g, specs }
 const ARROW_SVG = (col, halo) => `<svg viewBox="0 0 18 18" width="18" height="18"><path d="M5 3l7 6-7 6" fill="none" stroke="${halo}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/><path d="M5 3l7 6-7 6" fill="none" stroke="${col}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const ARROWS = new WeakMap();   // map → { group, specs }: arrows are redrawn on zoom so short routes stay clean
+const SVGNS = 'http://www.w3.org/2000/svg';
 function routeArrows(map, path, ab, ba, col, on = true) {
   let st = ARROWS.get(map);
-  if (!st) { st = { group: L.layerGroup().addTo(map), specs: [] }; ARROWS.set(map, st); map.on('zoomend', () => drawArrows(map)); }
-  st.specs.push({ path, ab, ba, col, on });
+  if (!st) {
+    const rend = L.svg({ pane: 'overlayPane' }).addTo(map), g = document.createElementNS(SVGNS, 'g'); g.setAttribute('class', 'fl-gliders'); rend._rootGroup.appendChild(g);
+    st = { rend, g, specs: [], marks: L.layerGroup().addTo(map), n: 0 }; ARROWS.set(map, st);
+    map.on('zoomend viewreset', () => drawArrows(map));
+  }
+  st.specs.push({ path, ab, ba, col, on, km: A.distKm({ lat: path[0][0], lon: path[0][1] }, { lat: path[path.length - 1][0], lon: path[path.length - 1][1] }) });
   if (!st.raf) st.raf = requestAnimationFrame(() => { st.raf = 0; drawArrows(map); });
 }
-function resetArrows(map) { const st = ARROWS.get(map); if (st) { st.group.clearLayers(); st.specs = []; } }
+function resetArrows(map) { const st = ARROWS.get(map); if (st) { st.g.replaceChildren(); st.marks.clearLayers(); st.specs = []; } }
 function drawArrows(map) {
-  const st = ARROWS.get(map); if (!st) return; st.group.clearLayers();
-  const P = L.Projection.SphericalMercator, halo = document.documentElement.dataset.theme === 'light' ? '#ffffff' : '#04111f', z = map.getZoom();
-  st.specs.forEach(({ path, ab, ba, col, on }) => {
-    const a = map.project(path[0], z), b = map.project(path[path.length - 1], z), px = a.distanceTo(b);
-    if (px < 90) return;   // too short on screen for an arrow to read
-    const put = (t, flip) => {
-      const i = Math.max(1, Math.min(path.length - 2, Math.round(t * (path.length - 1))));
-      const p0 = P.project(L.latLng(path[i - 1])), p1 = P.project(L.latLng(path[i + 1]));
-      const deg = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI + (flip ? 180 : 0);   // projected y grows southwards, like CSS
-      L.marker(path[i], { icon: L.divIcon({ className: 'fl-arrow' + (on ? '' : ' dim'), iconSize: [18, 18], iconAnchor: [9, 9], html: `<span style="transform:rotate(${deg.toFixed(1)}deg)">${ARROW_SVG(col, halo)}</span>` }), interactive: false, keyboard: false }).addTo(st.group);
+  const st = ARROWS.get(map); if (!st) return; st.g.replaceChildren(); st.marks.clearLayers();
+  const halo = document.documentElement.dataset.theme === 'light' ? '#ffffff' : '#04111f', z = map.getZoom(), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const P = L.Projection.SphericalMercator;
+  st.specs.forEach((sp, si) => {
+    const { path, ab, ba, col, on } = sp, pts = path.map(ll => map.latLngToLayerPoint(ll));
+    const px = pts[0].distanceTo(pts[pts.length - 1]); if (px < 60) return;
+    if (still) {   // static chevron(s), as before
+      const put = (t, flip) => { const i = Math.max(1, Math.min(path.length - 2, Math.round(t * (path.length - 1)))), p0 = P.project(L.latLng(path[i - 1])), p1 = P.project(L.latLng(path[i + 1]));
+        const deg = Math.atan2(p1.y - p0.y, p1.x - p0.x) * 180 / Math.PI + (flip ? 180 : 0);
+        L.marker(path[i], { icon: L.divIcon({ className: 'fl-arrow' + (on ? '' : ' dim'), iconSize: [18, 18], iconAnchor: [9, 9], html: `<span style="transform:rotate(${deg.toFixed(1)}deg)">${ARROW_SVG(col, halo)}</span>` }), interactive: false, keyboard: false }).addTo(st.marks); };
+      if (ab && ba && px >= 160) { put(0.6, false); put(0.4, true); } else put(0.5, !(ab >= (ba || 0)));
+      return;
+    }
+    const id = `fl-gp-${st.n}-${si}`, d = pts.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join('');
+    const track = document.createElementNS(SVGNS, 'path'); track.setAttribute('id', id); track.setAttribute('d', d); track.setAttribute('fill', 'none'); track.setAttribute('stroke', 'none'); st.g.appendChild(track);
+    const dur = Math.min(18, Math.max(5, 4 + sp.km / 700)), scale = Math.min(1, px / 260) * 0.25 + 0.75;   // slower on long hauls, a touch smaller on short hops
+    const glider = (rev, k) => {
+      const g = document.createElementNS(SVGNS, 'g'); g.setAttribute('class', 'fl-glider' + (on ? '' : ' dim'));
+      const body = document.createElementNS(SVGNS, 'path'); body.setAttribute('d', 'M-5.5 -4 L6 0 L-5.5 4 Z'); body.setAttribute('fill', col); body.setAttribute('stroke', halo); body.setAttribute('stroke-width', '1.2'); body.setAttribute('paint-order', 'stroke'); body.setAttribute('stroke-linejoin', 'round'); body.setAttribute('transform', `scale(${scale.toFixed(2)})`);
+      g.appendChild(body);
+      const begin = `${(-((si * 2.7 + k * 1.3) % dur)).toFixed(2)}s`;
+      const mo = document.createElementNS(SVGNS, 'animateMotion'); mo.setAttribute('dur', `${dur.toFixed(1)}s`); mo.setAttribute('repeatCount', 'indefinite'); mo.setAttribute('begin', begin); mo.setAttribute('rotate', rev ? 'auto-reverse' : 'auto');
+      if (rev) { mo.setAttribute('keyPoints', '1;0'); mo.setAttribute('keyTimes', '0;1'); mo.setAttribute('calcMode', 'linear'); }
+      const mp = document.createElementNS(SVGNS, 'mpath'); mp.setAttribute('href', '#' + id); mp.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + id); mo.appendChild(mp); g.appendChild(mo);
+      const fade = document.createElementNS(SVGNS, 'animate'); fade.setAttribute('attributeName', 'opacity'); fade.setAttribute('values', '0;1;1;0'); fade.setAttribute('keyTimes', '0;0.04;0.96;1'); fade.setAttribute('dur', `${dur.toFixed(1)}s`); fade.setAttribute('repeatCount', 'indefinite'); fade.setAttribute('begin', begin); g.appendChild(fade);
+      st.g.appendChild(g);
     };
-    const two = ab && ba && px >= 160;   // both directions only when there is room for two chevrons
-    if (two) { put(0.6, false); put(0.4, true); } else if (ab >= (ba || 0)) put(0.5, false); else put(0.5, true);
+    if (ab) glider(false, 0); if (ba) glider(true, 1);
   });
+  st.n++;
 }
 function renderMap(list) {
   initMap(); LAYER.clearLayers(); resetArrows(MAP);
