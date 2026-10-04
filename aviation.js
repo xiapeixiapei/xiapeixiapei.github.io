@@ -66,7 +66,7 @@
   // Chinese short names; everything else shows its English name in both languages
   const AIRLINE_ZH = {
     CA: '中国国际航空', MU: '中国东方航空', CZ: '中国南方航空', HU: '海南航空', '3U': '四川航空', ZH: '深圳航空', MF: '厦门航空',
-    CN: '大新华航空', KY: '昆明航空', TO: '法国泛航航空',
+    CN: '大新华航空', KY: '昆明航空', TO: '法国泛航航空', GT: '桂林航空',
     FM: '上海航空', HO: '吉祥航空', '9C': '春秋航空', KN: '中国联合航空', SC: '山东航空', GS: '天津航空', JD: '首都航空', PN: '西部航空',
     TV: '西藏航空', EU: '成都航空', G5: '华夏航空', '8L': '祥鹏航空', BK: '奥凯航空', NS: '河北航空', GJ: '长龙航空', QW: '青岛航空', DR: '瑞丽航空',
     CX: '国泰航空', HX: '香港航空', UO: '香港快运', NX: '澳门航空', CI: '中华航空', BR: '长荣航空', JX: '星宇航空',
@@ -159,6 +159,7 @@
     MF: { founded: 1984, base: 'Xiamen Gaoqi (XMN)', alliance: 'SkyTeam', en: 'Boeing-only fleet from Xiamen; the white egret on the blue tail is the city bird of Xiamen.', zh: '来自厦门的全波音机队航司；蓝色尾翼上的白鹭是厦门市鸟。' },
     TV: { founded: 2010, base: 'Lhasa Gonggar (LXA) / Chengdu', alliance: '—', en: 'The first airline based on the Tibetan plateau; its ribbon livery is a khata, the Tibetan ceremonial scarf.', zh: '第一家以青藏高原为基地的航空公司，彩带涂装取自藏族的哈达。' },
     JD: { founded: 1995, base: 'Beijing Daxing (PKX)', alliance: '—', en: 'Beijing Capital Airlines, an HNA Group carrier; the golden dragon on a red tail is the HNA family look.', zh: '北京首都航空，海航集团成员；红尾金龙是海航系的家族风格。' },
+    GT: { founded: 2016, base: 'Guilin Liangjiang (KWL)', alliance: '—', en: 'Guilin-based A319 / A320 operator of the HNA group; the blue tail carries the karst peaks and the Li River in white, red and orange.', zh: '以桂林两江为基地的海航系航司，机队为 A319 / A320；蓝色尾翼上是白、红、橙三色的漓江山水。' },
     KY: { founded: 2007, base: 'Kunming Changshui (KMG)', alliance: '—', en: 'Yunnan-based 737 operator; the golden peacock feathers on the red tail refer to the Dai peacock dance of Yunnan.', zh: '云南的全 737 机队航司；红尾翼上的金色孔雀翎取自云南傣族孔雀舞。' },
     GJ: { founded: 2011, base: 'Hangzhou Xiaoshan (HGH)', alliance: '—', en: 'Zhejiang Loong Airlines, from Hangzhou; the sky-blue livery carries a red Chinese dragon (loong).', zh: '浙江长龙航空，基地杭州；天蓝色涂装配红色中国龙。' },
     '9C': { founded: 2004, base: 'Shanghai Hongqiao (SHA)', alliance: '—', en: "China's first low-cost airline; the three S of its green emblem stand for smile, service and security.", zh: '中国第一家低成本航空公司；绿色标志里的三个 S 代表微笑、服务、安全。' },
