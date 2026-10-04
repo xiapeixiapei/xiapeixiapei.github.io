@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610050140"></script>
-<script src="fleet3d.js?v=202610050140"></script>
+<script src="aviation.js?v=202610050200"></script>
+<script src="fleet3d.js?v=202610050200"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -200,7 +200,7 @@
   .fl-arrow span { display: block; width: 18px; height: 18px; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)); }
   .fl-arrow.dim { opacity: 0.22; }
   .fl-gliders { pointer-events: none; }
-  .fl-glider { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35)); }
+  .fl-glider { filter: none; }
   .fl-glider.dim { opacity: 0.18 !important; }
   .fl-plane { background: none; border: 0; pointer-events: none; }
   .fl-plane img, .fl-plane-svg { display: block; width: 48px; height: 48px; filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.35)); }
@@ -544,7 +544,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
 <script src="site-lang.js"></script>
-<script src="map-base.js?v=202610050140"></script>
+<script src="map-base.js?v=202610050200"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -728,11 +728,14 @@ function drawArrows(map) {
     }
     const id = `fl-gp-${st.n}-${si}`, d = pts.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join('');
     const track = document.createElementNS(SVGNS, 'path'); track.setAttribute('id', id); track.setAttribute('d', d); track.setAttribute('fill', 'none'); track.setAttribute('stroke', 'none'); st.g.appendChild(track);
-    const dur = Math.min(18, Math.max(5, 4 + sp.km / 700)), scale = Math.min(1, px / 260) * 0.25 + 0.75;   // slower on long hauls, a touch smaller on short hops
+    const dur = Math.min(18, Math.max(5, 4 + sp.km / 700)), scale = Math.min(1, px / 260) * 0.3 + 0.8;   // slower on long hauls, a touch smaller on short hops
     const glider = (rev, k) => {
       const g = document.createElementNS(SVGNS, 'g'); g.setAttribute('class', 'fl-glider' + (on ? '' : ' dim'));
-      const body = document.createElementNS(SVGNS, 'path'); body.setAttribute('d', 'M-6.5 -4.5 L7 0 L-6.5 4.5 Z'); body.setAttribute('fill', col); body.setAttribute('stroke', '#ffffff'); body.setAttribute('stroke-width', '1.4'); body.setAttribute('paint-order', 'stroke'); body.setAttribute('stroke-linejoin', 'round'); body.setAttribute('transform', `scale(${scale.toFixed(2)})`);
-      g.appendChild(body);
+      // a short arrowhead in the line's own two tones (route colour at the back, white at the tip) inside the same soft glow as the line
+      const mk = (d, fill, stroke, sw, op) => { const e = document.createElementNS(SVGNS, 'path'); e.setAttribute('d', d); e.setAttribute('fill', fill); e.setAttribute('stroke', stroke); if (sw) e.setAttribute('stroke-width', sw); e.setAttribute('stroke-linejoin', 'round'); if (op) e.setAttribute('opacity', op); e.setAttribute('transform', `scale(${scale.toFixed(2)})`); return e; };
+      g.appendChild(mk('M-4 -4 L5 0 L-4 4 Z', col, col, '6', '0.22'));          // glow
+      g.appendChild(mk('M-4 -4 L0.6 -2 L0.6 2 L-4 4 Z', col, 'none'));            // back: route colour
+      g.appendChild(mk('M0.6 -2 L5 0 L0.6 2 Z', '#ffffff', 'none'));             // tip: white, like the dashes
       const begin = `${(-((si * 2.7 + k * 1.3) % dur)).toFixed(2)}s`;
       const mo = document.createElementNS(SVGNS, 'animateMotion'); mo.setAttribute('dur', `${dur.toFixed(1)}s`); mo.setAttribute('repeatCount', 'indefinite'); mo.setAttribute('begin', begin); mo.setAttribute('rotate', rev ? 'auto-reverse' : 'auto');
       if (rev) { mo.setAttribute('keyPoints', '1;0'); mo.setAttribute('keyTimes', '0;1'); mo.setAttribute('calcMode', 'linear'); }
