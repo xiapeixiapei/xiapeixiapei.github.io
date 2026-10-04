@@ -871,7 +871,7 @@ async function deleteAuthFile() {
 // Re-encrypt the current tokens with the unlocked key (used when the GoatCounter token changes)
 async function syncAuthBundle() {
   if (!SESSION_KEY || !TOKEN) return false;
-  const file = await encryptBundle({ gh: TOKEN, gc: SESSION?.gc || '', tp: SESSION?.tp || '', amap: SESSION?.amap || '', els: SESSION?.els || '' }, SESSION_KEY.key, SESSION_KEY.salt, SESSION_KEY.iter);
+  const file = await encryptBundle({ gh: TOKEN, gc: SESSION?.gc || '', tp: SESSION?.tp || '', amap: SESSION?.amap || '', els: SESSION?.els || '', adb: SESSION?.adb || '' }, SESSION_KEY.key, SESSION_KEY.salt, SESSION_KEY.iter);
   await writeAuthFile(file, 'Update encrypted sign-in via Site Manager');
   return true;
 }
@@ -971,7 +971,7 @@ function showLogin(opts = {}) {
           m.textContent = 'Checking GitHub access…';
           try { await verifyGitHubToken(bundle.gh); }
           catch (err) { btn.disabled = false; return viewSetup('Your password is correct, but the saved GitHub token no longer works: ' + err.message + ' Create a new token and set up sign-in again.'); }
-          TOKEN = bundle.gh; SESSION = { gh: bundle.gh, gc: bundle.gc || '', tp: bundle.tp || '', amap: bundle.amap || '', els: bundle.els || '' }; SESSION_KEY = { key, salt, iter };
+          TOKEN = bundle.gh; SESSION = { gh: bundle.gh, gc: bundle.gc || '', tp: bundle.tp || '', amap: bundle.amap || '', els: bundle.els || '', adb: bundle.adb || '' }; SESSION_KEY = { key, salt, iter };
           saveSession($('#keep').checked); done();
         } catch (err) { m.textContent = err.message; btn.disabled = false; $('#pw').select(); }
       };
@@ -1012,7 +1012,7 @@ function showLogin(opts = {}) {
           m.textContent = 'Encrypting and saving…';
           const salt = crypto.getRandomValues(new Uint8Array(16));
           const key = await deriveKey(p1, salt, AUTH_ITER);
-          SESSION = { gh: t, gc: gcToken(), tp: SESSION?.tp || '', amap: SESSION?.amap || '' };
+          SESSION = { gh: t, gc: gcToken(), tp: SESSION?.tp || '', amap: SESSION?.amap || '', els: SESSION?.els || '', adb: SESSION?.adb || '' };
           await writeAuthFile(await encryptBundle(SESSION, key, salt, AUTH_ITER), 'Set up encrypted sign-in for Site Manager');
           SESSION_KEY = { key, salt, iter: AUTH_ITER };
           saveSession($('#s-keep').checked); done();
@@ -1315,6 +1315,7 @@ async function fetchJson(url, headers = {}) { const r = await fetch(url, { heade
 function cleanAbstract(s) { return String(s || '').replace(/\s+/g, ' ').replace(/^\s*(abstract|summary)\s*[:.\-–]?\s*/i, '').trim(); }
 const goodAbstract = a => a.length >= 80 && !/^(no abstract|abstract not available)/i.test(a);
 const elsKey = () => SESSION?.els || '';
+const adbKey = () => SESSION?.adb || '';   // AeroDataBox (RapidAPI) key for flight auto-fill
 // Elsevier Article Retrieval API (needs a free key; works from the browser, the API sends CORS headers)
 async function elsevierAbstract(doi) {
   if (!elsKey() || !/^10\.1016\//i.test(doi)) return '';
@@ -1791,12 +1792,12 @@ function renderAccount() {
         if (p1.length < MIN_PW) throw new Error(`The password needs at least ${MIN_PW} characters.`);
         if (p1 !== p2) throw new Error('The two new passwords do not match.');
       }
-      let bundle = { gh: TOKEN, gc: gcToken(), tp: SESSION?.tp || '', amap: SESSION?.amap || '' };
+      let bundle = { gh: TOKEN, gc: gcToken(), tp: SESSION?.tp || '', amap: SESSION?.amap || '', els: SESSION?.els || '', adb: SESSION?.adb || '' };
       if (exists) {
         msg.textContent = 'Checking current password…';
         const f = await fetchAuthFile(); if (!f) throw new Error('admin-auth.json was not found. Reload the page.');
         const d = await decryptBundle(f, cur);
-        bundle = { gh: d.bundle.gh || TOKEN, gc: gcToken() || d.bundle.gc || '', tp: SESSION?.tp || d.bundle.tp || '', amap: SESSION?.amap || d.bundle.amap || '' };
+        bundle = { gh: d.bundle.gh || TOKEN, gc: gcToken() || d.bundle.gc || '', tp: SESSION?.tp || d.bundle.tp || '', amap: SESSION?.amap || d.bundle.amap || '', els: SESSION?.els || d.bundle.els || '', adb: SESSION?.adb || d.bundle.adb || '' };
         if (!p1) password = cur;
       }
       if (newTok) { msg.textContent = 'Checking new token…'; await verifyGitHubToken(newTok); bundle.gh = newTok; }
@@ -2976,6 +2977,63 @@ const fmtDur = m => m ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')
 const flRoute = f => `${f.from?.iata || '???'} → ${f.to?.iata || '???'}`;
 
 // The flight form: once at the top to add a flight (prefix 'fl-'), and in place of a list row while that flight is edited (prefix 'fe-')
+// ── Auto-fill from the flight number and date ──
+// AeroDataBox (via RapidAPI) returns the legs of a flight on a date: airports, scheduled and actual times, aircraft and registration.
+// Without a key, or when nothing comes back, earlier flights with the same number fill in the route and aircraft instead.
+async function adbLegs(no, date) {
+  const r = await fetch(`https://aerodatabox.p.rapidapi.com/flights/number/${encodeURIComponent(no)}/${date}?withAircraftImage=false&withLocation=false`,
+    { headers: { 'X-RapidAPI-Key': adbKey(), 'X-RapidAPI-Host': 'aerodatabox.p.rapidapi.com' } });
+  if (r.status === 404 || r.status === 204) return [];
+  if (!r.ok) throw new Error(r.status === 401 || r.status === 403 ? 'AeroDataBox did not accept the key (check the RapidAPI subscription).' : r.status === 429 ? 'AeroDataBox: the monthly quota is used up.' : `AeroDataBox ${r.status}`);
+  const j = await r.json(); return Array.isArray(j) ? j : (j?.flights || []);
+}
+// "Airbus A320-251N" → A20N, "Boeing 737-800" → B738, "Boeing 787-9 Dreamliner" → B789: longest type name contained in the model string
+function acCodeForModel(model) {
+  const norm = x => String(x || '').toLowerCase().replace(/[^a-z0-9]/g, ''); const m = norm(model); if (!m) return '';
+  const neo = /a3(19|20|21)-?\d{3}n/i.exec(model || ''); if (neo) return { 19: 'A19N', 20: 'A20N', 21: 'A21N' }[neo[1]];
+  const hit = Aviation.TYPES.map(t => ({ t, n: norm(t.name.replace(/\(.*?\)/g, '')) })).filter(x => x.n && m.includes(x.n) && !(x.n.endsWith('neo') && !m.includes('neo'))).sort((a, b) => b.n.length - a.n.length)[0];
+  if (hit && !(m.includes('neo') && !hit.n.endsWith('neo') && Aviation.TYPES.some(t => norm(t.name) === hit.n + 'neo'))) return hit.t.code;
+  if (hit) return Aviation.TYPES.find(t => norm(t.name) === hit.n + 'neo')?.code || hit.t.code;
+  const byCode = Aviation.TYPES.find(t => m === t.code.toLowerCase()); return byCode ? byCode.code : '';
+}
+const adbLocal = t => { const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})/.exec(t?.local || t || ''); return m ? { d: m[1], hm: `${m[2]}:${m[3]}` } : null; };
+async function flAutoFill(F, T, g, calc, say) {
+  const no = (F.no || '').trim(), date = F.date;
+  if (!/^[A-Z0-9]{2}\d{1,4}[A-Z]?$/.test(no)) return say('Type the flight number first, e.g. GT1023.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return say('Choose the date first.');
+  const ap = code => { const a = AVDB.airports.find(x => x.iata === code) || AVDB.airports.find(x => x.icao === code); return a ? apRecord(a) : null; };
+  const setAp = (k, rec) => { if (!rec) return; F[k] = rec; g(k).value = `${rec.iata} · ${Aviation.airportName(rec, 'en')}`; g(k + '-h').textContent = `${rec.name}, ${rec.cc}`; };
+  const setAc = (code, text) => { if (code) { F.ac = code; F.acText = ''; g('ac').value = code; g('act').hidden = true; } else if (text) { F.ac = ''; F.acText = text; g('ac').value = '__other'; g('act').hidden = false; g('act').value = text; } };
+  let filled = [];
+  if (adbKey()) {
+    say('Looking up ' + no + ' on ' + date + '…'); g('auto').disabled = true;
+    try {
+      const legs = await adbLegs(no, date);
+      if (legs.length) {
+        let leg = legs[0];
+        if (F.from && legs.length > 1) leg = legs.find(l => l.departure?.airport?.iata === F.from.iata) || leg;
+        const dep = leg.departure || {}, arr = leg.arrival || {};
+        const from = ap(dep.airport?.iata || dep.airport?.icao), to = ap(arr.airport?.iata || arr.airport?.icao);
+        if (from) { setAp('from', from); filled.push('route'); } if (to) setAp('to', to);
+        const sd = adbLocal(dep.scheduledTime), sa = adbLocal(arr.scheduledTime);   // scheduled, local at each airport
+        if (sd) { F.depText = sd.hm; g('dep').value = sd.hm; filled.push('scheduled times'); }
+        if (sa) { const plus = sd && sa.d > sd.d ? '+1' : ''; F.arrText = sa.hm + plus; g('arr').value = sa.hm + plus; }
+        if (leg.aircraft?.model) { setAc(acCodeForModel(leg.aircraft.model), leg.aircraft.model); filled.push('aircraft'); }
+        if (leg.aircraft?.reg && !F.reg) { F.reg = String(leg.aircraft.reg).toUpperCase(); g('reg').value = F.reg; filled.push('registration'); }
+        if (leg.airline?.iata && (!F.airline || !F.airline.iata)) { const al = AVDB.airlines.find(a => a.iata === leg.airline.iata); if (al) { F.airline = alRecord(al); g('al').value = `${al.iata} · ${al.name}`; } }
+        calc(); g('auto').disabled = false;
+        return say(`Filled from AeroDataBox: ${filled.join(', ')}${legs.length > 1 ? ` · ${legs.length} legs that day, the ${leg === legs[0] ? 'first' : 'matching'} one is shown` : ''}. Check, then add.`);
+      }
+      say('AeroDataBox has no record of ' + no + ' on ' + date + '. ');
+    } catch (e) { say(e.message + ' '); }
+    g('auto').disabled = false;
+  }
+  // fallback: your own earlier flights with this number
+  const prev = T.flights.filter(f => f.no === no && f.from && f.to).sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+  if (prev) { setAp('from', prev.from); setAp('to', prev.to); if (prev.ac || prev.acText) setAc(prev.ac, prev.acText); calc();
+    return say((g('auto-msg').textContent || '') + `Route and aircraft copied from your ${prev.date} flight. Check, then add.`); }
+  say((g('auto-msg').textContent || '') + (adbKey() ? 'Nothing to copy from earlier flights either.' : 'No AeroDataBox key yet: add one under "Auto-fill source" below to look flights up.'));
+}
 function flFormHtml(F, P, editing) {
   const km = Aviation.distKm(F.from, F.to);
   const typeOpts = (() => { const g = new Map(); Aviation.TYPES.forEach(t => { if (!g.has(t.mfr)) g.set(t.mfr, []); g.get(t.mfr).push(t); });
@@ -2983,7 +3041,8 @@ function flFormHtml(F, P, editing) {
   return `  <div class="card fl-form" id="${P}form"><h3>${editing ? 'Edit flight' : 'Add a flight'}</h3>
     <div class="row fl-row">
       <div class="field"><label for="${P}date">Date</label><input id="${P}date" type="date" value="${esc(F.date)}"></div>
-      <div class="field"><label for="${P}no">Flight number</label><input id="${P}no" type="text" value="${esc(F.no)}" placeholder="e.g. KL897" autocomplete="off" class="mono"><div class="hint">The airline is filled in from the first two characters.</div></div>
+      <div class="field"><label for="${P}no">Flight number</label><input id="${P}no" type="text" value="${esc(F.no)}" placeholder="e.g. KL897" autocomplete="off" class="mono"><div class="hint">The airline is filled in from the first two characters.</div>
+        <div class="toolbar" style="margin:0.45rem 0 0"><button class="btn sm" id="${P}auto" type="button" title="Route, scheduled times, aircraft and registration from the flight number and date">⚡ Auto-fill from flight number</button><span class="hint" id="${P}auto-msg" style="margin:0"></span></div></div>
     </div>
     <div class="row fl-row">
       <div class="field fl-ac-wrap"><label for="${P}from">From</label><input id="${P}from" type="text" value="${esc(F.from ? F.from.iata + ' · ' + Aviation.airportName(F.from, 'en') : '')}" placeholder="IATA code or city, e.g. AMS" autocomplete="off"><div class="fl-sug" id="${P}from-sug"></div><div class="hint" id="${P}from-h">${F.from ? esc(`${F.from.name}, ${F.from.cc}`) : ''}</div></div>
@@ -3031,6 +3090,8 @@ function wireFlightForm(P, F, T, editId, onDone) {
   suggest('al', 'al-sug', searchAirlines, a => `<span><b class="mono">${esc(a.iata)}</b> · ${esc(a.name)}${Aviation.AIRLINE_ZH[a.iata] ? ` · ${esc(Aviation.AIRLINE_ZH[a.iata])}` : ''}</span><span class="m">${esc(a.cc)}</span>`, a => { F.airline = alRecord(a); g('al').value = `${a.iata} · ${a.name}`; });
   g('al').addEventListener('change', e => { const t = e.target.value.trim(); if (!t) F.airline = null; else if (!F.airline || !t.endsWith(F.airline.name)) F.airline = { iata: '', icao: '', name: t, zh: '' }; });
   g('date').onchange = e => { F.date = e.target.value; };
+  g('auto').onclick = () => flAutoFill(F, T, g, calc, m => { g('auto-msg').textContent = m || ''; });
+  g('no').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); g('auto').click(); } });
   g('no').addEventListener('input', e => {
     F.no = e.target.value.toUpperCase().replace(/\s+/g, ''); e.target.value = F.no;
     const pre = F.no.slice(0, 2), al = /^[A-Z0-9]{2}\d/.test(F.no) && AVDB.airlines.find(a => a.iata === pre);
@@ -3088,11 +3149,23 @@ function viewFlights(v) {
   <h3 class="yearhead">Flights</h3>
   <div class="tv-filter"><input type="search" id="fl-filter" placeholder="Find a flight: number, airport, airline, aircraft, year …" autocomplete="off" value="${esc(FL_FILTER)}"><span class="hint" id="fl-filter-n"></span></div>
   <div id="fl-list"></div>
-  <div class="tv-folds">${foldCardGlobal('fl-import', 'Import flights from CSV', 'e.g. a my.flightradar24 export', `<p class="hint" style="margin-bottom:0.6rem">Paste a CSV with a header row. Recognised columns: <b>Date, Flight number, From, To, Airline, Aircraft, Registration, Seat, Class, Reason / Purpose, Duration, Note</b>, and also <b>Dep time / Actual departure, Arr time / Actual arrival, Fare / Price, Currency, Aircraft age</b>. Airports may be written as IATA codes (<span class="mono">AMS</span>) or like <span class="mono">Amsterdam (AMS/EHAM)</span>; aircraft by name or ICAO code (<span class="mono">B78X</span>). A row for a flight already in the list (same date, flight number and route) is not added twice: its filled-in cells update that flight, so a CSV of just <span class="mono">Date, Flight number, From, To, Dep time, Arr time</span> adds the actual times to existing flights. A reason of “business” or “academic” marks the flight as academic.</p>
+  <div class="tv-folds">${foldCardGlobal('fl-adb', 'Auto-fill source (AeroDataBox key)', adbKey() ? 'key saved' : 'no key yet', `<p class="hint" style="margin-bottom:0.6rem">With a key, <b>⚡ Auto-fill</b> in the form above fills the route, the scheduled take-off and landing times, the aircraft and the registration from the flight number and date (AeroDataBox via RapidAPI; the free plan allows a few hundred look-ups a month). The key is stored inside your encrypted sign-in. Without a key, auto-fill copies the route and aircraft from your earlier flights with the same number.</p>
+      <div class="row" style="grid-template-columns:1fr auto;align-items:end"><div class="field" style="margin:0"><label for="adb-key">RapidAPI key</label><input id="adb-key" type="password" class="mono" value="${esc(adbKey())}" autocomplete="off" placeholder="x-rapidapi-key"></div>
+        <div class="toolbar" style="margin:0"><button class="btn sm" id="adb-save" type="button">Save</button></div></div>
+      <p class="hint" id="adb-msg" style="margin-top:0.4rem"></p>
+      <p class="hint" style="margin-top:0.6rem">How to get one: <a href="https://rapidapi.com/aedbx-aedbx/api/aerodatabox" target="_blank" rel="noopener">rapidapi.com → AeroDataBox</a> → Subscribe to Test (free) → the <span class="mono">x-rapidapi-key</span> shown in the code snippets is the key. Historical coverage goes back a few years and depends on the plan.</p>`)}
+  ${foldCardGlobal('fl-import', 'Import flights from CSV', 'e.g. a my.flightradar24 export', `<p class="hint" style="margin-bottom:0.6rem">Paste a CSV with a header row. Recognised columns: <b>Date, Flight number, From, To, Airline, Aircraft, Registration, Seat, Class, Reason / Purpose, Duration, Note</b>, and also <b>Dep time / Actual departure, Arr time / Actual arrival, Fare / Price, Currency, Aircraft age</b>. Airports may be written as IATA codes (<span class="mono">AMS</span>) or like <span class="mono">Amsterdam (AMS/EHAM)</span>; aircraft by name or ICAO code (<span class="mono">B78X</span>). A row for a flight already in the list (same date, flight number and route) is not added twice: its filled-in cells update that flight, so a CSV of just <span class="mono">Date, Flight number, From, To, Dep time, Arr time</span> adds the actual times to existing flights. A reason of “business” or “academic” marks the flight as academic.</p>
     <textarea id="fl-csv" rows="6" class="mono" placeholder="Date,Flight number,From,To,Airline,Aircraft&#10;2025-09-14,KL897,AMS,PEK,KLM,B78X"></textarea>
     <div class="toolbar" style="margin-bottom:0"><input type="file" id="fl-csv-file" accept=".csv,text/csv" hidden><button class="btn sm" id="fl-csv-pick">Choose a CSV file…</button><button class="btn sm primary" id="fl-csv-go">Import</button><span class="hint" id="fl-csv-msg" style="margin:0"></span></div>`)}</div>`;
 
   wireFlightForm('fl-', F, T, null, render);
+  $('#adb-save').onclick = async () => {
+    const k = $('#adb-key').value.trim(), m = $('#adb-msg');
+    SESSION ||= { gh: TOKEN, gc: '' }; SESSION.adb = k; saveSession();
+    m.textContent = 'Saving…';
+    try { const ok = await syncAuthBundle(); m.textContent = k ? (ok ? 'Saved into your encrypted sign-in.' : 'Saved for this session (turn on password sign-in to keep it on every device).') : 'Key removed.'; }
+    catch (e) { m.textContent = 'Could not save: ' + e.message; }
+  };
 
   if ($('#fl-export')) $('#fl-export').onclick = () => {
     const cols = ['Date', 'Flight number', 'From', 'To', 'Airline', 'Aircraft', 'Registration', 'Seat', 'Class', 'Purpose', 'Duration', 'Dep time', 'Arr time', 'Fare', 'Currency', 'Aircraft age', 'Note'];
