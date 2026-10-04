@@ -176,6 +176,17 @@
   .tv-res:hover { border-color: var(--accent); background: var(--highlight); }
   .tv-res .m { color: var(--muted); font-size: 15px; white-space: nowrap; }
   .tv-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .tv-top { margin: -0.2rem 0 0.9rem; }
+  .tv-top .hint { margin: 0; }
+  /* Footprints settings: folded cards, closed by default so adding and editing places comes first */
+  details.fold { padding: 0.75rem 1.2rem; }
+  details.fold > summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap; }
+  details.fold > summary::-webkit-details-marker { display: none; }
+  details.fold > summary::before { content: '▸'; color: var(--muted); width: 0.8em; flex: none; }
+  details.fold[open] > summary::before { content: '▾'; }
+  details.fold > summary .hint { font-weight: 400; margin: 0; }
+  details.fold[open] > summary { margin-bottom: 0.8rem; }
+  .tv-folds { margin-top: 1.6rem; }
   .tv-flag { font-size: 1.4rem; line-height: 1; }
   .flag-img { height: 16px; width: 24px; aspect-ratio: 3 / 2; object-fit: cover; object-position: center; border-radius: 2px; box-shadow: 0 0 0 1px rgba(13, 27, 42, 0.12); vertical-align: -3px; flex: none; background: var(--subtle); }
   .tv-acad { background: var(--highlight); border-radius: 8px; padding: 0.9rem 1rem 0.1rem; margin-bottom: 0.9rem; }
@@ -415,6 +426,9 @@
     .card { padding: 0.9rem 0.85rem; border-radius: 10px; }
     .item { padding: 0.75rem 0.8rem; }
     .row, .row.two { grid-template-columns: minmax(0, 1fr) !important; gap: 0.6rem; }
+    .row.tv-add { grid-template-columns: 1fr 1fr !important; }
+    .row.tv-add .field { grid-column: 1 / -1; }
+    details.fold { padding: 0.7rem 0.85rem; }
     .field { min-width: 0; }
     .item-head { gap: 0.4rem; }
     .item-head .title { min-width: 0; flex: 1 1 100%; overflow-wrap: anywhere; }
@@ -1806,6 +1820,7 @@ function normalizeFP(d) {
 }
 // Footprints editor: places grouped by country, with a filter
 const OPEN_COUNTRIES = new Set(); let COUNTRIES_TOUCHED = false, PLACE_FILTER = '';
+const FP_FOLDS = new Set();   // footprints settings cards opened this session (closed by default)
 const fold = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 function placeMatches(p, q) {
   const hay = fold([p.city?.en, p.city?.zh, p.country?.en, p.country?.zh, p.cc, p.when, p.event?.en, p.event?.zh, p.talk, p.note?.en, p.note?.zh, p.pnote?.en, p.pnote?.zh,
@@ -2883,36 +2898,38 @@ function viewFootprints(v) {
 
   // Editor
   const T = FP.data;
+  const foldCard = (id, title, sub, body, cls = '') => `<details class="card fold ${cls}" data-fold="${id}" ${FP_FOLDS.has(id) ? 'open' : ''}><summary>${title}<span class="hint">${sub}</span></summary>${body}</details>`;
   const nAcad = T.places.filter(p => p.academic).length, nPhotos = T.places.reduce((n, p) => n + p.photos.length, 0);
-  v.innerHTML = intro + `<div class="card"><div class="tv-head"><span class="pill ok">${T.places.length} place${T.places.length === 1 ? '' : 's'}</span><span class="pill acad">${nAcad} academic</span><span class="hint">${nPhotos} photo${nPhotos === 1 ? '' : 's'}. Text changes are saved with <b>Publish changes</b> (both pages at once); photos upload immediately.</span></div>
-    <div class="row two">
-      <div><h3 style="font-size:1.1rem">Travel page (private)</h3>${biField('Title (use *asterisks* for the italic blue word)', T, 'title')}${biField('Introduction', T, 'intro', 'textarea')}</div>
-      <div><h3 style="font-size:1.1rem">Academic page (public)</h3>${biField('Title', T, 'pub_title')}${biField('Introduction', T, 'pub_intro', 'textarea')}</div></div>
-    <div class="toolbar"><a class="btn sm" href="travel.html" target="_blank">Open travel.html ↗</a><a class="btn sm" href="academic.html" target="_blank">Open academic.html ↗</a></div></div>
+  v.innerHTML = `<h2>Footprints</h2><div class="tv-head tv-top"><span class="pill ok">${T.places.length} place${T.places.length === 1 ? '' : 's'}</span><span class="pill acad">${nAcad} academic</span><span class="hint">${nPhotos} photo${nPhotos === 1 ? '' : 's'} · text changes are saved with <b>Publish changes</b>; photos upload immediately.</span></div>
   <div class="card"><h3>Add a place</h3>
-    <div class="row" style="grid-template-columns:1fr auto auto;align-items:end">
+    <div class="row tv-add" style="grid-template-columns:1fr auto auto;align-items:end">
       <div class="field" style="margin:0"><label for="tv-q">City or town</label><input id="tv-q" type="text" placeholder="e.g. Guangzhou, Oslo, Kyoto" autocomplete="off"></div>
       <button class="btn primary" id="tv-search">Search</button><button class="btn" id="tv-manual">Add manually</button></div>
     <div class="tv-results" id="tv-results"></div><p class="hint" id="tv-smsg"></p></div>
   <div id="tv-drafts" class="tv-drafts" hidden></div>
-  <div class="card tag-check"><div class="toolbar" style="margin:0"><button class="btn sm primary" id="tv-check">✓ Check all tags</button>
-    <span class="hint" style="margin:0">Re-checks every saved sight: 5A against the official list (358, May 2025), national parks against the official rule, and World Heritage / 5A-area grouping. Tags you set by hand are checked too.</span></div>
-    <div id="tv-check-out"></div></div>
   <h3 class="yearhead">Places</h3>
   <div class="tv-filter"><input type="search" id="tv-filter" placeholder="Find a place: city, country, conference, sight … (中文 or English)" autocomplete="off" value="${esc(PLACE_FILTER)}"><span class="hint" id="tv-filter-n"></span>
     <span class="sort-seg" id="tv-sort" role="group" aria-label="Sort"><button type="button" data-psort="name" class="${PLACE_SORT === 'name' ? 'on' : ''}">A–Z</button><button type="button" data-psort="date" class="${PLACE_SORT === 'date' ? 'on' : ''}">Newest first</button></span>
     <button class="btn sm" type="button" id="tv-open-all">Expand all</button><button class="btn sm" type="button" id="tv-close-all">Collapse all</button></div>
   <div id="tv-places"></div>
-  <div class="card"><h3>Map services (optional)</h3>
-    <p class="hint" style="margin-bottom:0.8rem">Landmark search uses Wikidata and the built-in UNESCO list. Wikidata is blocked in mainland China, so for Chinese places add a free <b>Amap (高德) Web-service key</b>: open <a href="https://console.amap.com/dev/key/app" target="_blank">console.amap.com</a> → 应用管理 → 创建新应用 → 添加 Key → 服务平台 <b>Web服务</b>. The key is stored inside your encrypted sign-in.</p>
+  <div class="tv-folds">${foldCard('pages', 'Page titles &amp; introductions', 'travel.html and academic.html', `<p class="hint" style="margin-bottom:0.8rem">One list of places for two pages. <a href="travel.html" target="_blank">travel.html</a> shows everything and opens only with the <b>travel password</b> (share it with family and friends; it gives no access to this manager). Entries ticked as <b>academic visit</b> are also published, in clear, on the public <a href="academic.html" target="_blank">academic.html</a>.</p>
+    <div class="row two">
+      <div><h3 style="font-size:1.1rem">Travel page (private)</h3>${biField('Title (use *asterisks* for the italic blue word)', T, 'title')}${biField('Introduction', T, 'intro', 'textarea')}</div>
+      <div><h3 style="font-size:1.1rem">Academic page (public)</h3>${biField('Title', T, 'pub_title')}${biField('Introduction', T, 'pub_intro', 'textarea')}</div></div>
+    <div class="toolbar"><a class="btn sm" href="travel.html" target="_blank">Open travel.html ↗</a><a class="btn sm" href="academic.html" target="_blank">Open academic.html ↗</a></div>`)}
+  ${foldCard('check', 'Check all tags', '5A, national parks, World Heritage', `<div class="toolbar" style="margin:0"><button class="btn sm primary" id="tv-check">✓ Check all tags</button>
+    <span class="hint" style="margin:0">Re-checks every saved sight: 5A against the official list (358, May 2025), national parks against the official rule, and World Heritage / 5A-area grouping. Tags you set by hand are checked too.</span></div>
+    <div id="tv-check-out"></div>`, 'tag-check')}
+  ${foldCard('map', 'Map services', 'Amap key for Chinese landmark search', `    <p class="hint" style="margin-bottom:0.8rem">Landmark search uses Wikidata and the built-in UNESCO list. Wikidata is blocked in mainland China, so for Chinese places add a free <b>Amap (高德) Web-service key</b>: open <a href="https://console.amap.com/dev/key/app" target="_blank">console.amap.com</a> → 应用管理 → 创建新应用 → 添加 Key → 服务平台 <b>Web服务</b>. The key is stored inside your encrypted sign-in.</p>
     <div class="row" style="grid-template-columns:1fr auto;align-items:end"><div class="field" style="margin:0"><label for="tv-amap">Amap Web-service key</label><input id="tv-amap" type="password" class="mono" value="${esc(amapKey())}" autocomplete="off" placeholder="32 hex characters"></div><button class="btn sm" id="tv-amap-save">Save</button></div>
-    <p class="hint" id="tv-amap-msg" style="margin-top:0.4rem"></p></div>
-  <div class="card"><h3>Travel password</h3>
-    <p class="hint" style="margin-bottom:0.8rem">Share this password with the people who may see travel.html. Changing it only re-encrypts the list; the photos stay as they are.</p>
+    <p class="hint" id="tv-amap-msg" style="margin-top:0.4rem"></p>`)}
+  ${foldCard('pw', 'Travel password', 'change the password for travel.html', `    <p class="hint" style="margin-bottom:0.8rem">Share this password with the people who may see travel.html. Changing it only re-encrypts the list; the photos stay as they are.</p>
     <form id="f-tv-chpw" autocomplete="off"><div class="row two">
       <div class="field"><label for="tv-npw">New travel password</label><input id="tv-npw" type="password" minlength="${TRAVEL_MIN_PW}" required autocomplete="new-password"></div>
       <div class="field"><label for="tv-npw2">Repeat</label><input id="tv-npw2" type="password" required autocomplete="new-password"></div></div>
-      <div class="toolbar"><button class="btn sm" type="submit" id="tv-chgo">Change travel password</button><span class="hint" id="tv-chmsg"></span></div></form></div>`;
+      <div class="toolbar"><button class="btn sm" type="submit" id="tv-chgo">Change travel password</button><span class="hint" id="tv-chmsg"></span></div></form>`)}</div>`;
+
+  v.querySelectorAll('details.fold').forEach(d => d.addEventListener('toggle', () => { if (d.open) FP_FOLDS.add(d.dataset.fold); else FP_FOLDS.delete(d.dataset.fold); }));
 
   // Search
   const doSearch = async () => {
