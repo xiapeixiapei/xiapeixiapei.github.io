@@ -148,13 +148,9 @@
     '9C': { img: '9C', overOnArt: true, winOnArt: true, name: 'Spring Airlines', zh: '春秋航空', belly: '#e9ebee', engine: W, lip: '#c9d0d8', winglet: '#1e9646', tail: '9c',
       under: P => { P.below(0.42, '#e9ebee'); },
       over: P => { const a = P.title('春秋航空', 0.175, tv(0.088) - 0.012, 0.088, { col: '#108c54', f: KAI, w: 700, cjk: 1, sp: 0.06, i: 1 }); P.title('SPRING AIRLINES', a[0] + 0.004, 0.182, 0.014, { col: '#108c54', w: 700, sp: 0.12 }); } },
-    CN: { name: 'Grand China Air', zh: '大新华航空', belly: '#e9ebee', engine: W, lip: '#c9d0d8', winglet: '#d2232a', tail: 'cn',
-      under: P => {   // HNA scheme: the rear fuselage is red, its edge sweeping from the belly under the wing up to the crown ahead of the fin, with a gold band along it
-        P.below(0.42, '#e9ebee');
-        const s = u => Math.max(0, Math.min(1, (u - 0.5) / 0.38)), edge = u => 0.5 - 0.5 * s(u) ** 1.25;
-        P.ribbon(edge, () => 0.5, 0.5, 1.01, '#d2232a'); P.ribbon(u => edge(u) - 0.022, u => edge(u) + 0.002, 0.5, 1.01, '#f2c230');
-        P.ribbon(u => Math.max(0.21, edge(u) - 0.06), u => edge(u) - 0.045, 0.62, 1.01, '#f2c230'); },
-      over: P => { const a = P.title([{ logo: 'hna', col: '#d2232a', s: 0.9 }, { gap: 0.15 }, { t: '大新华航空', w: 700, cjk: 1 }], 0.16, tv(0.06), 0.06, { col: '#d2232a', cjk: 1, sp: 0.1 }); P.title('Grand China', a[1] + 0.025, tv(0.064), 0.064, { col: '#d2232a', w: 800 }); } },
+    CN: { img: 'CN', overOnArt: true, name: 'Grand China Air', zh: '大新华航空', belly: '#e9ebee', engine: W, lip: '#c9d0d8', winglet: '#d2232a', tail: 'cn',
+      under: P => { P.below(0.42, '#e9ebee'); },
+      over: P => { const a = P.title([{ logo: 'hna', col: '#d2232a', s: 0.9 }, { gap: 0.15 }, { t: '大新华航空', w: 700, cjk: 1 }], 0.165, 0.138, 0.046, { col: '#d2232a', cjk: 1, sp: 0.1 }); P.title('Grand China', a[1] + 0.02, 0.138, 0.05, { col: '#d2232a', w: 800 }); } },
     TV: { img: 'TV', name: 'Tibet Airlines', zh: '西藏航空', engine: W, winglet: '#1E5AA8', tail: 'tv',
       under: P => {   // the wavy four-colour "khata" ribbon: starts under the forward door, dips under the wing, climbs to the tail and thins out
         P.below(0.42, '#d9dde2');
