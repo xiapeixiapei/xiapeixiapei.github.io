@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610041759"></script>
-<script src="fleet3d.js?v=202610041759"></script>
+<script src="aviation.js?v=202610041831"></script>
+<script src="fleet3d.js?v=202610041831"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -198,6 +198,9 @@
 
   /* Hangar: one card per aircraft type */
   .fleet { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.9rem; }
+  .fleet-filters { display: flex; flex-direction: column; gap: 0.4rem; margin: -0.3rem 0 0.2rem; }
+  .fleet-filters .seg:empty { display: none; }
+  .fsel { appearance: none; -webkit-appearance: none; max-width: 100%; padding-right: 1.6rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238ea3bd' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.55rem center; background-size: 10px; align-self: flex-start; color: var(--ink); }
   .ac { overflow: hidden; display: flex; flex-direction: column; }
   .ac-pic { position: relative; aspect-ratio: 16 / 10; background: radial-gradient(circle at 50% 45%, rgba(var(--cyan-rgb), 0.10), transparent 65%), linear-gradient(rgba(var(--cyan-rgb), 0.08) 1px, transparent 1px) 0 0 / 12px 12px, linear-gradient(90deg, rgba(var(--cyan-rgb), 0.08) 1px, transparent 1px) 0 0 / 12px 12px, var(--pic-bg); color: var(--cyan); display: grid; place-items: center; border-bottom: 1px solid var(--line); }
   .ac-pic .ac-sil { width: 62%; height: 86%; filter: drop-shadow(0 0 6px rgba(var(--cyan-rgb), 0.45)); }
@@ -412,9 +415,7 @@
   <div class="layout">
     <aside class="col side">
       <section class="hero sec-hero">
-        <p class="kicker" data-en="Flight log · personal record" data-zh="飞行记录 · 个人档案">Flight log · personal record</p>
         <h1 data-en="My Air Times" data-zh="云间岁月">My Air Times</h1>
-        <p class="sub" id="sub"></p>
       </section>
       <div class="filters sec-filters">
         <div class="seg" id="f-year" role="group" aria-label="Year"></div>
@@ -456,11 +457,12 @@
       <footer class="foot">
         <div class="foot-links" id="foot-links"></div>
         <p class="copy" id="copy"></p>
-        <p class="credits"><span data-en="Map data © OpenStreetMap contributors, 高德地图 · Airport data: OurAirports · 3D models are simplified renderings, not official artwork." data-zh="地图数据 © OpenStreetMap 贡献者、高德地图 · 机场数据：OurAirports · 三维模型为简化示意，非官方图案。">Map data © OpenStreetMap contributors, 高德地图 · Airport data: OurAirports · 3D models are simplified renderings, not official artwork.</span></p>
+        <p class="credits"><span data-en="Map data © OpenStreetMap contributors, 高德地图 · Airport data: OurAirports · 3D liveries after FlightGear community textures (GPL) by legoboyvdlp, Pilot2938, Devansh1007, FGMEMBERS; others are simplified renderings. Airline trademarks belong to their owners." data-zh="地图数据 © OpenStreetMap 贡献者、高德地图 · 机场数据：OurAirports · 三维涂装基于 FlightGear 社区贴图（GPL，作者 legoboyvdlp、Pilot2938、Devansh1007、FGMEMBERS），其余为简化示意；航空公司商标归各公司所有。">Map data © OpenStreetMap contributors, 高德地图 · Airport data: OurAirports · 3D liveries after FlightGear community textures (GPL) by legoboyvdlp, Pilot2938, Devansh1007, FGMEMBERS; others are simplified renderings. Airline trademarks belong to their owners.</span></p>
       </footer>    </main>
     <aside class="col right">
       <section class="sec-fleet">
         <h2 class="sec"><span data-en="Hangar" data-zh="机库">Hangar</span><span class="kicker" data-en="Hover to rotate · click to inspect" data-zh="悬停旋转 · 点击查看">Hover to rotate · click to inspect</span></h2>
+        <div class="fleet-filters" id="fleet-filters"></div>
         <div class="fleet" id="fleet"></div>
       </section>
       <section class="ranks" id="ranks"></section>
@@ -469,7 +471,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
-<script src="map-base.js?v=202610041759"></script>
+<script src="map-base.js?v=202610041831"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -607,8 +609,6 @@ function renderStats(list) {
   ];
   $('#stats').innerHTML = cells.map(([k, , , unit, sub, link], i) => `<${link ? `a class="hud stat dl" href="#list=${link}" title="${esc(tr('details'))}"` : 'div class="hud stat"'}><div class="n"><span data-i="${i}">0</span>${unit ? `<small>${esc(unit)}</small>` : ''}</div><div class="l">${esc(tr(k))}${link ? '<span class="more-i">›</span>' : ''}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ''}</${link ? 'a' : 'div'}>`).join('');
   cells.forEach(([, v, d], i) => countUp($(`#stats [data-i="${i}"]`), v, d));
-  const yrs = [...new Set(FLIGHTS.map(f => f.year))].sort();
-  $('#sub').textContent = FLIGHTS.length ? (LANG === 'zh' ? `${yrs[0]}–${yrs[yrs.length - 1]} 年的 ${FLIGHTS.length} 次飞行：航线、机型、航空公司与机场。` : `${FLIGHTS.length} flights from ${yrs[0]} to ${yrs[yrs.length - 1]}: routes, aircraft, airlines and airports.`) : tr('empty');
 }
 
 function initMap() {
@@ -701,7 +701,7 @@ async function flyRoute(f) {
   if (reduced) { heading = endHeading(); trailTo(n, L.latLng(path[n])); park(); return; }
 
   // the live model (or a plain plane icon without WebGL)
-  if (window.Fleet3D) { try { if (await Fleet3D.load()) me.model = Fleet3D.flyer({ type: f.ac || 'A320', airline: f.airline }, S); } catch (e) { me.model = null; } }
+  if (window.Fleet3D) { try { if (await Fleet3D.load()) { await Fleet3D.prepare(f.airline, f.ac || 'A320'); if (FLY === me) me.model = Fleet3D.flyer({ type: f.ac || 'A320', airline: f.airline }, S); } } catch (e) { me.model = null; } }
   if (FLY !== me) { me.model?.destroy(); return; }
   me.el = document.createElement('div'); me.el.className = 'fl-fly'; me.el.style.opacity = '0';
   if (me.model) me.el.appendChild(me.model.canvas); else me.el.innerHTML = `<span class="fl-plane-svg">${PLANE_I}</span>`;
@@ -787,6 +787,22 @@ function renderRecords(list) {
 
 // Hangar: one card per aircraft type, a 3D model in the livery of the airline flown most on it (chips switch liveries)
 let FLEET_KEY = '';
+const FLEET_F = { body: 'all', mfr: 'all', al: 'all' };   // hangar filters
+const BODY_L = { narrow: ['Narrow-body', '窄体'], wide: ['Wide-body', '宽体'], quad: ['Four engines', '四发'], regional: ['Regional', '支线'], turboprop: ['Turboprop', '涡桨'] };
+function renderFleetFilters(list) {
+  const zh = LANG === 'zh', bodies = [...new Set(list.map(f => A.type(f.ac)?.body).filter(Boolean))], mfrs = [...new Set(list.map(f => A.type(f.ac)?.mfr).filter(Boolean))].sort();
+  const als = tally(list, alKey, (k, f) => A.airlineName(f.airline, LANG) || k);
+  if (FLEET_F.body !== 'all' && !bodies.includes(FLEET_F.body)) FLEET_F.body = 'all';
+  if (FLEET_F.mfr !== 'all' && !mfrs.includes(FLEET_F.mfr)) FLEET_F.mfr = 'all';
+  if (FLEET_F.al !== 'all' && !als.some(a => a.key === FLEET_F.al)) FLEET_F.al = 'all';
+  const chip = (k, v, l) => `<button type="button" class="chip${FLEET_F[k] === v ? ' on' : ''}" data-fk="${k}" data-fv="${esc(v)}">${esc(l)}</button>`;
+  $('#fleet-filters').innerHTML = `<div class="seg">${chip('body', 'all', tr('all'))}${bodies.map(b => chip('body', b, BODY_L[b]?.[zh ? 1 : 0] || b)).join('')}</div>
+    <div class="seg">${mfrs.length > 1 ? chip('mfr', 'all', zh ? '所有制造商' : 'All makers') + mfrs.map(m => chip('mfr', m, A.mfrName(m, LANG))).join('') : ''}</div>
+    <select class="chip fsel" id="fleet-al" aria-label="${esc(tr('airlines'))}"><option value="all">${esc(zh ? '所有航空公司' : 'All airlines')}</option>${als.map(a => `<option value="${esc(a.key)}"${FLEET_F.al === a.key ? ' selected' : ''}>${esc(a.label)} (${a.n})</option>`).join('')}</select>`;
+  $('#fleet-filters').querySelectorAll('[data-fk]').forEach(b => b.onclick = () => { FLEET_F[b.dataset.fk] = b.dataset.fv; renderFleet(scoped()); });
+  $('#fleet-al').onchange = e => { FLEET_F.al = e.target.value; renderFleet(scoped()); };
+}
+const fleetScope = list => list.filter(f => (FLEET_F.al === 'all' || alKey(f) === FLEET_F.al) && (FLEET_F.body === 'all' || A.type(f.ac)?.body === FLEET_F.body) && (FLEET_F.mfr === 'all' || A.type(f.ac)?.mfr === FLEET_F.mfr));
 const OPEN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>';
 function fleetTypes(list) {
   return tally(list, acKey, (k, f) => acName(f)).map(t => {
@@ -798,9 +814,11 @@ function livChips(t, cur) {
   return t.als.slice(0, 5).map((a, i) => `<button type="button" class="liv${i === cur ? ' on' : ''}" data-liv="${i}" title="${esc(a.label)}">${esc(a.label)}<i>${a.n}</i></button>`).join('');
 }
 function renderFleet(list) {
-  const key = [YEAR, PURPOSE, LANG, list.length].join('|');
+  renderFleetFilters(list);
+  const key = [YEAR, PURPOSE, LANG, list.length, FLEET_F.body, FLEET_F.mfr, FLEET_F.al].join('|');
   if (key === FLEET_KEY && $('#fleet').children.length) return;
   FLEET_KEY = key;
+  list = fleetScope(list);
   const types = fleetTypes(list), max = types[0]?.n || 1;
   if (!types.length) { $('#fleet').innerHTML = `<div class="hud empty">${esc(tr('none'))}</div>`; return; }
   const ref = Math.max(...types.map(t => { const ty = A.type(t.code); return ty ? Math.max(ty.len, ty.span) : 0; }), 36);   // the biggest type fills its card; the rest are drawn to scale
@@ -851,7 +869,6 @@ function renderRanks(list) {
   const groups = [
     ['airlines', tally(list, alKey, (k, f) => A.airlineName(f.airline, LANG) || k), 'al'],
     ['airports', tally(list, f => [f.from.iata, f.to.iata], k => { const f = list.find(x => x.from.iata === k || x.to.iata === k); const ap = f.from.iata === k ? f.from : f.to; return `${k} · ${apName(ap)}`; }), 'ap'],
-    ['countries', tally(list, f => [...new Set([A.statCC(f.from.cc), A.statCC(f.to.cc)])], k => A.countryName(k, LANG)), 'cc'],
     ['routes', tally(list, routeKey, k => k.replace('-', ' ⇄ ')), 'rt'],
     ['types', tally(list, acKey, (k, f) => acName(f)), 'ac'],
   ];
