@@ -670,7 +670,7 @@
   let THEME = 'dark';
   function makeScene(theme) {
     const sc = new T.Scene(), light = theme === 'light', accent = light ? '#0a7ea6' : '#4de1ff';
-    sc.add(new T.HemisphereLight(light ? '#ffffff' : '#e6f0ff', light ? '#9fb0c4' : '#1a2840', light ? 1.35 : 1.15));
+    sc.add(new T.HemisphereLight(light ? '#ffffff' : '#e6f0ff', light ? '#dde5ee' : '#4a5a70', light ? 1.5 : 1.3));   // a bright ground colour keeps bellies from going dark
     const sun = new T.DirectionalLight('#ffffff', light ? 1.6 : 1.9); sun.position.set(-2, 3, 2.5); sc.add(sun);
     const rim = new T.DirectionalLight(accent, light ? 0.35 : 0.9); rim.position.set(2, 1, -3); sc.add(rim);
     const ring = new T.Group(), lineMat = new T.MeshBasicMaterial({ color: accent, transparent: true, opacity: light ? 0.45 : 0.35, side: T.DoubleSide, depthWrite: false });

@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610041831"></script>
-<script src="fleet3d.js?v=202610041831"></script>
+<script src="aviation.js?v=202610041854"></script>
+<script src="fleet3d.js?v=202610041854"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -471,7 +471,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
-<script src="map-base.js?v=202610041831"></script>
+<script src="map-base.js?v=202610041854"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -811,7 +811,7 @@ function fleetTypes(list) {
   });
 }
 function livChips(t, cur) {
-  return t.als.slice(0, 5).map((a, i) => `<button type="button" class="liv${i === cur ? ' on' : ''}" data-liv="${i}" title="${esc(a.label)}">${esc(a.label)}<i>${a.n}</i></button>`).join('');
+  return t.als.map((a, i) => `<button type="button" class="liv${i === cur ? ' on' : ''}" data-liv="${i}" title="${esc(a.label)}">${esc(a.label)}<i>${a.n}</i></button>`).join('');
 }
 function renderFleet(list) {
   renderFleetFilters(list);
