@@ -6,6 +6,7 @@
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
 <script src="city-icons.js"></script>
+<script src="aviation.js"></script>
 <meta name="robots" content="noindex, nofollow">
 <title>Site Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,7 +50,7 @@
   body { font-family: var(--sans); background: var(--paper); color: var(--ink); font-size: 17.5px; line-height: 1.55; -webkit-font-smoothing: antialiased; }
   a { color: var(--accent); }
   button, input, select, textarea { font: inherit; color: inherit; }
-  input[type=text], input[type=url], input[type=password], input[type=number], select, textarea {
+  input[type=text], input[type=url], input[type=password], input[type=number], input[type=date], select, textarea {
     width: 100%; padding: 0.5rem 0.65rem; border: 1px solid var(--subtle); border-radius: 6px; background: var(--card);
   }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent-light); outline-offset: 1px; border-color: var(--accent-light); }
@@ -187,6 +188,20 @@
   details.fold > summary .hint { font-weight: 400; margin: 0; }
   details.fold[open] > summary { margin-bottom: 0.8rem; }
   .tv-folds { margin-top: 1.6rem; }
+  /* Flights editor */
+  .fl-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fl-row4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .fl-ac-wrap { position: relative; }
+  .fl-sug { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% - 1.4rem); display: grid; gap: 2px; background: var(--card); border-radius: 8px; box-shadow: 0 8px 24px var(--shadow); }
+  .fl-sug:empty { display: none; }
+  .fl-sug .tv-res { border-radius: 6px; }
+  .fl-year { margin-bottom: 1rem; }
+  .fl-yh { font-family: var(--serif); font-weight: 600; color: var(--accent); margin: 0.4rem 0; }
+  .fl-item { display: grid; grid-template-columns: 4.2rem 5.5rem minmax(0, 1.2fr) minmax(0, 1.6fr) auto; gap: 0.3rem 0.8rem; align-items: center; padding: 0.55rem 0.8rem; background: var(--card); border: 1px solid var(--subtle); border-radius: 8px; margin-bottom: 0.35rem; }
+  .fl-item.editing { border-color: var(--accent); box-shadow: 0 0 0 2px var(--highlight); }
+  .fl-item .fl-d { color: var(--muted); }
+  .fl-item .fl-m { color: var(--muted); font-size: 15px; min-width: 0; }
+  .fl-item .fl-t { display: flex; gap: 0.3rem; }
   .tv-flag { font-size: 1.4rem; line-height: 1; }
   .flag-img { height: 16px; width: 24px; aspect-ratio: 3 / 2; object-fit: cover; object-position: center; border-radius: 2px; box-shadow: 0 0 0 1px rgba(13, 27, 42, 0.12); vertical-align: -3px; flex: none; background: var(--subtle); }
   .tv-acad { background: var(--highlight); border-radius: 8px; padding: 0.9rem 1rem 0.1rem; margin-bottom: 0.9rem; }
@@ -428,6 +443,10 @@
     .row, .row.two { grid-template-columns: minmax(0, 1fr) !important; gap: 0.6rem; }
     .row.tv-add { grid-template-columns: 1fr 1fr !important; }
     .row.tv-add .field { grid-column: 1 / -1; }
+    .row.fl-row4 { grid-template-columns: 1fr 1fr !important; }
+    .fl-item { grid-template-columns: auto 1fr auto; }
+    .fl-item .fl-r, .fl-item .fl-m { grid-column: 1 / -1; }
+    .fl-item .fl-t { grid-column: 3; grid-row: 1; }
     details.fold { padding: 0.7rem 0.85rem; }
     .field { min-width: 0; }
     .item-head { gap: 0.4rem; }
@@ -1041,12 +1060,13 @@ const TABS = [
   ['awards', 'Awards'],
   ['photos', 'Photos'],
   ['travel', 'Footprints'],
+  ['flights', 'Flights'],
   ['cv', 'CV & site settings'],
   ['json', 'Raw JSON'],
 ];
 function tabCount(id) {
   if (!C) return '';
-  return { research: C.research_interests.length, education: C.education.length, publications: C.publications.length, awards: C.awards.length, photos: C.carousels.flat().length, travel: FP.data ? FP.data.places.length : '' }[id] ?? '';
+  return { research: C.research_interests.length, education: C.education.length, publications: C.publications.length, awards: C.awards.length, photos: C.carousels.flat().length, travel: FP.data ? FP.data.places.length : '', flights: FP.data ? (FP.data.flights || []).length : '' }[id] ?? '';
 }
 function renderNav() {
   $('#nav').innerHTML = TABS.map(([id, label]) => `<button data-tab="${id}" class="${TAB === id ? 'active' : ''}">${label}<span class="count">${tabCount(id)}</span></button>`).join('');
@@ -1118,7 +1138,7 @@ function render() {
   BIND.clear();
   renderNav();
   const v = $('#view');
-  const fn = { overview: viewOverview, profile: viewProfile, research: viewResearch, education: viewEducation, publications: viewPublications, awards: viewAwards, photos: viewPhotos, travel: viewFootprints, cv: viewCV, json: viewJSON }[TAB];
+  const fn = { overview: viewOverview, profile: viewProfile, research: viewResearch, education: viewEducation, publications: viewPublications, awards: viewAwards, photos: viewPhotos, travel: viewFootprints, flights: viewFlights, cv: viewCV, json: viewJSON }[TAB];
   v.innerHTML = ''; fn(v); wireBindings(v);
 }
 
@@ -1809,7 +1829,7 @@ async function ghDeleteFile(path, message) {
   await gh(`/repos/${REPO.owner}/${REPO.name}/contents/${encodeURIComponent(path).replace(/%2F/g, '/')}`, { method: 'DELETE', body: JSON.stringify({ message, sha, branch: REPO.branch }) });
 }
 function normalizeFP(d) {
-  d.v ||= 1; d.places ||= [];
+  d.v ||= 1; d.places ||= []; d.flights ||= [];
   d.title ||= { en: 'Places I have *been*', zh: '我的旅行足迹' }; d.intro ||= { en: '', zh: '' };
   d.pub_title ||= { en: 'Academic *footprint*', zh: '学术足迹' }; d.pub_intro ||= { en: 'Conferences, workshops and research visits.', zh: '参加过的学术会议、研讨会与学术访问。' };
   d.places.forEach(p => { p.id ||= 'pl-' + rid(); p.photos ||= []; p.note ||= { en: '', zh: '' }; p.city ||= { en: '', zh: '' }; p.country ||= { en: '', zh: '' }; p.when ||= '';
@@ -1896,7 +1916,7 @@ async function loadFootprints() {
   catch (e) { if (/404/.test(e.message)) { FP.sha = null; FP.remote = null; } else { FP.remote = undefined; FP.err = e.message; } }
   try { const r = await ghGetFile(FP.pubFile); FP.pubOrig = b64dec(r.content); FP.pubSha = r.sha; } catch (e) { FP.pubOrig = ''; FP.pubSha = null; }
   FP.loading = false;
-  if (TAB === 'travel') render();
+  if (TAB === 'travel' || TAB === 'flights') render();
 }
 async function unlockFootprints(password) {
   const { bundle, key, salt, iter } = await decryptBundle(FP.remote, password);
@@ -2846,8 +2866,223 @@ async function setPhotoVisibility(ph, toPublic) {
   ph.full = nf; ph.thumb = nt;
   await ghDeleteFile(of, 'Remove old photo copy'); await ghDeleteFile(ot, 'Remove old photo copy');
 }
-function viewFootprints(v) {
-  const intro = `<h2>Footprints</h2><p class="lead">One list of places for two pages. <a href="travel.html" target="_blank">travel.html</a> shows everything and opens only with the <b>travel password</b> (share it with family and friends; it gives no access to this manager). Entries ticked as <b>academic visit</b> are also published, in clear, on the public <a href="academic.html" target="_blank">academic.html</a>.</p>`;
+// ─────────────────────────────────────────────────────────────────────────────
+// Flights: a flight log stored inside the encrypted footprints bundle (FP.data.flights),
+// shown on flights.html (same travel password). Airport and airline lookups use
+// aviation/airports.json (OurAirports) and aviation/airlines.json (OpenFlights).
+// ─────────────────────────────────────────────────────────────────────────────
+const AVDB = { airports: null, airlines: null, p: null };
+function loadAvdb() {
+  return AVDB.p ||= Promise.all([fetch('aviation/airports.json').then(r => r.json()), fetch('aviation/airlines.json').then(r => r.json())]).then(([a, l]) => {
+    AVDB.airports = a.airports.map(([iata, icao, name, city, cc, lat, lon, size]) => ({ iata, icao, name, city, cc, lat, lon, size }));
+    AVDB.byIata = new Map(AVDB.airports.map(x => [x.iata, x]));
+    AVDB.airlines = l.airlines.map(([iata, icao, name, cc]) => ({ iata, icao, name, cc }));
+  }).catch(e => { AVDB.p = null; throw e; });
+}
+const FL_CLASSES = [['', '—'], ['economy', 'Economy'], ['premium', 'Premium economy'], ['business', 'Business'], ['first', 'First']];
+let FL_FILTER = '', FL_EDIT = null, FL_FORM = null;
+const flBlank = () => ({ date: new Date().toISOString().slice(0, 10), no: '', airline: null, from: null, to: null, ac: '', acText: '', reg: '', seat: '', cls: '', purpose: 'personal', dur: null, note: '' });
+// Chinese city name for an airport: taken from the nearest footprints place within 80 km, if any
+function cityZhNear(ap) {
+  let best = null, bd = 80;
+  for (const p of FP.data?.places || []) { if (typeof p.lat !== 'number' || !p.city?.zh || p.city.zh === p.city.en) continue;
+    const d = Aviation.distKm(ap, p); if (d < bd) { bd = d; best = p.city.zh; } }
+  return best || '';
+}
+const apRecord = a => ({ iata: a.iata, icao: a.icao || '', name: a.name, city: a.city || a.name, city_zh: cityZhNear(a), cc: a.cc, lat: a.lat, lon: a.lon });
+function searchAirports(q) {
+  q = q.trim(); if (!q || !AVDB.airports) return [];
+  const Q = q.toUpperCase(), f = fold(q), out = [];
+  const exact = AVDB.byIata.get(Q); if (exact) out.push(exact);
+  for (const a of AVDB.airports) {
+    if (out.length >= 8) break; if (a === exact) continue;
+    if (a.icao === Q || fold(a.city).startsWith(f) || (f.length > 2 && (fold(a.name).includes(f) || fold(a.city).includes(f)))) out.push(a);
+  }
+  return out;
+}
+function searchAirlines(q) {
+  q = q.trim(); if (!q || !AVDB.airlines) return [];
+  const Q = q.toUpperCase(), f = fold(q);
+  const zh = Object.entries(Aviation.AIRLINE_ZH).filter(([, n]) => n.includes(q)).map(([c]) => c);
+  return AVDB.airlines.filter(a => a.iata === Q || a.icao === Q || zh.includes(a.iata) || (f.length > 1 && fold(a.name).includes(f))).sort((a, b) => (b.iata === Q) - (a.iata === Q)).slice(0, 8);
+}
+const alRecord = a => ({ iata: a.iata, icao: a.icao || '', name: a.name, zh: Aviation.AIRLINE_ZH[a.iata] || '' });
+const parseDur = s => { const m = /^\s*(\d{1,2})\s*[:h]\s*(\d{1,2})/.exec(String(s || '')); return m ? (+m[1]) * 60 + (+m[2]) : (/^\s*\d+\s*$/.test(s || '') ? +s : null); };
+const fmtDur = m => m ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}` : '';
+const flRoute = f => `${f.from?.iata || '???'} → ${f.to?.iata || '???'}`;
+
+function viewFlights(v) {
+  if (!FP.data) { viewFootprints(v, `<h2>Flights</h2><p class="lead">The flight log is stored encrypted together with the footprints and opens with the same <b>travel password</b> on <a href="flights.html" target="_blank">flights.html</a>.</p>`); return; }
+  const T = FP.data; T.flights ||= [];
+  if (!AVDB.airports) { v.innerHTML = `<h2>Flights</h2><div class="card"><p class="hint">Loading the airport and airline lists…</p></div>`; loadAvdb().then(() => { if (TAB === 'flights') render(); }, e => toast('Could not load the airport list: ' + e.message, true)); return; }
+  FL_FORM ||= flBlank();
+  const F = FL_FORM, km = Aviation.distKm(F.from, F.to);
+  const typeOpts = (() => { const g = new Map(); Aviation.TYPES.forEach(t => { if (!g.has(t.mfr)) g.set(t.mfr, []); g.get(t.mfr).push(t); });
+    return `<option value="">—</option>` + [...g].map(([m, ts]) => `<optgroup label="${esc(m)}">${ts.map(t => `<option value="${t.code}" ${F.ac === t.code ? 'selected' : ''}>${esc(t.name)} (${t.code})</option>`).join('')}</optgroup>`).join('') + `<option value="__other" ${!F.ac && F.acText ? 'selected' : ''}>Other (type it in)…</option>`; })();
+  const nA = T.flights.filter(f => f.purpose === 'academic').length, totKm = T.flights.reduce((s, f) => s + Aviation.distKm(f.from, f.to), 0);
+  v.innerHTML = `<h2>Flights</h2><div class="tv-head tv-top"><span class="pill ok">${T.flights.length} flight${T.flights.length === 1 ? '' : 's'}</span><span class="pill acad">${nA} academic</span><span class="hint">${Math.round(totKm).toLocaleString('en')} km · shown on <a href="flights.html" target="_blank">flights.html</a> (travel password) · saved with <b>Publish changes</b>.</span></div>
+  <div class="card fl-form" id="fl-form"><h3>${FL_EDIT ? 'Edit flight' : 'Add a flight'}</h3>
+    <div class="row fl-row">
+      <div class="field"><label for="fl-date">Date</label><input id="fl-date" type="date" value="${esc(F.date)}"></div>
+      <div class="field"><label for="fl-no">Flight number</label><input id="fl-no" type="text" value="${esc(F.no)}" placeholder="e.g. KL897" autocomplete="off" class="mono"><div class="hint">The airline is filled in from the first two characters.</div></div>
+    </div>
+    <div class="row fl-row">
+      <div class="field fl-ac-wrap"><label for="fl-from">From</label><input id="fl-from" type="text" value="${esc(F.from ? F.from.iata + ' · ' + F.from.city : '')}" placeholder="IATA code or city, e.g. AMS" autocomplete="off"><div class="fl-sug" id="fl-from-sug"></div><div class="hint" id="fl-from-h">${F.from ? esc(`${F.from.name}, ${F.from.cc}`) : ''}</div></div>
+      <div class="field fl-ac-wrap"><label for="fl-to">To</label><input id="fl-to" type="text" value="${esc(F.to ? F.to.iata + ' · ' + F.to.city : '')}" placeholder="IATA code or city, e.g. PEK" autocomplete="off"><div class="fl-sug" id="fl-to-sug"></div><div class="hint" id="fl-to-h">${F.to ? esc(`${F.to.name}, ${F.to.cc}`) : ''}</div></div>
+    </div>
+    <div class="row fl-row">
+      <div class="field fl-ac-wrap"><label for="fl-al">Airline</label><input id="fl-al" type="text" value="${esc(F.airline ? (F.airline.iata ? F.airline.iata + ' · ' : '') + F.airline.name : '')}" placeholder="Name or code" autocomplete="off"><div class="fl-sug" id="fl-al-sug"></div></div>
+      <div class="field"><label for="fl-ac">Aircraft</label><select id="fl-ac">${typeOpts}</select>
+        <input id="fl-act" type="text" value="${esc(F.acText)}" placeholder="Aircraft type, e.g. Ilyushin Il-96" style="margin-top:0.4rem" ${!F.ac && F.acText ? '' : 'hidden'}></div>
+    </div>
+    <div class="row fl-row4">
+      <div class="field"><label for="fl-reg">Registration</label><input id="fl-reg" type="text" value="${esc(F.reg)}" placeholder="optional, e.g. PH-BKA" class="mono"></div>
+      <div class="field"><label for="fl-seat">Seat</label><input id="fl-seat" type="text" value="${esc(F.seat)}" placeholder="optional, e.g. 32K" class="mono"></div>
+      <div class="field"><label for="fl-cls">Class</label><select id="fl-cls">${FL_CLASSES.map(([k, l]) => `<option value="${k}" ${F.cls === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label for="fl-pur">Purpose</label><select id="fl-pur"><option value="personal" ${F.purpose !== 'academic' ? 'selected' : ''}>Personal</option><option value="academic" ${F.purpose === 'academic' ? 'selected' : ''}>Academic</option></select></div>
+    </div>
+    <div class="row fl-row">
+      <div class="field"><label for="fl-dur">Flight time (h:mm)</label><input id="fl-dur" type="text" value="${esc(fmtDur(F.dur))}" placeholder="optional, e.g. 9:50" class="mono"><div class="hint" id="fl-calc">${km ? `${Math.round(km).toLocaleString('en')} km · estimate ${fmtDur(Aviation.estMinutes(km))} if left empty` : 'Distance and time are calculated from the two airports.'}</div></div>
+      <div class="field"><label for="fl-note">Note</label><input id="fl-note" type="text" value="${esc(F.note)}" placeholder="optional"></div>
+    </div>
+    <div class="toolbar" style="margin-bottom:0"><button class="btn primary" id="fl-save">${FL_EDIT ? '✓ Save changes' : '+ Add flight'}</button>${FL_EDIT ? '<button class="btn" id="fl-cancel">Cancel</button>' : '<button class="btn" id="fl-clear">Clear</button>'}<span class="hint" id="fl-msg" style="margin:0"></span></div>
+  </div>
+  <h3 class="yearhead">Flights</h3>
+  <div class="tv-filter"><input type="search" id="fl-filter" placeholder="Find a flight: number, airport, airline, aircraft, year …" autocomplete="off" value="${esc(FL_FILTER)}"><span class="hint" id="fl-filter-n"></span></div>
+  <div id="fl-list"></div>
+  <div class="tv-folds">${foldCardGlobal('fl-import', 'Import flights from CSV', 'e.g. a my.flightradar24 export', `<p class="hint" style="margin-bottom:0.6rem">Paste a CSV with a header row. Recognised columns: <b>Date, Flight number, From, To, Airline, Aircraft, Registration, Seat, Class, Reason / Purpose, Duration, Note</b>. Airports may be written as IATA codes (<span class="mono">AMS</span>) or like <span class="mono">Amsterdam (AMS/EHAM)</span>; aircraft by name or ICAO code (<span class="mono">B78X</span>). Flights already in the list (same date, flight and route) are skipped. A reason of “business” or “academic” marks the flight as academic.</p>
+    <textarea id="fl-csv" rows="6" class="mono" placeholder="Date,Flight number,From,To,Airline,Aircraft&#10;2025-09-14,KL897,AMS,PEK,KLM,B78X"></textarea>
+    <div class="toolbar" style="margin-bottom:0"><input type="file" id="fl-csv-file" accept=".csv,text/csv" hidden><button class="btn sm" id="fl-csv-pick">Choose a CSV file…</button><button class="btn sm primary" id="fl-csv-go">Import</button><span class="hint" id="fl-csv-msg" style="margin:0"></span></div>`)}</div>`;
+
+  // ── Form wiring ──
+  const msg = t => { $('#fl-msg').textContent = t || ''; };
+  const calc = () => { const k = Aviation.distKm(F.from, F.to); $('#fl-calc').textContent = k ? `${Math.round(k).toLocaleString('en')} km · estimate ${fmtDur(Aviation.estMinutes(k))} if left empty` : 'Distance and time are calculated from the two airports.'; };
+  const suggest = (inputId, boxId, search, label, pick) => {
+    const inp = $('#' + inputId), box = $('#' + boxId); let res = [];
+    const show = () => { res = search(inp.value); box.innerHTML = res.map((r, i) => `<button type="button" class="tv-res" data-i="${i}">${label(r)}</button>`).join(''); box.querySelectorAll('[data-i]').forEach(b => b.onmousedown = e => { e.preventDefault(); pick(res[+b.dataset.i]); box.innerHTML = ''; }); };
+    inp.addEventListener('input', show); inp.addEventListener('focus', () => { if (inp.value && !inp.dataset.picked) show(); });
+    inp.addEventListener('blur', () => setTimeout(() => { box.innerHTML = ''; }, 150));
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && res[0]) { e.preventDefault(); pick(res[0]); box.innerHTML = ''; } });
+  };
+  const apLabel = a => `<span>${tvFlag(a.cc)} <b class="mono">${esc(a.iata)}</b> · ${esc(a.city || a.name)}<span class="m"> — ${esc(a.name)}</span></span><span class="m">${esc(a.cc)}</span>`;
+  ['from', 'to'].forEach(k => suggest('fl-' + k, `fl-${k}-sug`, searchAirports, apLabel, a => { F[k] = apRecord(a); $('#fl-' + k).value = `${a.iata} · ${a.city || a.name}`; $(`#fl-${k}-h`).textContent = `${a.name}, ${a.cc}`; calc(); }));
+  suggest('fl-al', 'fl-al-sug', searchAirlines, a => `<span><b class="mono">${esc(a.iata)}</b> · ${esc(a.name)}${Aviation.AIRLINE_ZH[a.iata] ? ` · ${esc(Aviation.AIRLINE_ZH[a.iata])}` : ''}</span><span class="m">${esc(a.cc)}</span>`, a => { F.airline = alRecord(a); $('#fl-al').value = `${a.iata} · ${a.name}`; });
+  $('#fl-al').addEventListener('change', e => { const t = e.target.value.trim(); if (!t) F.airline = null; else if (!F.airline || !t.endsWith(F.airline.name)) F.airline = { iata: '', icao: '', name: t, zh: '' }; });
+  $('#fl-date').onchange = e => { F.date = e.target.value; };
+  $('#fl-no').addEventListener('input', e => {
+    F.no = e.target.value.toUpperCase().replace(/\s+/g, ''); e.target.value = F.no;
+    const pre = F.no.slice(0, 2), al = /^[A-Z0-9]{2}\d/.test(F.no) && AVDB.airlines.find(a => a.iata === pre);
+    if (al && (!F.airline || !F.airline.iata || F.airline.iata !== pre)) { F.airline = alRecord(al); $('#fl-al').value = `${al.iata} · ${al.name}`; }
+  });
+  $('#fl-ac').onchange = e => { const v0 = e.target.value; if (v0 === '__other') { F.ac = ''; $('#fl-act').hidden = false; $('#fl-act').focus(); } else { F.ac = v0; F.acText = ''; $('#fl-act').hidden = true; } };
+  $('#fl-act').oninput = e => { F.acText = e.target.value; };
+  $('#fl-reg').oninput = e => { F.reg = e.target.value.toUpperCase(); e.target.value = F.reg; };
+  $('#fl-seat').oninput = e => { F.seat = e.target.value.toUpperCase(); e.target.value = F.seat; };
+  $('#fl-cls').onchange = e => { F.cls = e.target.value; };
+  $('#fl-pur').onchange = e => { F.purpose = e.target.value; };
+  $('#fl-dur').oninput = e => { F.dur = parseDur(e.target.value); };
+  $('#fl-note').oninput = e => { F.note = e.target.value; };
+  $('#fl-save').onclick = () => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(F.date || '')) return msg('Choose a date.');
+    if (!F.from || !F.to) return msg('Choose both airports from the suggestions.');
+    if (F.from.iata === F.to.iata) return msg('From and To are the same airport.');
+    const rec = { id: FL_EDIT || 'fl-' + rid(), date: F.date, no: F.no, airline: F.airline, from: F.from, to: F.to, ac: F.ac, acText: F.ac ? '' : (F.acText || '').trim(), reg: F.reg, seat: F.seat, cls: F.cls, purpose: F.purpose, dur: F.dur || null, note: F.note };
+    if (FL_EDIT) { const i = T.flights.findIndex(f => f.id === FL_EDIT); if (i >= 0) T.flights[i] = rec; toast('Flight updated. Publish to save.'); }
+    else { T.flights.push(rec); toast(`Added ${flRoute(rec)}. Publish to save.`); }
+    const keep = FL_EDIT ? null : { date: F.date, purpose: F.purpose };
+    FL_EDIT = null; FL_FORM = flBlank(); if (keep) Object.assign(FL_FORM, keep);
+    markDirty(); render();
+  };
+  const reset = () => { FL_EDIT = null; FL_FORM = flBlank(); render(); };
+  if ($('#fl-cancel')) $('#fl-cancel').onclick = reset;
+  if ($('#fl-clear')) $('#fl-clear').onclick = reset;
+
+  // ── List ──
+  const renderList = () => {
+    const q = fold(FL_FILTER.trim()), terms = q.split(/\s+/).filter(Boolean);
+    const rows = T.flights.map((f, i) => ({ f, i })).filter(({ f }) => { if (!terms.length) return true;
+      const hay = fold([f.date, f.no, f.from?.iata, f.to?.iata, f.from?.city, f.to?.city, f.airline?.name, f.airline?.iata, Aviation.typeName(f.ac, 'en', f.acText), f.ac, f.reg, f.seat, f.note, f.purpose].join(' '));
+      return terms.every(t => hay.includes(t)); })
+      .sort((a, b) => String(b.f.date).localeCompare(String(a.f.date)));
+    $('#fl-filter-n').textContent = terms.length ? `${rows.length} of ${T.flights.length}` : '';
+    if (!rows.length) { $('#fl-list').innerHTML = `<p class="hint">${T.flights.length ? 'No flight matches.' : 'No flights yet. Add the first one above, or import a CSV below.'}</p>`; return; }
+    let html = '', yr = null;
+    rows.forEach(({ f, i }) => {
+      const y = String(f.date).slice(0, 4);
+      if (y !== yr) { if (yr !== null) html += '</div>'; yr = y; const n = rows.filter(r => String(r.f.date).startsWith(y)).length; html += `<div class="fl-year"><div class="fl-yh">${esc(y)} <span class="hint" style="display:inline">${n} flight${n === 1 ? '' : 's'}</span></div>`; }
+      const km = Math.round(Aviation.distKm(f.from, f.to));
+      html += `<div class="fl-item${FL_EDIT === f.id ? ' editing' : ''}"><span class="mono fl-d">${esc(f.date.slice(5))}</span><span class="mono fl-n">${esc(f.no || '—')}</span>
+        <span class="fl-r"><b class="mono">${esc(f.from?.iata)}</b> → <b class="mono">${esc(f.to?.iata)}</b> <span class="hint" style="display:inline">${esc(f.from?.city || '')} – ${esc(f.to?.city || '')}</span></span>
+        <span class="fl-m">${esc(f.airline?.name || '')}${f.ac || f.acText ? ' · ' + esc(Aviation.typeName(f.ac, 'en', f.acText)) : ''} · ${km.toLocaleString('en')} km${f.purpose === 'academic' ? ' <span class="pill acad">academic</span>' : ''}</span>
+        <span class="fl-t"><button class="btn sm" data-fl-edit="${i}">Edit</button><button class="btn sm danger" data-fl-del="${i}" title="Delete" aria-label="Delete">✕</button></span></div>`;
+    });
+    $('#fl-list').innerHTML = html + '</div>';
+    $('#fl-list').querySelectorAll('[data-fl-edit]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flEdit]; FL_EDIT = f.id; FL_FORM = JSON.parse(JSON.stringify({ ...flBlank(), ...f })); render(); requestAnimationFrame(() => $('#fl-form').scrollIntoView({ behavior: 'smooth', block: 'start' })); });
+    $('#fl-list').querySelectorAll('[data-fl-del]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flDel]; if (!confirm(`Delete ${f.date} ${f.no || ''} ${flRoute(f)}?`)) return; T.flights.splice(+b.dataset.flDel, 1); if (FL_EDIT === f.id) { FL_EDIT = null; FL_FORM = flBlank(); } markDirty(); render(); });
+  };
+  renderList();
+  let ft; $('#fl-filter').addEventListener('input', e => { clearTimeout(ft); ft = setTimeout(() => { FL_FILTER = e.target.value; renderList(); }, 120); });
+
+  // ── CSV import ──
+  $('#fl-csv-pick').onclick = () => $('#fl-csv-file').click();
+  $('#fl-csv-file').onchange = async e => { const file = e.target.files[0]; if (file) $('#fl-csv').value = await file.text(); };
+  $('#fl-csv-go').onclick = () => {
+    const out = importFlightsCsv($('#fl-csv').value, T.flights);
+    $('#fl-csv-msg').textContent = out.msg;
+    if (out.added) { markDirty(); FL_FOLDS_OPEN.add('fl-import'); render(); toast(out.msg + ' Publish to save.'); }
+  };
+  v.querySelectorAll('details.fold').forEach(d => d.addEventListener('toggle', () => { if (d.open) FL_FOLDS_OPEN.add(d.dataset.fold); else FL_FOLDS_OPEN.delete(d.dataset.fold); }));
+}
+const FL_FOLDS_OPEN = new Set();
+const foldCardGlobal = (id, title, sub, body) => `<details class="card fold" data-fold="${id}" ${FL_FOLDS_OPEN.has(id) ? 'open' : ''}><summary>${title}<span class="hint">${sub}</span></summary>${body}</details>`;
+
+// CSV → flights. Returns { added, msg }.
+function parseCsv(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; continue; }
+    if (c === '"') q = true; else if (c === ',' || c === ';' || c === '\t') { row.push(cell); cell = ''; } else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; } else cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()));
+}
+function importFlightsCsv(text, flights) {
+  const rows = parseCsv(String(text || '').trim());
+  if (rows.length < 2) return { added: 0, msg: 'Paste a CSV with a header row and at least one flight.' };
+  const head = rows[0].map(h => fold(h).replace(/[^a-z]/g, ''));
+  const col = (...names) => head.findIndex(h => names.includes(h));
+  const C = { date: col('date'), no: col('flightnumber', 'flight', 'flightno', 'flightnr'), from: col('from', 'origin', 'departure', 'dep'), to: col('to', 'destination', 'arrival', 'arr'),
+    al: col('airline', 'carrier'), ac: col('aircraft', 'aircrafttype', 'type', 'equipment'), reg: col('registration', 'reg', 'tail'), seat: col('seat', 'seatnumber'),
+    cls: col('class', 'flightclass', 'cabin'), pur: col('reason', 'flightreason', 'purpose'), dur: col('duration', 'flighttime', 'time'), note: col('note', 'notes', 'comment') };
+  if (C.date < 0 || C.from < 0 || C.to < 0) return { added: 0, msg: 'The header needs at least Date, From and To columns.' };
+  const ap = s => { s = String(s || '').trim(); const m = /\(([A-Z]{3})\s*[\/)]/.exec(s) || /^([A-Z]{3})$/.exec(s.toUpperCase()) || /\b([A-Z]{3})\b/.exec(s); return m ? AVDB.byIata.get(m[1].toUpperCase()) : null; };
+  const seen = new Set(flights.map(f => [f.date, f.no, f.from?.iata, f.to?.iata].join('|')));
+  let added = 0, skipped = 0; const bad = [];
+  rows.slice(1).forEach((r, n) => {
+    const g = k => C[k] >= 0 ? String(r[C[k]] || '').trim() : '';
+    const dm = /(\d{4})-(\d{1,2})-(\d{1,2})/.exec(g('date')) || /(\d{1,2})[./](\d{1,2})[./](\d{4})/.exec(g('date'));
+    const date = dm ? (dm[1].length === 4 ? `${dm[1]}-${dm[2].padStart(2, '0')}-${dm[3].padStart(2, '0')}` : `${dm[3]}-${dm[2].padStart(2, '0')}-${dm[1].padStart(2, '0')}`) : '';
+    const a = ap(g('from')), b = ap(g('to'));
+    if (!date || !a || !b) { bad.push(n + 2); return; }
+    const no = g('no').toUpperCase().replace(/\s+/g, '');
+    const key = [date, no, a.iata, b.iata].join('|'); if (seen.has(key)) { skipped++; return; } seen.add(key);
+    const alS = g('al'), alCode = (/\(([A-Z0-9]{2})\s*[\/)]/.exec(alS) || [])[1] || (/^[A-Z0-9]{2}\d/.test(no) ? no.slice(0, 2) : '');
+    const alDb = AVDB.airlines.find(x => x.iata === alCode && (!alS || fold(alS).includes(fold(x.name).split(' ')[0]))) || AVDB.airlines.find(x => alS && fold(x.name) === fold(alS.replace(/\s*\(.*$/, '')));
+    const acS = g('ac'), acCode = (/\(([A-Z0-9]{3,4})\)/.exec(acS) || [])[1] || acS.toUpperCase();
+    const ty = Aviation.type(acCode) || Aviation.TYPES.find(t => acS && fold(acS).startsWith(fold(t.name)));
+    const clsS = fold(g('cls')), purS = fold(g('pur'));
+    flights.push({ id: 'fl-' + rid(), date, no, airline: alDb ? alRecord(alDb) : (alS ? { iata: '', icao: '', name: alS.replace(/\s*\(.*$/, ''), zh: '' } : null),
+      from: apRecord(a), to: apRecord(b), ac: ty ? ty.code : '', acText: ty ? '' : acS, reg: g('reg').toUpperCase(), seat: g('seat').toUpperCase(),
+      cls: /first|^3$/.test(clsS) ? 'first' : /business|^2$/.test(clsS) ? 'business' : /premium|\+|^4$/.test(clsS) ? 'premium' : /econ|^1$/.test(clsS) ? 'economy' : '',
+      purpose: /academ|conference|business|work|^2$/.test(purS) ? 'academic' : 'personal', dur: parseDur(g('dur')), note: g('note') });
+    added++;
+  });
+  return { added, msg: `Imported ${added} flight${added === 1 ? '' : 's'}${skipped ? `, ${skipped} already in the list` : ''}${bad.length ? `; rows ${bad.slice(0, 8).join(', ')}${bad.length > 8 ? '…' : ''} skipped (date or airport not recognised)` : ''}.` };
+}
+
+function viewFootprints(v, introOverride) {
+  const intro = introOverride || `<h2>Footprints</h2><p class="lead">One list of places for two pages. <a href="travel.html" target="_blank">travel.html</a> shows everything and opens only with the <b>travel password</b> (share it with family and friends; it gives no access to this manager). Entries ticked as <b>academic visit</b> are also published, in clear, on the public <a href="academic.html" target="_blank">academic.html</a>.</p>`;
   if (!TOKEN) { v.innerHTML = intro + `<div class="card"><p class="hint">Sign in to edit the footprints.</p></div>`; return; }
   if (FP.remote === undefined) {
     if (FP.err) { v.innerHTML = intro + `<div class="card"><p class="hint">Could not load ${esc(FP.file)}: ${esc(FP.err)}</p><div class="toolbar"><button class="btn sm" id="tv-retry">Try again</button></div></div>`; $('#tv-retry').onclick = () => { FP.err = ''; render(); }; return; }
