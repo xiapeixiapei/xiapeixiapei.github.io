@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610041947"></script>
-<script src="fleet3d.js?v=202610041947"></script>
+<script src="aviation.js?v=202610042011"></script>
+<script src="fleet3d.js?v=202610042011"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -138,9 +138,17 @@
   }
   @media (max-width: 1099px) {
     .col { display: contents; }
-    .sec-hero { order: 1; } .sec-filters { order: 2; } .stats { order: 3; } .sec-map { order: 4; } .sec-fleet { order: 5; } .sec-records { order: 6; }
-    .sec-log { order: 7; } .sec-flags { order: 8; } .ranks { order: 9; } .credits { order: 10; }
+    .sec-hero { order: 1; } .sec-filters { order: 2; } .stats { order: 3; } .sec-map { order: 4; } .sec-log { order: 5; } .sec-fleet { order: 6; }
+    .sec-records { order: 7; } .sec-flags { order: 8; } .sec-ranks { order: 9; } .foot { order: 10; }
+    /* secondary sections fold behind their heading (tap to open); the hangar's filters too */
+    .fold-h { cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent; }
+    .fold-h::after { content: '›'; margin-left: auto; color: var(--cyan); font-weight: 400; transform: rotate(90deg); transition: transform 0.2s; }
+    .folded > .fold-h::after { transform: none; }
+    .folded > :not(.fold-h) { display: none !important; }
+    .m-only { display: flex; }
   }
+  @media (min-width: 1100px) { .m-only { display: none !important; } }
+  .sec-ranks { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
   .hero { display: flex; flex-direction: column; gap: 0.2rem; }
   .hero h1 { font-family: var(--f-hud); font-weight: 700; font-size: clamp(2.4rem, 6vw, 3.8rem); line-height: 1.05; letter-spacing: 0.02em; margin-top: 0.3rem;
     background: var(--title-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -203,6 +211,7 @@
   /* Hangar: one card per aircraft type */
   .fleet { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.9rem; }
   .fleet-filters { display: flex; flex-direction: column; gap: 0.4rem; margin: -0.3rem 0 0.2rem; }
+  @media (max-width: 1099px) { .fleet-filters { display: none; } .sec-fleet.ff-open .fleet-filters { display: flex; } #fleet-ftog { align-self: flex-start; } .sec-fleet.ff-open #fleet-ftog { color: var(--on-cyan); background: var(--cyan); border-color: var(--cyan); } }
   .fleet-filters .seg:empty { display: none; }
   .fsel { appearance: none; -webkit-appearance: none; max-width: 100%; padding-right: 1.6rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238ea3bd' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.55rem center; background-size: 10px; align-self: flex-start; color: var(--ink); }
   .ac { overflow: hidden; display: flex; flex-direction: column; }
@@ -339,6 +348,10 @@
   .plist img { width: 30px; height: 22px; object-fit: cover; border-radius: 2px; }
   @media (max-width: 720px) {
     .back-link { font-size: 1.4rem; }
+    .layout { gap: 0.9rem; padding-top: 0.9rem; }
+    .hero h1 { font-size: 2.2rem; margin-top: 0; }
+    .stat { padding: 0.7rem 0.8rem 0.65rem; } .stat .n { font-size: 1.4rem; } .stat .s { font-size: 0.76rem; }
+    .foot { padding-top: 0.9rem; } .foot-links a { font-size: 0.8rem; padding: 0.3rem 0.65rem; } .credits { font-size: 0.68rem; }
     .stat .n { font-size: 1.5rem; }
     .col-x { display: none; }
     .fleet { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
@@ -347,11 +360,11 @@
     .ac-meta.al { display: none; }
     .ac-n { font-size: 1.2rem; }
     .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .stat:first-child, .stat:nth-child(2) { grid-column: span 1; }
+    .stat:first-child { grid-column: span 2; }   /* 1 + 6 tiles: no orphan in the two-column grid */
     /* Log as cards: route and distance, then flight number and date, then airline and aircraft */
     .log table, .log tbody { display: block; }
     .log thead { display: none; }
-    .log tr.yr { display: block; }
+    .log tr.yr, .log tr.more { display: block; } .log tr.more td { display: flex; justify-content: center; padding: 0.8rem; border: 0; }
     .log tr.yr td { display: block; }
     .log tr.fl { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "r k" "f d" "a a"; gap: 0.1rem 0.8rem; padding: 0.7rem 0.75rem; border-bottom: 1px solid var(--line-soft); }
     .log tr.fl td { padding: 0; border: none; background: none !important; min-width: 0; overflow-wrap: anywhere; }
@@ -427,11 +440,11 @@
       </div>
       <div class="stats" id="stats"></div>
       <section class="sec-records">
-        <h2 class="sec small"><span data-en="Records" data-zh="飞行纪录">Records</span></h2>
+        <h2 class="sec small fold-h"><span data-en="Records" data-zh="飞行纪录">Records</span></h2>
         <div class="records" id="records"></div>
       </section>
       <section class="sec-flags">
-        <h2 class="sec small"><span data-en="Flags" data-zh="国旗墙">Flags</span><span class="kicker" id="flags-n"></span></h2>
+        <h2 class="sec small fold-h"><span data-en="Flags" data-zh="国旗墙">Flags</span><span class="kicker" id="flags-n"></span></h2>
         <div class="flags-head"><div class="seg" id="f-flags" role="group" aria-label="Sort"></div><span class="flags-hint" data-en="Badge: take-offs and landings in that country" data-zh="角标：在该国的起降次数">Badge: take-offs and landings in that country</span></div>
         <div class="flags" id="flags"></div>
       </section>
@@ -466,16 +479,17 @@
     <aside class="col right">
       <section class="sec-fleet">
         <h2 class="sec"><span data-en="Hangar" data-zh="机库">Hangar</span><span class="kicker" data-en="Hover to rotate · click to inspect" data-zh="悬停旋转 · 点击查看">Hover to rotate · click to inspect</span></h2>
+        <button type="button" class="chip m-only" id="fleet-ftog" data-en="Filter the hangar" data-zh="筛选机库">Filter the hangar</button>
         <div class="fleet-filters" id="fleet-filters"></div>
         <div class="fleet" id="fleet"></div>
       </section>
-      <section class="ranks" id="ranks"></section>
+      <section class="sec-ranks"><h2 class="sec small m-only fold-h"><span data-en="Rankings" data-zh="排行榜">Rankings</span></h2><div class="ranks" id="ranks"></div></section>
     </aside>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
-<script src="map-base.js?v=202610041947"></script>
+<script src="map-base.js?v=202610042011"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -516,6 +530,7 @@ const apName = ap => A.airportName(ap, LANG) || city(ap);   // the usual name: B
 const acName = f => f.ac ? A.typeName(f.ac, LANG, f.acText) : (f.acText || '');
 const acKey = f => f.ac || (f.acText ? 'x:' + f.acText.trim().toLowerCase() : '');
 const routeKey = f => [f.from.iata, f.to.iata].sort().join('-');
+const narrow = () => matchMedia('(max-width: 1099px)').matches;   // phone / tablet layout
 const alKey = f => f.airline?.iata || f.airline?.name || '';
 
 // ── Unlock ──
@@ -885,6 +900,7 @@ function renderRanks(list) {
   $('#ranks').querySelectorAll('[data-more]').forEach(b => b.onclick = () => { const k = b.dataset.more; RANK_OPEN.has(k) ? RANK_OPEN.delete(k) : RANK_OPEN.add(k); renderRanks(list); });
 }
 
+let LOG_ALL = false;
 const fmtFare = f => {
   if (!(f.fare > 0)) return '';
   try { return new Intl.NumberFormat(LANG === 'zh' ? 'zh-CN' : 'en', { style: 'currency', currency: f.cur || 'EUR', currencyDisplay: 'narrowSymbol', maximumFractionDigits: f.fare % 1 ? 2 : 0 }).format(f.fare); }
@@ -919,7 +935,10 @@ function renderLog(list) {
   const rows = list.filter(selMatch).filter(matchesQ);
   $('#log-n').textContent = `${rows.length} / ${list.length}`;
   if (!rows.length) { $('#log').innerHTML = `<tr><td colspan="7" class="empty">${esc(FLIGHTS.length ? tr('none') : tr('empty'))}</td></tr>`; return; }
-  $('#log').innerHTML = rowsHtml(rows);
+  // on a phone the log starts with the latest dozen flights; a button unfolds the rest
+  const cut = narrow() && !LOG_ALL && rows.length > 12;
+  $('#log').innerHTML = rowsHtml(cut ? rows.slice(0, 12) : rows) + (cut ? `<tr class="more"><td colspan="7"><button type="button" class="chip" id="log-more">${esc(LANG === 'zh' ? `显示全部 ${rows.length} 班` : `Show all ${rows.length} flights`)}</button></td></tr>` : '');
+  const mb = $('#log-more'); if (mb) mb.onclick = () => { LOG_ALL = true; renderLog(scoped()); };
   $('#log').querySelectorAll('tr.fl').forEach(tr0 => tr0.onclick = e => {
     if (e.target.closest('a')) return;   // a link inside the row opens its detail view instead
     const k = tr0.dataset.route, [a, b] = k.split('-');
@@ -1094,6 +1113,10 @@ function renderFooter() {
   $('#copy').textContent = zh ? `© ${span} ${OWNER.zh} · 版权所有，未经许可请勿转载` : `© ${span} ${OWNER.en}. All rights reserved.`;
 }
 const setBarH = () => document.documentElement.style.setProperty('--bar-h', $('.top-bar').offsetHeight + 'px');
+// Phone layout: Records, Flags and Rankings start folded behind their headings; the hangar filters behind a button
+document.querySelectorAll('.fold-h').forEach(h => { if (narrow()) h.parentElement.classList.add('folded'); h.addEventListener('click', () => { if (narrow()) h.parentElement.classList.toggle('folded'); }); });
+matchMedia('(max-width: 1099px)').addEventListener('change', e => { if (!e.matches) document.querySelectorAll('.folded').forEach(el => el.classList.remove('folded')); });
+$('#fleet-ftog').onclick = () => $('.sec-fleet').classList.toggle('ff-open');
 addEventListener('resize', setBarH); setBarH();
 function showApp() { $('#gate').hidden = true; $('#app').hidden = false; $('#btn-lock').hidden = false; renderAll(); if (detailOf(location.hash)) renderDetail(); }
 (async () => { if (await tryStoredKey()) showApp(); else $('#pw').focus(); })();
