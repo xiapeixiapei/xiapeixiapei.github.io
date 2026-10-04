@@ -145,6 +145,10 @@
   .hero h1 { font-family: var(--f-hud); font-weight: 700; font-size: clamp(2.4rem, 6vw, 3.8rem); line-height: 1.05; letter-spacing: 0.02em; margin-top: 0.3rem;
     background: var(--title-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .hero .sub { color: var(--muted); margin-top: 0.3rem; max-width: 640px; }
+  /* a blinking full stop after the title, like a terminal cursor */
+  .hero h1::after { content: '.'; color: var(--cyan); -webkit-text-fill-color: var(--cyan); animation: blink-dot 1.1s steps(1, end) infinite; }
+  @keyframes blink-dot { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .hero h1::after { animation: none; } }
   .filters { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
   .seg { display: flex; flex-wrap: wrap; gap: 0.35rem; }
   .chip { border: 1px solid var(--line-2); background: var(--field); color: var(--muted); border-radius: 3px; padding: 0.32rem 0.75rem; font-family: var(--f-mono); font-size: 0.8rem; cursor: pointer; }
