@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610050430"></script>
-<script src="fleet3d.js?v=202610050430"></script>
+<script src="aviation.js?v=202610051200"></script>
+<script src="fleet3d.js?v=202610051200"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -175,13 +175,26 @@
   .chip:hover { color: var(--ink); border-color: var(--cyan); }
   .chip.on { background: var(--cyan); border-color: var(--cyan); color: var(--on-cyan); font-weight: 600; }
   .chip.amber.on { background: var(--amber); border-color: var(--amber); }
+  /* segmented box: one frame per filter, one row; the picked option fills with the accent (scrolls sideways if it ever overflows) */
+  .seg.box { flex-wrap: nowrap; gap: 0; align-self: stretch; max-width: 100%; overflow-x: auto; scrollbar-width: none; border: 1px solid var(--line-2); border-radius: 4px; background: var(--field); }
+  .seg.box::-webkit-scrollbar { display: none; }
+  .seg.box .chip { flex: 1 0 auto; border: 0; border-radius: 0; background: transparent; padding: 0.34rem 0.5rem; white-space: nowrap; text-align: center; }
+  .seg.box .chip + .chip { border-left: 1px solid var(--line); }
+  .seg.box .chip:hover { background: rgba(var(--cyan-rgb), 0.08); }
+  .seg.box .chip.on { background: var(--cyan); color: var(--on-cyan); }
+  .seg.box .chip.amber.on { background: var(--amber); color: var(--on-cyan); }
 
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.8rem; }
-  .stat { padding: 0.95rem 1rem 0.85rem; }
-  .stat .n { font-family: var(--f-mono); font-weight: 600; font-size: 1.85rem; color: var(--cyan); line-height: 1.1; text-shadow: 0 0 18px rgba(var(--cyan-rgb), var(--glow)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.6rem; }
+  .stat { padding: 0.75rem 0.9rem 0.7rem; }
+  .stat .n { font-family: var(--f-mono); font-weight: 600; font-size: 1.7rem; color: var(--cyan); line-height: 1.1; text-shadow: 0 0 18px rgba(var(--cyan-rgb), var(--glow)); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .stat .n small { font-size: 0.55em; color: var(--muted); margin-left: 0.15em; text-shadow: none; }
-  .stat .l { font-family: var(--f-hud); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); margin-top: 0.35rem; }
+  .stat .l { font-family: var(--f-hud); font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink); margin-top: 0.25rem; }
   .stat .s { font-size: 0.82rem; color: var(--muted); }
+  /* the page's own stat row: three compact two-line tiles per row */
+  #stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+  #stats .stat { padding: 0.55rem 0.65rem 0.5rem; min-width: 0; }
+  #stats .stat .n { font-size: 1.2rem; text-shadow: none; }
+  #stats .stat .l { font-size: 0.66rem; letter-spacing: 0.06em; margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
   /* Map */
   .map-card { padding: 0.6rem; }
@@ -228,13 +241,14 @@
   .rec .s { font-size: 0.85rem; color: var(--muted); }
 
   /* Hangar: one card per aircraft type */
-  .fleet { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.9rem; }
+  .fleet { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.6rem; }
   .fleet-filters { display: flex; flex-direction: column; gap: 0.4rem; margin: -0.3rem 0 0.2rem; }
   @media (max-width: 1099px) { .fleet-filters { display: none; } .sec-fleet.ff-open .fleet-filters { display: flex; } #fleet-ftog { align-self: flex-start; } .sec-fleet.ff-open #fleet-ftog { color: var(--on-cyan); background: var(--cyan); border-color: var(--cyan); } }
   .fleet-filters .seg:empty { display: none; }
+  .fleet-filters .seg.box { max-width: 520px; }
   .fsel { appearance: none; -webkit-appearance: none; max-width: 100%; padding-right: 1.6rem; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238ea3bd' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.55rem center; background-size: 10px; align-self: flex-start; color: var(--ink); }
   .ac { overflow: hidden; display: flex; flex-direction: column; }
-  .ac-pic { position: relative; aspect-ratio: 16 / 10; background: radial-gradient(circle at 50% 45%, rgba(var(--cyan-rgb), 0.10), transparent 65%), linear-gradient(rgba(var(--cyan-rgb), 0.08) 1px, transparent 1px) 0 0 / 12px 12px, linear-gradient(90deg, rgba(var(--cyan-rgb), 0.08) 1px, transparent 1px) 0 0 / 12px 12px, var(--pic-bg); color: var(--cyan); display: grid; place-items: center; border-bottom: 1px solid var(--line); }
+  .ac-pic { position: relative; aspect-ratio: 2 / 1; background: radial-gradient(circle at 50% 45%, rgba(var(--cyan-rgb), 0.10), transparent 65%), linear-gradient(rgba(var(--cyan-rgb), 0.08) 1px, transparent 1px) 0 0 / 12px 12px, linear-gradient(90deg, rgba(var(--cyan-rgb), 0.08) 1px, transparent 1px) 0 0 / 12px 12px, var(--pic-bg); color: var(--cyan); display: grid; place-items: center; border-bottom: 1px solid var(--line); }
   .ac-pic .ac-sil { width: 62%; height: 86%; filter: drop-shadow(0 0 6px rgba(var(--cyan-rgb), 0.45)); }
   .ac-pic .ac-3d { position: absolute; inset: 0; width: 100%; height: 100%; display: none; cursor: grab; touch-action: pan-y; }
   .ac-pic .ac-3d:active { cursor: grabbing; }
@@ -249,6 +263,15 @@
   .liv:hover { color: var(--ink); border-color: var(--cyan); }
   .liv.on { border-color: var(--cyan); color: var(--cyan); background: rgba(var(--cyan-rgb), 0.12); }
   .liv i { font-style: normal; font-family: var(--f-mono); opacity: 0.7; margin-left: 0.3em; }
+  .ac-livs.logos { flex-wrap: wrap; gap: 0.3rem 0.35rem; margin-top: 0.3rem; align-items: center; }
+  .liv.logo { position: relative; width: 30px; height: 28px; padding: 2px; border-radius: 4px; overflow: visible; display: grid; place-items: center; }
+  .liv.logo[hidden] { display: none; }
+  .liv.logo .tail-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  .liv.logo .tl-fb { width: 100%; height: 100%; clip-path: polygon(0 100%, 62% 100%, 100% 0, 74% 0); background: var(--line-2); }
+  .liv.logo i { position: absolute; right: -6px; bottom: -6px; margin: 0; min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px; display: grid; place-items: center; font-size: 0.6rem; line-height: 1; opacity: 1; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line-2); }
+  .liv.logo.on i { background: var(--cyan); color: var(--on-cyan); border-color: var(--cyan); }
+  .liv-more { height: 28px; min-width: 30px; padding: 0 0.4rem; border: 1px dashed var(--line-2); border-radius: 4px; background: transparent; color: var(--cyan); font-family: var(--f-mono); font-size: 0.74rem; cursor: pointer; }
+  .liv-more:hover { border-style: solid; border-color: var(--cyan); }
   /* 3D viewer */
   .v3d { position: fixed; inset: 0; z-index: 2000; background: var(--overlay); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; padding: 1rem; }
   .v3d-box { width: min(1100px, 100%); height: min(720px, calc(100vh - 2rem)); display: flex; flex-direction: column; background: var(--box); }
@@ -259,7 +282,7 @@
   .v3d-foot { display: flex; justify-content: space-between; align-items: center; gap: 0.8rem; flex-wrap: wrap; padding: 0.6rem 1.1rem 0.9rem; font-size: 0.85rem; color: var(--muted); }
   .v3d-foot .ac-livs { margin: 0; }
   .ac-code { position: absolute; z-index: 1; left: 0.6rem; top: 0.5rem; font-family: var(--f-mono); font-size: 0.75rem; color: var(--cyan); background: var(--glass); border: 1px solid var(--line-2); padding: 0.05rem 0.4rem; border-radius: 2px; }
-  .ac-n { position: absolute; z-index: 1; right: 0.6rem; bottom: 0.35rem; font-family: var(--f-mono); font-weight: 600; font-size: 1.5rem; color: var(--ink-strong); text-shadow: 0 0 12px rgba(var(--cyan-rgb), var(--glow)); }
+  .ac-n { position: absolute; z-index: 1; right: 0.6rem; bottom: 0.25rem; font-family: var(--f-mono); font-weight: 600; font-size: 1.2rem; color: var(--ink-strong); text-shadow: 0 0 12px rgba(var(--cyan-rgb), var(--glow)); }
   .ac-n small { font-size: 0.55em; color: var(--muted); }
   .ac.locked { border-style: dashed; }
   .ac.locked .ac-name { color: var(--muted); }
@@ -268,8 +291,10 @@
   .xbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; margin: 0 0 0.9rem; }
   .sec-link { margin-left: auto; font-size: 0.78rem; color: var(--cyan); text-decoration: none; white-space: nowrap; }
   .sec-link:hover { text-decoration: underline; }
-  .ac-body { padding: 0.7rem 0.9rem 0.85rem; display: flex; flex-direction: column; gap: 0.15rem; }
-  .ac-name { font-family: var(--f-hud); font-weight: 600; font-size: 1.08rem; }
+  .ac-body { padding: 0.45rem 0.65rem 0.55rem; display: flex; flex-direction: column; gap: 0.15rem; }
+  .ac-body .ac-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ac-km { position: absolute; z-index: 1; left: 0.6rem; bottom: 0.4rem; font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); }
+  .ac-name { font-family: var(--f-hud); font-weight: 600; font-size: 1rem; }
   .ac-meta { font-size: 0.84rem; color: var(--muted); }
   .ac-dim { font-size: 0.76rem; font-family: var(--f-mono); letter-spacing: -0.01em; }
   .bar { height: 4px; background: rgba(var(--cyan-rgb), 0.14); border-radius: 2px; overflow: hidden; margin-top: 0.35rem; }
@@ -334,6 +359,8 @@
     background: var(--cyan); color: var(--on-cyan); font-family: var(--f-mono); font-weight: 600; font-size: 0.72rem; line-height: 1; box-shadow: 0 0 0 2px var(--bg); }
   .flags-head { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
   .flags-hint { font-size: 0.8rem; color: var(--muted); }
+  #flags-n, #tails-n { font-size: 0.82rem; letter-spacing: 0.14em; }
+  #flags-n b, #tails-n b { font-size: 1.7rem; font-weight: 700; letter-spacing: 0; margin-right: 0.3em; line-height: 1; vertical-align: -0.12em; text-shadow: 0 0 14px rgba(var(--cyan-rgb), var(--glow)); }
   .credits a { color: var(--muted); }
   /* Airline wall: each airline's tail fin, with the number of flights */
   .tails { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 0.9rem 0.4rem; }
@@ -379,7 +406,7 @@
   .pl-fin { width: 40px; height: 38px; }
   .pl-fin .tl-fb, .pl-fin img { width: 100%; height: 100%; }
   .al-fin { display: inline-block; width: 84px; height: 80px; clip-path: polygon(0 100%, 62% 100%, 100% 0, 74% 0); background: var(--line-2); flex: none; }
-  .dmap { height: clamp(300px, 46vh, 520px); border-radius: 4px; background: var(--map-bg); }
+  .dmap { height: clamp(300px, 46vh, 520px); border-radius: 4px; background: var(--map-bg); isolation: isolate; }
   .dmap .leaflet-tile-pane { filter: var(--tile-filter); }
   .dlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.9rem; align-items: start; }
   .dlist .rank .rk .c small { color: var(--dim); margin-left: 0.3em; font-size: 0.8em; }
@@ -395,6 +422,62 @@
   .plist .nm small { display: block; color: var(--muted); font-size: 0.8rem; }
   .plist .c { font-family: var(--f-mono); color: var(--muted); white-space: nowrap; }
   .plist img { width: 30px; height: 22px; object-fit: cover; border-radius: 2px; }
+  /* one flight (#fl=…) */
+  .fl-nav { font-size: 1.3rem; text-decoration: none; }
+  .fl-nav.off { opacity: 0.3; pointer-events: none; }
+  .detail-head .al-head { display: flex; align-items: center; gap: 0.9rem; }
+  .detail-head h2 .tag { font-size: 0.8rem; vertical-align: middle; -webkit-text-fill-color: var(--amber); }
+  .detail-head .sub a.dl { color: var(--ink); text-decoration: none; }
+  .detail-head .sub a.dl:hover { color: var(--cyan); }
+  .fl-acts { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .fl-acts a.chip { text-decoration: none; }
+  .fpass { display: grid; grid-template-columns: minmax(0, 1fr) minmax(90px, 0.7fr) minmax(0, 1fr); gap: 1rem; align-items: center; padding: 1.1rem 1.3rem; margin-bottom: 1.2rem; }
+  .fp-end { min-width: 0; }
+  .fp-end.to { text-align: right; }
+  .fp-end .kicker::before { display: none; }
+  .fp-code { display: block; font-family: var(--f-mono); font-weight: 700; font-size: clamp(2.2rem, 6vw, 3.4rem); line-height: 1.05; color: var(--ink-strong); text-decoration: none; text-shadow: 0 0 22px rgba(var(--cyan-rgb), var(--glow)); }
+  .fp-code:hover { color: var(--cyan); }
+  .fp-city { font-family: var(--f-hud); font-weight: 600; font-size: 1.05rem; }
+  .fp-flag { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; vertical-align: -1px; margin-left: 0.2rem; }
+  .fp-ap { color: var(--muted); font-size: 0.85rem; }
+  .fp-times { display: flex; gap: 1.1rem; margin-top: 0.6rem; flex-wrap: wrap; }
+  .fp-end.to .fp-times { justify-content: flex-end; }
+  .fp-times small { display: block; font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .fp-times b { font-family: var(--f-mono); font-size: 1.25rem; color: var(--ink-strong); }
+  .fp-times em { display: block; font-style: normal; font-family: var(--f-mono); font-size: 0.72rem; }
+  .fp-times em.late { color: var(--amber); } .fp-times em.early, .fp-times em.ontime { color: var(--ok, #2f9e6b); }
+  html[data-theme="light"] .fp-times em.early, html[data-theme="light"] .fp-times em.ontime { color: #1d7a4f; }
+  .fp-mid { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; font-family: var(--f-mono); font-size: 0.82rem; color: var(--muted); text-align: center; }
+  .fp-line { position: relative; width: 100%; height: 2px; background: linear-gradient(90deg, transparent, var(--cyan) 15%, var(--cyan) 85%, transparent); opacity: 0.85; }
+  .fp-plane { position: absolute; left: 50%; top: 50%; width: 26px; height: 26px; transform: translate(-50%, -50%) rotate(90deg); color: var(--cyan); background: var(--panel-2); border-radius: 50%; padding: 3px; }
+  .fp-plane svg { width: 100%; height: 100%; display: block; }
+  .fac { overflow: hidden; }
+  .fac-stage { aspect-ratio: 16 / 9; }
+  .fac-stage.is3d .ac-sil { display: none; }
+  .fac-stage .v3d-canvas { position: absolute; inset: 0; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; }
+  .fac-stage.is3d .ac-open { display: grid; }
+  .fac-body { padding: 0.9rem 1.1rem 1.1rem; display: grid; gap: 0.55rem; }
+  .fac-body h3 { font-family: var(--f-hud); font-size: 1.35rem; font-weight: 600; }
+  .fac-body h3 a { color: inherit; text-decoration: none; } .fac-body h3 a:hover { color: var(--cyan); }
+  .fac-reg { display: flex; gap: 0.8rem; align-items: baseline; flex-wrap: wrap; color: var(--muted); font-size: 0.9rem; }
+  .fac-reg .mono { font-size: 1.05rem; color: var(--ink-strong); padding: 0.05rem 0.45rem; border: 1px solid var(--line-2); border-radius: 3px; }
+  .fac-spec { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.45rem 0.8rem; }
+  .fac-spec dt { font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .fac-spec dd { font-family: var(--f-mono); color: var(--ink-strong); }
+  .fac-same { display: grid; gap: 0.25rem; font-size: 0.88rem; }
+  .fac-same b { font-weight: 600; }
+  .fac-same a, .fl-trip a { color: var(--ink); text-decoration: none; }
+  .fac-same a:hover { color: var(--cyan); }
+  .fac-same small { color: var(--muted); }
+  .fl-trip { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 0.7rem; margin-bottom: 0.9rem; }
+  .fl-trip a { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; padding: 0.7rem 0.9rem; }
+  .fl-trip a:hover { border-color: var(--cyan); }
+  .fl-trip img { width: 28px; height: 20px; object-fit: cover; border-radius: 2px; }
+  .fl-trip .nm { font-weight: 600; line-height: 1.3; min-width: 0; }
+  .fl-trip .nm small { display: block; color: var(--muted); font-weight: 400; font-size: 0.8rem; }
+  .fl-trip .go { font-family: var(--f-mono); font-size: 0.75rem; color: var(--cyan); white-space: nowrap; }
+  @media (max-width: 520px) { .detail-top .crumb:has(+ .fl-nav) b { display: none; } }
+  @media (max-width: 640px) { .fpass { grid-template-columns: 1fr; text-align: left; } .fp-end.to { text-align: left; } .fp-end.to .fp-times { justify-content: flex-start; } .fp-mid { flex-direction: row; } .fp-line { flex: 1; } }
   @media (max-width: 720px) {
     .back-link { font-size: 1.4rem; }
     .layout { gap: 0.9rem; padding-top: 0.9rem; }
@@ -410,6 +493,7 @@
     .ac-n { font-size: 1.2rem; }
     .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .stat:first-child { grid-column: span 2; }   /* flights full width, distance and time side by side */
+    #stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } #stats .stat:first-child { grid-column: auto; } #stats .stat .n { font-size: 1.2rem; }
     /* Log as cards: route and distance, then flight number and date, then airline and aircraft */
     .log table, .log tbody { display: block; }
     .log thead { display: none; }
@@ -484,13 +568,13 @@
         <h1 data-en="My Air Times" data-zh="云间岁月">My Air Times</h1>
       </section>
       <div class="filters sec-filters">
-        <div class="seg" id="f-year" role="group" aria-label="Year"></div>
-        <div class="seg" id="f-purpose" role="group" aria-label="Purpose"></div>
+        <div class="seg box" id="f-year" role="group" aria-label="Year"></div>
+        <div class="seg box" id="f-purpose" role="group" aria-label="Purpose"></div>
       </div>
       <div class="stats" id="stats"></div>
       <section class="sec-flags">
         <h2 class="sec small fold-h"><span data-en="Flags" data-zh="国旗墙">Flags</span><span class="kicker" id="flags-n"></span></h2>
-        <div class="flags-head"><div class="seg" id="f-flags" role="group" aria-label="Sort"></div><span class="flags-hint" data-en="Badge: take-offs and landings in that country" data-zh="角标：在该国的起降次数">Badge: take-offs and landings in that country</span></div>
+        <div class="flags-head"><div class="seg box" id="f-flags" role="group" aria-label="Sort"></div><span class="flags-hint" data-en="Badge: take-offs and landings in that country" data-zh="角标：在该国的起降次数">Badge: take-offs and landings in that country</span></div>
         <div class="flags" id="flags"></div>
       </section>
       <section class="sec-tails">
@@ -544,7 +628,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
 <script src="site-lang.js"></script>
-<script src="map-base.js?v=202610050430"></script>
+<script src="map-base.js?v=202610051200"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -560,7 +644,7 @@ const b64u8 = a => { let s = ''; a.forEach(x => { s += String.fromCharCode(x); }
 const A = window.Aviation;
 const EARTH = 40075, MOON = 384400;
 
-let LANG = window.SiteLang ? SiteLang.initial() : 'en', FLIGHTS = [], YEAR = 'all', PURPOSE = 'all', Q = '', SEL = null, MAP = null, LAYER = null, FIRST_FIT = true, FLAG_SORT = 'n', VIEWER = null, ALL_BOUNDS = null;
+let LANG = window.SiteLang ? SiteLang.initial() : 'en', FLIGHTS = [], PLACES = [], YEAR = 'all', PURPOSE = 'all', Q = '', SEL = null, MAP = null, LAYER = null, FIRST_FIT = true, FLAG_SORT = 'n', VIEWER = null, ALL_BOUNDS = null;
 const L10N = {
   all: ['All', '全部'], allYears: ['All years', '全部年份'], personal: ['Personal', '私人'], academic: ['Academic', '学术'],
   flights: ['Flights', '航班'], distance: ['Distance', '飞行距离'], time: ['Time aloft', '飞行时长'], airports: ['Airports', '机场'],
@@ -572,7 +656,7 @@ const L10N = {
   empty: ['No flights yet. Add them in Site Manager → Flights.', '还没有飞行记录。请在 Site Manager → Flights 中添加。'],
   clear: ['clear', '清除'], unknownType: ['Other / unknown', '其他 / 未知'], est: ['estimated', '估算'], details: ['Details', '查看详情'],
   back: ['Back', '返回'], movements: ['Take-offs and landings', '起降次数'], regs: ['Aircraft flown', '乘坐过的飞机'], years: ['By year', '按年份'],
-  first2: ['First', '首次'], last: ['Latest', '最近'], hours: ['Hours', '小时'], newTab: ['Open in a new tab', '在新标签页打开'], destinations: ['Destinations', '目的地'],
+  flight: ['Flight', '航班'], typesShort: ['Aircraft', '机型'], place: ['Place', '地点'], first2: ['First', '首次'], last: ['Latest', '最近'], hours: ['Hours', '小时'], newTab: ['Open in a new tab', '在新标签页打开'], destinations: ['Destinations', '目的地'],
 };
 const tr = k => (L10N[k] || [k, k])[LANG === 'zh' ? 1 : 0];
 const nf = (n, d = 0) => Number(n).toLocaleString(LANG === 'zh' ? 'zh-CN' : 'en', { maximumFractionDigits: d, minimumFractionDigits: d });
@@ -608,6 +692,8 @@ async function unlockWith(key, file) {
     const km = A.distKm(f.from, f.to);
     return { ...f, km, min: f.dur > 0 ? f.dur : A.estMinutes(km), est: !(f.dur > 0), year: String(f.date || '').slice(0, 4) || '—' };
   }).sort((a, b) => String(b.date).localeCompare(String(a.date)) || String(b.no).localeCompare(String(a.no)));
+  // places on travel.html this flight belongs to (the place keeps the flight ids it is linked to)
+  PLACES = (data.places || []).filter(p => (p.flights || []).length).map(p => ({ id: p.id, city: p.city, country: p.country, cc: p.cc, lat: p.lat, lon: p.lon, when: p.when, trip: p.trip, flights: p.flights }));
 }
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
@@ -657,7 +743,7 @@ function tally(list, keyFn, labelFn) {
 function renderFilters() {
   const years = [...new Set(FLIGHTS.map(f => f.year))].sort().reverse();
   if (YEAR !== 'all' && !years.includes(YEAR)) YEAR = 'all';
-  $('#f-year').innerHTML = [['all', tr('allYears')], ...years.map(y => [y, y])].map(([v, l]) => `<button type="button" class="chip${YEAR === v ? ' on' : ''}" data-year="${esc(v)}">${esc(l)}</button>`).join('');
+  $('#f-year').innerHTML = [['all', tr('all')], ...years.map(y => [y, y])].map(([v, l]) => `<button type="button" class="chip${YEAR === v ? ' on' : ''}" data-year="${esc(v)}">${esc(l)}</button>`).join('');
   $('#f-purpose').innerHTML = [['all', tr('all')], ['personal', tr('personal')], ['academic', tr('academic')]].map(([v, l]) => `<button type="button" class="chip${v === 'academic' ? ' amber' : ''}${PURPOSE === v ? ' on' : ''}" data-purpose="${v}">${esc(l)}</button>`).join('');
   $('#f-year').querySelectorAll('[data-year]').forEach(b => b.onclick = () => { YEAR = b.dataset.year; SEL = null; FIRST_FIT = true; renderAll(); });
   $('#f-purpose').querySelectorAll('[data-purpose]').forEach(b => b.onclick = () => { PURPOSE = b.dataset.purpose; SEL = null; FIRST_FIT = true; renderAll(); });
@@ -672,16 +758,16 @@ function countUp(el, to, dec = 0) {
 }
 function renderStats(list) {
   const km = list.reduce((s, f) => s + f.km, 0), min = list.reduce((s, f) => s + f.min, 0);
-  const aps = new Set(list.flatMap(f => [f.from.iata, f.to.iata])), ccs = new Set(list.flatMap(f => [A.statCC(f.from.cc), A.statCC(f.to.cc)]).filter(Boolean));
-  const als = new Set(list.map(f => f.airline?.iata || f.airline?.name).filter(Boolean)), types = new Set(list.map(acKey).filter(Boolean));
+  const aps = new Set(list.flatMap(f => [f.from.iata, f.to.iata])), types = new Set(list.map(acKey).filter(Boolean));
   const anyEst = list.some(f => f.est);
   const cells = [
     ['flights', list.length, 0, '', `${list.filter(f => f.purpose === 'academic').length} ${tr('academic').toLowerCase()} · ${list.filter(f => f.purpose !== 'academic').length} ${tr('personal').toLowerCase()}`],
     ['distance', Math.round(km), 0, 'km', LANG === 'zh' ? `绕地球 ${nf(km / EARTH, 2)} 圈 · 地月距离的 ${nf(km / MOON * 100, 1)}%` : `${nf(km / EARTH, 2)} ${tr('around')} · ${nf(km / MOON * 100, 1)}% ${tr('toMoon')}`],
     ['time', Math.round(min / 60), 0, LANG === 'zh' ? '小时' : 'h', `${anyEst ? '≈ ' : ''}${nf(min / 1440, 1)} ${tr('days')}`],
-    ['airports', aps.size, 0, '', '', 'airports'], ['countries', ccs.size, 0, '', '', 'countries'], ['airlines', als.size, 0, '', '', 'airlines'], ['types', types.size, 0, '', '', 'types'],
-  ];
-  $('#stats').innerHTML = cells.map(([k, , , unit, sub, link], i) => `<${link ? `a class="hud stat dl" href="#list=${link}" title="${esc(tr('details'))}"` : 'div class="hud stat"'}><div class="n"><span data-i="${i}">0</span>${unit ? `<small>${esc(unit)}</small>` : ''}</div><div class="l">${esc(tr(k))}${link ? '<span class="more-i">›</span>' : ''}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ''}</${link ? 'a' : 'div'}>`).join('');
+    ['airports', aps.size, 0, '', '', 'airports'], ['typesShort', types.size, 0, '', '', 'types'],
+  ];   // countries and airlines have their own walls below (flags, tails), so no tiles for them
+  // two lines per tile (number, label); the side note (academic / personal, × around the Earth, days) is the tooltip
+  $('#stats').innerHTML = cells.map(([k, , , unit, sub, link], i) => `<${link ? `a class="hud stat dl" href="#list=${link}" title="${esc(tr('details'))}"` : `div class="hud stat" title="${esc(sub)}"`}><div class="n"><span data-i="${i}">0</span>${unit ? `<small>${esc(unit)}</small>` : ''}</div><div class="l">${esc(tr(k))}${link ? '<span class="more-i">›</span>' : ''}</div></${link ? 'a' : 'div'}>`).join('');
   cells.forEach(([, v, d], i) => countUp($(`#stats [data-i="${i}"]`), v, d));
 }
 
@@ -699,13 +785,14 @@ const mapColors = () => document.documentElement.dataset.theme === 'light'
 // The gliders live in their own Leaflet SVG renderer, so they pan and zoom with the route lines; the paths are re-projected on
 // zoom and routes too short on screen go without. With reduced motion, a static chevron sits past the middle instead.
 const ARROWS = new WeakMap();   // map → { rend, g, specs }
+let ARROW_MAPS = 0;   // each map gets its own id prefix for the glider tracks, so a detail map's <mpath> never points at the main map's paths
 const ARROW_SVG = (col, halo) => `<svg viewBox="0 0 18 18" width="18" height="18"><path d="M5 3l7 6-7 6" fill="none" stroke="${halo}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/><path d="M5 3l7 6-7 6" fill="none" stroke="${col}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const SVGNS = 'http://www.w3.org/2000/svg';
 function routeArrows(map, path, ab, ba, col, on = true) {
   let st = ARROWS.get(map);
   if (!st) {
     const rend = L.svg({ pane: 'overlayPane' }).addTo(map), g = document.createElementNS(SVGNS, 'g'); g.setAttribute('class', 'fl-gliders'); rend._rootGroup.appendChild(g);
-    st = { rend, g, specs: [], marks: L.layerGroup().addTo(map), n: 0 }; ARROWS.set(map, st);
+    st = { rend, g, specs: [], marks: L.layerGroup().addTo(map), n: 0, uid: ++ARROW_MAPS }; ARROWS.set(map, st);
     map.on('zoomend viewreset', () => drawArrows(map));
   }
   st.specs.push({ path, ab, ba, col, on, km: A.distKm({ lat: path[0][0], lon: path[0][1] }, { lat: path[path.length - 1][0], lon: path[path.length - 1][1] }) });
@@ -726,7 +813,7 @@ function drawArrows(map) {
       if (ab && ba && px >= 160) { put(0.6, false); put(0.4, true); } else put(0.5, !(ab >= (ba || 0)));
       return;
     }
-    const id = `fl-gp-${st.n}-${si}`, d = pts.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join('');
+    const id = `fl-gp-${st.uid}-${st.n}-${si}`, d = pts.map((q, i) => `${i ? 'L' : 'M'}${q.x.toFixed(1)} ${q.y.toFixed(1)}`).join('');
     const track = document.createElementNS(SVGNS, 'path'); track.setAttribute('id', id); track.setAttribute('d', d); track.setAttribute('fill', 'none'); track.setAttribute('stroke', 'none'); st.g.appendChild(track);
     const dur = Math.min(18, Math.max(5, 4 + sp.km / 700)), scale = Math.min(1, px / 260) * 0.3 + 0.8;   // slower on long hauls, a touch smaller on short hops
     const glider = (rev, k) => {
@@ -884,7 +971,7 @@ function renderFlags(list) {
   list.forEach(f => [A.statCC(f.from.cc), A.statCC(f.to.cc)].forEach(c => { if (/^[A-Z]{2}$/.test(c)) cnt.set(c, (cnt.get(c) || 0) + 1); }));
   const coll = LANG === 'zh' ? 'zh-Hans-CN-u-co-pinyin' : 'en', byName = (a, b) => A.countryName(a, LANG).localeCompare(A.countryName(b, LANG), coll);
   const all = [...cnt.keys()].sort(FLAG_SORT === 'n' ? (a, b) => cnt.get(b) - cnt.get(a) || byName(a, b) : byName);
-  $('#flags-n').textContent = LANG === 'zh' ? `${all.length} 个国家和地区` : `${all.length} ${all.length === 1 ? 'country' : 'countries'}`;
+  $('#flags-n').innerHTML = `<b>${all.length}</b>${LANG === 'zh' ? '个国家和地区' : (all.length === 1 ? 'country' : 'countries')}`;
   const sorts = [['n', LANG === 'zh' ? '按起降次数' : 'Most flown'], ['az', LANG === 'zh' ? '按名称' : 'A–Z']];
   $('#f-flags').innerHTML = sorts.map(([k, l]) => `<button type="button" class="chip${FLAG_SORT === k ? ' on' : ''}" data-fs="${k}" aria-pressed="${FLAG_SORT === k}">${esc(l)}</button>`).join('');
   $('#f-flags').querySelectorAll('[data-fs]').forEach(b => b.onclick = () => { FLAG_SORT = b.dataset.fs; renderFlags(scoped()); });
@@ -924,7 +1011,7 @@ function renderHub(list) {
 // Airline wall: every airline flown, as its tail fin (painted like the model) with the number of flights
 function renderTails(list) {
   const rows = tally(list, alKey, (k, f) => A.airlineName(f.airline, LANG) || k);
-  $('#tails-n').textContent = LANG === 'zh' ? `${rows.length} 家` : `${rows.length} ${rows.length === 1 ? 'airline' : 'airlines'}`;
+  $('#tails-n').innerHTML = `<b>${rows.length}</b>${LANG === 'zh' ? '家航空公司' : (rows.length === 1 ? 'airline' : 'airlines')}`;
   $('#tails').innerHTML = rows.map(r => `<a class="tl dl" href="#al=${esc(encodeURIComponent(r.key))}" title="${esc(r.label)} · ${r.n} ${LANG === 'zh' ? '次' : (r.n === 1 ? 'flight' : 'flights')}"><div class="tl-fin"><span class="tl-fb" data-tail="${esc(r.key)}"></span><span class="tl-n">${r.n}</span></div><span class="tl-name">${esc(r.label)}</span></a>`).join('') || `<p class="empty">${esc(tr('none'))}</p>`;
   paintTails(rows.map(r => [r.key, r.f.airline]));
 }
@@ -936,7 +1023,7 @@ function paintTails(items) {
     for (const [key, al] of items) {
       try { await Fleet3D.prepare(al, 'A320'); } catch (e) {}
       const url = Fleet3D.tailIcon(al, 120);
-      document.querySelectorAll(`.tl-fb[data-tail="${CSS.escape(key)}"], .al-fin[data-tail="${CSS.escape(key)}"]`).forEach(el => { const img = document.createElement('img'); img.src = url; img.alt = ''; el.replaceWith(img); });
+      document.querySelectorAll(`.tl-fb[data-tail="${CSS.escape(key)}"], .al-fin[data-tail="${CSS.escape(key)}"]`).forEach(el => { const img = document.createElement('img'); img.src = url; img.alt = ''; img.className = 'tail-img'; el.replaceWith(img); });
     }
   });
 }
@@ -969,8 +1056,8 @@ function renderFleetFilters(list) {
   if (FLEET_F.mfr !== 'all' && !mfrs.includes(FLEET_F.mfr)) FLEET_F.mfr = 'all';
   if (FLEET_F.al !== 'all' && !als.some(a => a.key === FLEET_F.al)) FLEET_F.al = 'all';
   const chip = (k, v, l) => `<button type="button" class="chip${FLEET_F[k] === v ? ' on' : ''}" data-fk="${k}" data-fv="${esc(v)}">${esc(l)}</button>`;
-  $('#fleet-filters').innerHTML = `<div class="seg">${chip('body', 'all', tr('all'))}${bodies.map(b => chip('body', b, BODY_L[b]?.[zh ? 1 : 0] || b)).join('')}</div>
-    <div class="seg">${mfrs.length > 1 ? chip('mfr', 'all', zh ? '所有制造商' : 'All makers') + mfrs.map(m => chip('mfr', m, A.mfrName(m, LANG))).join('') : ''}</div>
+  $('#fleet-filters').innerHTML = `<div class="seg box">${chip('body', 'all', tr('all'))}${bodies.map(b => chip('body', b, BODY_L[b]?.[zh ? 1 : 0] || b)).join('')}</div>
+    <div class="seg box">${mfrs.length > 1 ? chip('mfr', 'all', zh ? '所有制造商' : 'All makers') + mfrs.map(m => chip('mfr', m, A.mfrName(m, LANG))).join('') : ''}</div>
     <select class="chip fsel" id="fleet-al" aria-label="${esc(tr('airlines'))}"><option value="all">${esc(zh ? '所有航空公司' : 'All airlines')}</option>${als.map(a => `<option value="${esc(a.key)}"${FLEET_F.al === a.key ? ' selected' : ''}>${esc(a.label)} (${a.n})</option>`).join('')}</select>`;
   $('#fleet-filters').querySelectorAll('[data-fk]').forEach(b => b.onclick = () => { FLEET_F[b.dataset.fk] = b.dataset.fv; renderFleet(scoped()); });
   $('#fleet-al').onchange = e => { FLEET_F.al = e.target.value; renderFleet(scoped()); };
@@ -981,6 +1068,20 @@ function fleetTypes(list) {
   return tally(list, acKey, (k, f) => acName(f)).map(t => {
     const fl = list.filter(f => acKey(f) === t.key), als = tally(fl, f => f.airline?.iata || f.airline?.name || '', (k, f) => A.airlineName(f.airline, LANG) || k).filter(a => a.key);
     return { ...t, code: t.key.startsWith('x:') ? '' : t.key, als: als.map(a => ({ al: a.f.airline, n: a.n, label: (LANG === 'zh' ? A.airlineName(a.f.airline, 'zh') : window.Fleet3D?.liveryName(a.f.airline?.iata, 'en')) || a.label })) };
+  });
+}
+// Hangar cards show the airlines as tail logos (name on hover; the 3D viewer lists names). The row stays one line:
+// fitLogos() hides logos from the end behind "+N" until it fits the card, and again whenever the cards change width.
+function livLogos(t) {
+  return t.als.map((a, i) => `<button type="button" class="liv logo${i === 0 ? ' on' : ''}" data-liv="${i}" title="${esc(a.label)} · ${a.n} ${LANG === 'zh' ? '次' : (a.n === 1 ? 'flight' : 'flights')}" aria-label="${esc(a.label)}"><span class="tl-fb" data-tail="${esc(alKey({ airline: a.al }))}"></span>${a.n > 1 ? `<i>${a.n}</i>` : ''}</button>`).join('')
+    + `<button type="button" class="liv-more" hidden aria-expanded="false"></button>`;
+}
+function fitLogos(root) {
+  root.querySelectorAll('.ac-livs.logos').forEach(row => {
+    if (row.classList.contains('open') || !row.offsetParent) return;
+    const logos = [...row.querySelectorAll('.liv.logo')], more = row.querySelector('.liv-more'), h = logos[0].offsetHeight + 8;
+    logos.forEach(l => { l.hidden = false; }); more.hidden = true;
+    for (let k = logos.length - 1; row.scrollHeight > h && k > 0; k--) { logos[k].hidden = true; more.hidden = false; more.textContent = '+' + (logos.length - k); }
   });
 }
 function livChips(t, cur) {
@@ -1000,10 +1101,17 @@ function mountFleet(host, list) {
   const ref = Math.max(...types.map(t => { const ty = A.type(t.code); return ty ? Math.max(ty.len, ty.span) : 0; }), 36);   // the biggest type fills its card; the rest are drawn to scale
   host.innerHTML = types.map((t, ti) => {
     const ty = A.type(t.code);
-    return `<div class="hud ac" data-t="${ti}"><div class="ac-pic">${A.silhouette(ty?.body || 'narrow')}<canvas class="ac-3d" aria-label="${esc(LANG === 'zh' ? '三维模型：' : '3D model: ')}${esc(t.label)}"></canvas>${t.code ? `<span class="ac-code">${esc(t.code)}</span>` : ''}<button type="button" class="ac-open" aria-label="${esc(LANG === 'zh' ? '打开三维查看器' : 'Open the 3D viewer')}">${OPEN_ICON}</button><span class="ac-n">${t.n}<small>×</small></span></div>
-      <div class="ac-body"><div class="ac-name"><a class="dl" href="#ac=${esc(t.key)}">${esc(t.label || tr('unknownType'))}</a></div><div class="ac-meta">${nf(t.km)} km</div>
-      ${t.als.length ? `<div class="ac-livs">${livChips(t, 0)}</div>` : ''}<div class="bar"><span style="width:${Math.round(t.n / max * 100)}%"></span></div></div></div>`;
+    return `<div class="hud ac" data-t="${ti}"><div class="ac-pic">${A.silhouette(ty?.body || 'narrow')}<canvas class="ac-3d" aria-label="${esc(LANG === 'zh' ? '三维模型：' : '3D model: ')}${esc(t.label)}"></canvas>${t.code ? `<span class="ac-code">${esc(t.code)}</span>` : ''}<button type="button" class="ac-open" aria-label="${esc(LANG === 'zh' ? '打开三维查看器' : 'Open the 3D viewer')}">${OPEN_ICON}</button><span class="ac-km">${nf(t.km)} km</span><span class="ac-n">${t.n}<small>×</small></span></div>
+      <div class="ac-body"><div class="ac-name"><a class="dl" href="#ac=${esc(t.key)}" title="${esc(t.label || '')}">${esc(t.label || tr('unknownType'))}</a></div>
+      ${t.als.length ? `<div class="ac-livs logos">${livLogos(t)}</div>` : ''}<div class="bar"><span style="width:${Math.round(t.n / max * 100)}%"></span></div></div></div>`;
   }).join('');
+  host.querySelectorAll('.liv-more').forEach(b => b.onclick = () => {
+    const row = b.parentElement, open = row.classList.toggle('open'); b.setAttribute('aria-expanded', open);
+    if (open) { row.querySelectorAll('.liv.logo').forEach(x => { x.hidden = false; }); b.textContent = '−'; } else fitLogos(row.parentElement);
+  });
+  fitLogos(host);
+  if (!host._fitRO) { let raf = 0; host._fitRO = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(() => fitLogos(host)); }); host._fitRO.observe(host); }
+  paintTails([...new Map(types.flatMap(t => t.als).map(a => [alKey({ airline: a.al }), a.al])).entries()]);
   window.Fleet3D?.load().then(ok => {
     if (!ok) return;
     Fleet3D.setRef(ref);
@@ -1113,7 +1221,7 @@ function rowsHtml(rows, clickable = true) {
     const ap = a => `<a class="dl" href="#ap=${esc(a.iata)}"><b>${esc(a.iata)}</b></a>`, alk = alKey(f), ack = acKey(f);
     html += `<tr class="fl${clickable && SEL && selMatch(f) ? ' sel' : ''}" data-route="${esc(routeKey(f))}" data-i="${FLIGHTS.indexOf(f)}">
       <td class="mono" style="white-space:nowrap">${esc(fmtDate(f.date))}${times}</td>
-      <td class="mono fno">${esc(f.no || '—')}${acad ? `<span class="tag">${LANG === 'zh' ? '学术' : 'ACAD'}</span>` : ''}</td>
+      <td class="mono fno"><a class="dl" href="#fl=${esc(encodeURIComponent(f.id))}" title="${esc(LANG === 'zh' ? '航班详情' : 'Flight details')}">${esc(f.no || '—')}</a>${acad ? `<span class="tag">${LANG === 'zh' ? '学术' : 'ACAD'}</span>` : ''}</td>
       <td><span class="route${acad ? ' acad' : ''}">${ap(f.from)}<span class="arrow">→</span>${ap(f.to)}</span><span class="s">${esc(apName(f.from))} – ${esc(apName(f.to))}</span></td>
       <td class="col-x">${alk ? `<a class="dl" href="#al=${esc(encodeURIComponent(alk))}">${esc(A.airlineName(f.airline, LANG))}</a>` : ''}</td>
       <td><span class="s only-m" style="color:var(--ink)">${esc(A.airlineName(f.airline, LANG))}</span>${ack ? `<a class="dl" href="#ac=${esc(encodeURIComponent(ack))}">${esc(acName(f))}</a>` : esc(acName(f))}${extra ? `<span class="s">${esc(extra)}</span>` : ''}</td>
@@ -1150,19 +1258,20 @@ function renderAll() {
 }
 $('#q').addEventListener('input', e => { Q = e.target.value; renderLog(scoped()); });
 
-// ── Detail views: #al=CA (airline), #ap=PEK (airport), #cc=CN (country), #ac=A359 (type), #rt=AMS-PEK (route), #list=airlines|airports|countries|types|routes ──
+// ── Detail views: #al=CA (airline), #ap=PEK (airport), #cc=CN (country), #ac=A359 (type), #rt=AMS-PEK (route), #fl=fl-… (one flight), #pl=pl-… (a place on travel.html), #list=airlines|airports|countries|types|routes ──
 // Each is a plain link, so it opens in the same view or (middle-click) in a new tab; the hash is the state.
-let DMAP = null;
-const DETAIL_KINDS = { al: 'airlines', ap: 'airports', cc: 'countries', ac: 'types', rt: 'routes' };
-function detailOf(hash) { if (/^#(log|hangar|records|explore)$/.test(hash || '')) return { kind: 'page', key: hash.slice(1) }; const m = /^#(al|ap|cc|ac|rt|list)=(.+)$/.exec(hash || ''); return m ? { kind: m[1], key: decodeURIComponent(m[2]) } : null; }
+let DMAP = null, FL_VIEWER = null;
+const DETAIL_KINDS = { al: 'airlines', ap: 'airports', cc: 'countries', ac: 'types', rt: 'routes', pl: 'place' };
+function detailOf(hash) { if (/^#(log|hangar|records|explore)$/.test(hash || '')) return { kind: 'page', key: hash.slice(1) }; const m = /^#(al|ap|cc|ac|rt|fl|pl|list)=(.+)$/.exec(hash || ''); return m ? { kind: m[1], key: decodeURIComponent(m[2]) } : null; }
 const inDetail = (d, f) => d.kind === 'al' ? alKey(f) === d.key : d.kind === 'ap' ? (f.from.iata === d.key || f.to.iata === d.key) : d.kind === 'cc' ? (A.statCC(f.from.cc) === d.key || A.statCC(f.to.cc) === d.key)
-  : d.kind === 'ac' ? acKey(f) === d.key : d.kind === 'rt' ? routeKey(f) === d.key : true;
+  : d.kind === 'ac' ? acKey(f) === d.key : d.kind === 'rt' ? routeKey(f) === d.key : d.kind === 'pl' ? !!PLACES.find(p => p.id === d.key)?.flights.includes(f.id) : true;
 function closeDetail() {
   const el = $('#detail'); if (!el) return;
-  if (DMAP) { DMAP.remove(); DMAP = null; } el.remove(); document.body.style.overflow = '';
+  if (DMAP) { DMAP.remove(); DMAP = null; } if (FL_VIEWER) { FL_VIEWER.destroy(); FL_VIEWER = null; } el.remove(); document.body.style.overflow = '';
 }
 function renderDetail() {
   const d = detailOf(location.hash); closeDetail(); if (!d || !FLIGHTS.length) return;
+  if (d.kind === 'fl') return renderFlight(d.key);
   const zh = LANG === 'zh', all = FLIGHTS.filter(f => inDetail(d, f)), list = all.filter(inYear);
   const el = document.createElement('div'); el.id = 'detail'; el.className = 'detail'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
   // header: what this is
@@ -1173,6 +1282,8 @@ function renderDetail() {
   else if (d.kind === 'cc') { title = A.countryName(d.key, LANG); sub = zh ? '在该国的起降记录' : 'Take-offs and landings in this country'; emblem = `<img class="emblem" src="https://flagcdn.com/w80/${d.key.toLowerCase()}.png" alt="">`; }
   else if (d.kind === 'ac') { title = f0 ? acName(f0) : d.key; const ty = A.type(d.key); sub = ty ? `${ty.code} · ${specLine(ty)}` : ''; }
   else if (d.kind === 'rt') { const [a, b] = d.key.split('-'); const fa = f0 ? (f0.from.iata === a ? f0.from : f0.to) : null, fb = f0 ? (f0.from.iata === b ? f0.from : f0.to) : null; title = `${a} ⇄ ${b}`; sub = fa && fb ? `${apName(fa)} – ${apName(fb)} · ${nf(A.distKm(fa, fb))} km` : ''; }
+  else if (d.kind === 'pl') { const p = PLACES.find(x => x.id === d.key); title = p ? tv(p.city) : d.key; sub = p ? [tv(p.country), p.when].filter(Boolean).join(' · ') : '';
+    emblem = p?.cc ? `<img class="emblem" src="https://flagcdn.com/w80/${esc(String(p.cc).toLowerCase())}.png" alt="" onerror="this.remove()">` : ''; }
   else if (d.kind === 'page') { title = { log: zh ? '飞行日志' : 'Flight log', hangar: zh ? '机库' : 'Hangar', records: zh ? '飞行纪录' : 'Records', explore: zh ? '机库探索' : 'Explore the hangar' }[d.key]; sub = d.key === 'hangar' ? (zh ? '悬停旋转 · 点击查看' : 'Hover to rotate · click to inspect') : d.key === 'explore' ? (zh ? '数据库里的全部机型 · 虚线卡片尚未解锁 · 可为任意机型换上任意航司涂装' : 'Every type in the database · dashed cards are not flown yet · dress any type in any airline\'s livery') : ''; }
   else { title = tr(d.key); sub = zh ? '点击任意一项查看详情' : 'Pick one for its details'; }
   const km = list.reduce((s, f) => s + f.km, 0), min = list.reduce((s, f) => s + f.min, 0), dates = list.map(f => f.date).sort();
@@ -1211,6 +1322,7 @@ function renderDetail() {
       <div class="lang-toggle detail-lang" role="group" aria-label="Language"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></div>
       <a class="icon-btn" href="${esc(location.hash)}" target="_blank" rel="noopener" title="${esc(tr('newTab'))}" aria-label="${esc(tr('newTab'))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M21 3l-9 9M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg></a></div>
     <div class="detail-head"><div class="${d.kind === 'al' ? 'al-head' : ''}">${emblem}<div><h2>${esc(title)}</h2><p class="sub">${esc(sub)}${esc(scopeNote)}</p></div></div></div>
+    ${d.kind === 'pl' ? `<div class="fl-acts" style="margin:-0.4rem 0 1.2rem"><a class="chip" href="travel.html#pl=${esc(encodeURIComponent(d.key))}">${zh ? '在足迹地图中查看' : 'Open on the travel map'} ›</a></div>` : ''}
     ${d.kind === 'al' && A.airlineInfo(d.key) ? (info => `<div class="hud al-profile"><div class="row"><b>${zh ? '成立' : 'Founded'}</b>${esc(info.founded)}</div><div class="row"><b>${zh ? '基地' : 'Base'}</b>${esc(info.base)}</div><div class="row"><b>${zh ? '联盟' : 'Alliance'}</b>${esc(info.alliance)}</div><p>${esc(zh ? info.zh : info.en)}</p></div>`)(A.airlineInfo(d.key)) : ''}
     ${stats}
     ${d.kind === 'page' ? pageHtml : d.kind === 'list' ? listHtml : `<div class="detail-grid"><div class="hud map-card"><div class="dmap" id="dmap"></div></div><div class="dlist">${parts.join('')}</div>
@@ -1235,6 +1347,115 @@ function renderDetail() {
   if (d.kind === 'list' && d.key === 'airlines') paintTails(tally(list, alKey, k => k).map(r => [r.key, r.f.airline]));
   if (d.kind === 'page' && d.key === 'hangar') mountFleet($('#dfleet'), list);
   if (d.kind === 'page' && d.key === 'explore') mountExplore($('#xfleet'), list);
+}
+// ── One flight (#fl=<id>): boarding-pass header with scheduled and actual times, the route on a map, the aircraft in 3D
+// with its specs and registration, and the trip it belongs to on travel.html (places that list this flight's id).
+const SCHED_RE = /(?:计划|sched(?:uled)?\.?)\s*(\d{1,2}:\d{2})\s*[-–~→]\s*(\d{1,2}:\d{2}(?:\s*\+\d)?)/i;
+const hm = s => { const m = /^(\d{1,2}):(\d{2})\s*(?:\+(\d))?/.exec(s || ''); return m ? (+m[1]) * 60 + (+m[2]) + (m[3] ? +m[3] * 1440 : 0) : null; };
+function delayMin(sched, act) { const a = hm(sched), b = hm(act); if (a === null || b === null) return null; let d = b - a; if (d > 720) d -= 1440; if (d < -720) d += 1440; return d; }
+const tv = o => (o && typeof o === 'object') ? (o[LANG] || o.en || o.zh || '') : (o || '');
+const WEEKDAYS = [['Sun', '周日'], ['Mon', '周一'], ['Tue', '周二'], ['Wed', '周三'], ['Thu', '周四'], ['Fri', '周五'], ['Sat', '周六']];
+const weekday = d => { const t = Date.parse(String(d) + 'T00:00:00Z'); return isNaN(t) ? '' : WEEKDAYS[new Date(t).getUTCDay()][LANG === 'zh' ? 1 : 0]; };
+const placesOf = f => PLACES.filter(p => p.flights.includes(f.id));
+// A home base (lived there, or dated only by years such as Amsterdam "2025-2026") does not make a trip; any other place does
+const isBase = p => p.trip === 'lived' || !String(p.when || '').split(/\s*[;,，、|；]\s*/).some(v => /^\d{4}[-/.]\d{1,2}([-/.]\d{1,2})?$/.test(v.trim()));
+const TRIP_DAYS = 21;
+// The legs of this flight's trip: flights linked to the same non-base places within three weeks of it
+function tripLegs(f, places) {
+  const t0 = Date.parse(f.date), ids = new Set(places.filter(p => !isBase(p)).flatMap(p => p.flights));
+  return FLIGHTS.filter(g => ids.has(g.id) && Math.abs(Date.parse(g.date) - t0) <= TRIP_DAYS * 864e5)
+    .sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.dep || '').localeCompare(String(b.dep || '')));
+}
+function renderFlight(id) {
+  const zh = LANG === 'zh', f = FLIGHTS.find(x => x.id === id);
+  const el = document.createElement('div'); el.id = 'detail'; el.className = 'detail'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+  const top = (title, nav = '') => `<div class="detail-top"><button type="button" class="icon-btn" id="detail-back" aria-label="${esc(tr('back'))}" title="${esc(tr('back'))}">←</button>
+      <div class="crumb"><span class="kicker">${esc(tr('flight'))}</span><b>${esc(title)}</b></div>${nav}
+      <div class="lang-toggle detail-lang" role="group" aria-label="Language"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></div>
+      <a class="icon-btn" href="${esc(location.hash)}" target="_blank" rel="noopener" title="${esc(tr('newTab'))}" aria-label="${esc(tr('newTab'))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6M21 3l-9 9M19 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h6"/></svg></a></div>`;
+  if (!f) {
+    el.innerHTML = top('—') + `<p class="empty" style="padding:2rem 0">${esc(zh ? '找不到这个航班，它可能已被删除。' : 'This flight is not in the log (it may have been deleted).')}</p>`;
+    document.body.appendChild(el); document.body.style.overflow = 'hidden';
+    $('#detail-back').onclick = () => { if (history.state?.fromPage) history.back(); else location.hash = ''; };
+    return;
+  }
+  // neighbours in the log (FLIGHTS is newest first)
+  const i = FLIGHTS.indexOf(f), older = FLIGHTS[i + 1], newer = FLIGHTS[i - 1];
+  const navBtn = (g, label, arrow) => g ? `<a class="icon-btn dl fl-nav" href="#fl=${esc(encodeURIComponent(g.id))}" title="${esc(`${label}: ${g.no || ''} ${g.from.iata}→${g.to.iata} · ${fmtDateY(g.date)}`)}" aria-label="${esc(label)}">${arrow}</a>` : `<span class="icon-btn fl-nav off" aria-hidden="true">${arrow}</span>`;
+  const nav = navBtn(older, zh ? '上一班' : 'Earlier flight', '‹') + navBtn(newer, zh ? '下一班' : 'Later flight', '›');
+  // times: scheduled ones come from the note ("计划 14:15-18:30"), actual ones from dep / arr
+  const sm = SCHED_RE.exec(f.note || ''), sDep = sm?.[1] || '', sArr = sm?.[2] || '';
+  const note = String(f.note || '').replace(SCHED_RE, '').replace(/^[\s·,;|]+|[\s·,;|]+$/g, '');
+  const late = d => d === null ? '' : d > 15 ? `<em class="late">+${d} ${zh ? '分钟' : 'min'}</em>` : d < -5 ? `<em class="early">${zh ? `提前 ${-d} 分钟` : `${-d} min early`}</em>` : `<em class="ontime">${zh ? '准点' : 'on time'}</em>`;
+  const times = (sch, act) => !sch && !act ? '' : `<div class="fp-times">${sch ? `<div><small>${zh ? '计划' : 'Scheduled'}</small><b>${fmtArr(sch)}</b></div>` : ''}${act ? `<div><small>${zh ? '实际' : 'Actual'}</small><b>${fmtArr(act)}</b>${late(delayMin(sch, act))}</div>` : ''}</div>`;
+  const end = (ap, kick, sch, act, cls = '') => `<div class="fp-end ${cls}"><span class="kicker">${esc(kick)}</span><a class="dl fp-code" href="#ap=${esc(ap.iata)}">${esc(ap.iata)}</a>
+      <div class="fp-city">${esc(city(ap))}${ap.cc ? ` <img class="fp-flag" src="https://flagcdn.com/w40/${esc(String(ap.cc).toLowerCase())}.png" alt="" onerror="this.remove()">` : ''}</div><div class="fp-ap">${esc(apName(ap))}${ap.icao ? ` · <span class="mono">${esc(ap.icao)}</span>` : ''}</div>${times(sch, act)}</div>`;
+  const acad = f.purpose === 'academic', ty = f.ac ? A.type(f.ac) : null, al = A.airlineName(f.airline, LANG) || f.airline?.name || '';
+  const cls = { economy: ['Economy', '经济舱'], premium: ['Premium economy', '超级经济舱'], business: ['Business', '公务舱'], first: ['First', '头等舱'] }[f.cls];
+  const stat = (n, l, s2 = '') => `<div class="hud stat"><div class="n">${n}</div><div class="l">${esc(l)}</div>${s2 ? `<div class="s">${esc(s2)}</div>` : ''}</div>`;
+  const stats = [stat(`${nf(f.km)}<small>km</small>`, tr('distance'), `${nf(f.km / EARTH * 100, 1)}% ${zh ? '地球周长' : 'of the way around the Earth'}`),
+    stat(esc(fmtH(f.min)), tr('time'), f.est ? tr('est') : ''),
+    f.age > 0 ? stat(`${nf(f.age, f.age % 1 ? 1 : 0)}<small>${zh ? '年' : 'yrs'}</small>`, zh ? '机龄' : 'Aircraft age', f.reg || '') : '',
+    f.seat || cls ? stat(esc(f.seat || '—'), zh ? '座位' : 'Seat', cls ? cls[zh ? 1 : 0] : '') : '',
+    fmtFare(f) ? stat(`<span style="font-size:0.8em">${esc(fmtFare(f))}</span>`, zh ? '票价' : 'Fare') : ''].join('');
+  // the aircraft: same registration on other flights, and how often this type was flown
+  const sameReg = f.reg ? FLIGHTS.filter(x => x !== f && x.reg && x.reg === f.reg) : [], sameType = FLIGHTS.filter(x => acKey(x) === acKey(f));
+  const spec = ty ? [[zh ? '制造商' : 'Manufacturer', A.mfrName(ty.mfr, LANG)], [zh ? '全长' : 'Length', `${ty.len} m`], [zh ? '翼展' : 'Wingspan', `${ty.span} m`], [zh ? '高度' : 'Height', `${ty.height} m`],
+    [zh ? '典型座位' : 'Typical seats', String(ty.seats)], [zh ? '航程' : 'Range', `${nf(ty.range)} km`], [zh ? '首飞' : 'First flight', String(ty.year)]] : [];
+  const fltLink = g => `<a class="dl" href="#fl=${esc(encodeURIComponent(g.id))}"><span class="mono">${esc(g.no || '—')}</span> ${esc(g.from.iata)}→${esc(g.to.iata)} <small>${esc(fmtDateY(g.date))}</small></a>`;
+  const acCard = `<div class="hud fac"><div class="fac-stage ac-pic">${A.silhouette(ty?.body || 'narrow')}${f.ac ? `<button type="button" class="ac-open" aria-label="${esc(zh ? '打开三维查看器' : 'Open the 3D viewer')}">${OPEN_ICON}</button>` : ''}</div>
+      <div class="fac-body"><p class="kicker">${esc(f.ac || (zh ? '机型' : 'Aircraft'))}</p><h3>${acKey(f) ? `<a class="dl" href="#ac=${esc(encodeURIComponent(acKey(f)))}">${esc(acName(f) || tr('unknownType'))}</a>` : esc(acName(f) || tr('unknownType'))}</h3>
+      ${f.reg ? `<div class="fac-reg"><span class="mono">${esc(f.reg)}</span>${f.age > 0 ? `<span>${zh ? `机龄 ${nf(f.age, f.age % 1 ? 1 : 0)} 年` : `${nf(f.age, f.age % 1 ? 1 : 0)} years old`}</span>` : ''}</div>` : ''}
+      ${spec.length ? `<dl class="fac-spec">${spec.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>` : ''}
+      <p class="ac-meta">${zh ? `这个机型共乘坐 ${sameType.length} 次` : `${sameType.length} ${sameType.length === 1 ? 'flight' : 'flights'} on this type`}</p>
+      ${sameReg.length ? `<div class="fac-same"><b>${zh ? '同一架飞机的其他航班' : 'Also flown on this very aircraft'}</b>${sameReg.map(fltLink).join('')}</div>` : ''}</div></div>`;
+  // the trip: places on travel.html that list this flight, and the other flights those places list
+  const fromSide = p => typeof p.lat === 'number' && A.distKm(p, f.from) < A.distKm(p, f.to);   // departure city first, then arrival
+  const places = placesOf(f).sort((a, b) => fromSide(b) - fromSide(a)), legs = tripLegs(f, places);
+  const tripHtml = places.length ? `<div class="span"><h2 class="sec small"><span>${zh ? '足迹地图上的地点' : 'On the travel map'}</span><span class="kicker">${places.length}</span></h2>
+      <div class="fl-trip">${places.map(p => `<a class="hud" href="travel.html#pl=${esc(encodeURIComponent(p.id))}"><img src="https://flagcdn.com/w40/${esc(String(p.cc || '').toLowerCase())}.png" alt="" onerror="this.remove()"><span class="nm">${esc(tv(p.city))}<small>${esc([tv(p.country), p.when].filter(Boolean).join(' · '))}</small></span><span class="go">${zh ? '足迹地图' : 'Travel map'} ›</span></a>`).join('')}</div>
+      ${legs.length > 1 ? `<h2 class="sec small"><span>${zh ? '这次旅行的航段' : 'Legs of this trip'}</span><span class="kicker">${legs.length}</span></h2><div class="hud log"><table><tbody>${rowsHtml(legs, false).replace(/<tr class="fl([^"]*)" data-route="[^"]*" data-i="(\d+)">/g, (m, c, k) => `<tr class="fl${c}${FLIGHTS[+k] === f ? ' sel' : ''}">`)}</tbody></table></div>` : ''}</div>` : '';
+  el.innerHTML = top(`${f.no || ''} ${f.from.iata} → ${f.to.iata}`, nav) + `
+    <div class="detail-head"><div class="al-head">${alKey(f) ? `<span class="al-fin" data-tail="${esc(alKey(f))}"></span>` : ''}<div><h2>${esc(f.no || `${f.from.iata} → ${f.to.iata}`)}${acad ? `<span class="tag">${esc(tr('academic'))}</span>` : ''}</h2>
+      <p class="sub">${alKey(f) ? `<a class="dl" href="#al=${esc(encodeURIComponent(alKey(f)))}">${esc(al)}</a> · ` : ''}${esc(fmtDateY(f.date))} ${esc(weekday(f.date))}${note ? ` · ${esc(note)}` : ''}</p></div></div>
+      <div class="fl-acts"><button type="button" class="chip" id="fl-replay">${zh ? '在地图上重放' : 'Replay on the map'} ✈</button><a class="chip dl" href="#rt=${esc(encodeURIComponent(routeKey(f)))}">${zh ? '这条航线' : 'This route'} ›</a></div></div>
+    <div class="hud fpass">${end(f.from, zh ? '出发' : 'From', sDep, f.dep)}
+      <div class="fp-mid"><span>${esc(fmtH(f.min))}${f.est ? '*' : ''}</span><div class="fp-line"><span class="fp-plane">${PLANE_I}</span></div><span>${nf(f.km)} km</span></div>
+      ${end(f.to, zh ? '到达' : 'To', sArr, f.arr, 'to')}</div>
+    <div class="stats">${stats}</div>
+    <div class="detail-grid"><div class="hud map-card"><div class="dmap" id="dmap"></div></div>${acCard}${tripHtml}</div>`;
+  document.body.appendChild(el); document.body.style.overflow = 'hidden';
+  $('#detail-back').onclick = () => { if (history.state?.fromPage) history.back(); else location.hash = ''; };
+  $('#fl-replay').onclick = () => {
+    location.hash = ''; closeDetail();
+    SEL = { kind: 'route', key: routeKey(f), label: `${f.from.iata} ⇄ ${f.to.iata}` }; renderAll();
+    $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' }); flyRoute(f);
+  };
+  // map: the great circle with its direction, both airports labelled, and the aircraft halfway along
+  DMAP = L.map('dmap', { worldCopyJump: true, minZoom: 2, maxZoom: 12, zoomSnap: 0.25, attributionControl: true }).setView([35, 60], 2);
+  MapBase.attach(DMAP, LANG);
+  const C = mapColors(), col = acad ? C.acad : C.route, path = A.greatCircle(f.from, f.to, 160);
+  L.polyline(path, { color: col, weight: 12, opacity: 0.14, interactive: false }).addTo(DMAP); L.polyline(path, { color: col, weight: 3, opacity: 0.85, interactive: false }).addTo(DMAP);
+  [f.from, f.to].forEach(a => L.circleMarker([a.lat, a.lon], { radius: 6, color: C.dot, weight: 2, fillColor: C.dotFill, fillOpacity: 1 }).addTo(DMAP)
+    .bindTooltip(`<b>${esc(a.iata)}</b> ${esc(apName(a))}`, { className: 'fl-tip', direction: 'top', offset: [0, -6], permanent: true }).on('click', () => { location.hash = '#ap=' + a.iata; }));
+  DMAP.fitBounds(L.latLngBounds([[f.from.lat, f.from.lon], [f.to.lat, f.to.lon]]).pad(0.25), { maxZoom: 7, animate: false });
+  routeArrows(DMAP, path, 1, 0, col);
+  const mid = Math.floor(path.length / 2), pa = DMAP.latLngToLayerPoint(path[mid - 1]), pb = DMAP.latLngToLayerPoint(path[mid + 1]), deg = Math.atan2(pb.y - pa.y, pb.x - pa.x) * 180 / Math.PI + 90;
+  const planeAt = html => L.marker(path[mid], { icon: L.divIcon({ className: 'fl-plane', iconSize: [48, 48], iconAnchor: [24, 24], html }), interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(DMAP);
+  const marker = planeAt(`<span class="fl-plane-svg" style="transform:rotate(${deg}deg)">${PLANE_I}</span>`);
+  el.scrollTop = 0;
+  if (alKey(f)) paintTails([[alKey(f), f.airline]]);
+  // the aircraft in 3D, in this airline's livery (a blueprint silhouette until WebGL is ready, or without it)
+  window.Fleet3D?.load().then(async ok => {
+    if (!ok || $('#detail') !== el) return;
+    try { await Fleet3D.prepare(f.airline, f.ac || 'A320'); } catch (e) {}
+    if ($('#detail') !== el) return;
+    try { const src = Fleet3D.sprite({ type: f.ac || 'A320', airline: f.airline }, 128); if (src) marker.setIcon(L.divIcon({ className: 'fl-plane', iconSize: [48, 48], iconAnchor: [24, 24], html: `<img src="${src}" alt="" style="transform:rotate(${deg}deg)">` })); } catch (e) {}
+    if (!f.ac) return;
+    const stage = el.querySelector('.fac-stage'); stage.classList.add('is3d');
+    FL_VIEWER = Fleet3D.viewer(stage, { type: f.ac, airline: f.airline, zoom: 1.15 });
+    stage.querySelector('.ac-open').onclick = () => openViewer({ code: f.ac, key: acKey(f), label: acName(f), n: sameType.length, km: sameType.reduce((s, x) => s + x.km, 0), als: [{ al: f.airline, n: 1, label: al }] }, 0);
+  });
 }
 addEventListener('hashchange', () => { if (!$('#app').hidden) renderDetail(); });
 document.addEventListener('click', e => { const a = e.target.closest('a.dl'); if (a && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0 && a.getAttribute('href')?.startsWith('#')) { e.preventDefault(); const h = a.getAttribute('href'); if (location.hash !== h) history.pushState({ fromPage: !$('#detail') || history.state?.fromPage }, '', h); renderDetail(); } });
@@ -1268,7 +1489,7 @@ function applyTheme(t, save) {
   if (save) lsSet('site-theme', t);
   document.querySelector('meta[name="theme-color"]').content = t === 'light' ? '#eef3f8' : '#050b16';
   if (typeof applyBg === 'function') applyBg();
-  paintThemeBtn(); window.Fleet3D?.setTheme(t); VIEWER?.setTheme(t);
+  paintThemeBtn(); window.Fleet3D?.setTheme(t); VIEWER?.setTheme(t); FL_VIEWER?.setTheme(t);
   if (!$('#app').hidden) { renderMap(scoped()); if ($('#detail')) renderDetail(); }
 }
 $('#btn-theme').onclick = () => applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light', true);

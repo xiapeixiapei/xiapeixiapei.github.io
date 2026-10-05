@@ -83,6 +83,7 @@
       over: P => { P.logo('mfegret', 0.155, 0.145, 0.07, '#1a5fae');
         const a = P.title('厦门航空', 0.19, 0.145, 0.04, { col: '#1a5fae', w: 600, cjk: 1, sp: 0.12 });
         P.title([{ t: 'XIAMEN', w: 800 }, { t: 'AIR', w: 400 }], a[1] + 0.012, 0.145, 0.038, { col: '#1a5fae' }); } },
+    G5: { img: 'G5', winOnArt: true, name: 'China Express', zh: '华夏航空', engine: W, lip: '#c9d0d8', winglet: '#0033a6', tail: 'g5' },   // titles from the official artwork, blue tail sweep
     GT: { img: 'GT', winOnArt: true, name: 'Air Guilin', zh: '桂林航空', engine: W, lip: '#c9d0d8', winglet: '#1a44b8', tail: 'gt' },   // titles and logo are in the texture, taken from the official artwork
     HU: { img: 'HU', name: 'Hainan Airlines', zh: '海南航空', engine: W, winglet: '#c8102e', tail: 'hu',
       under: P => {   // red and gold ribbon from the tail, sweeping down under the windows to a point below the forward cabin
@@ -439,6 +440,7 @@
     cz(x, w, h, f) { bg(x, w, h, '#1793d1'); LOGO.kapok(x, f.cx, f.cy - f.s * 0.04, f.s * 0.95); },
     mu(x, w, h, f) { bg(x, w, h, '#fbfbfc'); along(x, f, 0.62, 0.635, '#1F2F7A'); LOGO.swallow(x, f.cx, f.cy - f.s * 0.05, f.s * 1.1); },
     mf(x, w, h, f) { bg(x, w, h, '#1f86d0'); LOGO.mfegret(x, f.cx, f.cy + f.s * 0.05, f.s * 1.3); },
+    g5(x, w, h, f) { bg(x, w, h, '#0033a6'); along(x, f, 0, 0.12, '#50c0e8'); LOGO.egret(x, f.cx, f.cy, f.s * 0.9, '#ffffff'); },
     gt(x, w, h, f) { bg(x, w, h, '#1a44b8'); LOGO.guilin(x, f.cx + f.s * 0.02, f.cy - f.s * 0.02, f.s * 1.05, '#ffffff'); },
     hu(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.1, '#e0a526'); },
     '3u'(x, w, h, f) { bg(x, w, h, '#c8102e'); x.strokeStyle = '#f5c400'; x.lineWidth = f.s * 0.06; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(f.cx - f.s * 0.2 + i * f.s * 0.13, f.cy + f.s * 0.35 - i * f.s * 0.12, f.s * 0.45, Math.PI * 1.15, Math.PI * 1.75); x.stroke(); } },
