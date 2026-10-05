@@ -73,7 +73,7 @@
     MU: { img: 'MU', name: 'China Eastern', zh: '中国东方航空', engine: W, winglet: '#f2f3f5', tail: 'mu',
       under: P => { P.below(0.42, '#d9dde2'); },
       over: P => { const a = P.title('中國東方航空', 0.1, tv(0.05), 0.05, { col: '#B70109', w: 500, cjk: 1, sp: 0.12 }); P.title('CHINA EASTERN', a[1] + 0.03, tv(0.048), 0.048, { col: '#1F2F7A', w: 800 }); } },
-    MF: { img: 'MF', overOnArt: true, name: 'Xiamen Air', zh: '厦门航空', belly: '#1f7fcc', engine: W, winglet: '#1f86d0', tail: 'mf',
+    MF: { img: 'MF', overOnArt: true, winOnArt: true, name: 'Xiamen Air', zh: '厦门航空', belly: '#0a3460', engine: W, winglet: '#188bca', tail: 'mf',
       under: P => {   // blue lower fuselage rising into the tail, a light-blue line under the windows, darker belly with a white sweep
         const top = u => 0.3 - 0.06 * Math.min(1, u / 0.8) - 0.22 * Math.max(0, (u - 0.8) / 0.2) ** 1.4 + 0.12 * Math.max(0, (0.06 - u) / 0.06);
         P.ribbon(top, () => 0.5, -0.01, 1.01, '#1f7fcc');
@@ -431,9 +431,8 @@
       x.lineWidth = 0.07; x.beginPath(); x.arc(-0.12, 0.22, 0.13, -Math.PI * 0.2, Math.PI * 1.4); x.stroke();
       x.beginPath(); x.moveTo(0.0, 0.18); x.quadraticCurveTo(0.2, 0.44, 0.44, 0.38); x.stroke(); x.restore();
     },
-    osarrow(x, cx, cy, s, col = '#d8001a') {   // Austrian: swept arrow with a grey shadow
+    osarrow(x, cx, cy, s, col = '#d8001a') {   // Austrian: a single red swept arrow
       x.save(); x.translate(cx, cy); x.scale(s, s);
-      x.fillStyle = '#9aa1a8'; x.beginPath(); x.moveTo(-0.4, 0.1); x.lineTo(0.42, 0.06); x.lineTo(0.16, 0.42); x.lineTo(0.2, 0.16); x.closePath(); x.fill();
       x.fillStyle = col; x.beginPath(); x.moveTo(-0.46, -0.28); x.lineTo(0.46, -0.12); x.lineTo(0.12, 0.3); x.lineTo(0.2, -0.06); x.closePath(); x.fill(); x.restore();
     },
   };

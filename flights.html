@@ -10,8 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Pinyon+Script&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
-<script src="aviation.js?v=202610051600"></script>
-<script src="fleet3d.js?v=202610051600"></script>
+<script src="aviation.js?v=202610051900"></script>
+<script src="fleet3d.js?v=202610051900"></script>
 <style>
   /* Flight log: a private page (same travel password and encrypted file as travel.html) in a "cockpit HUD" look, dark or light (site-wide setting). */
   :root {
@@ -533,6 +533,38 @@
   .fl-go span { font-size: 1.05em; line-height: 1; }
   .fl-go:hover, .log tr.fl:hover .fl-go { background: var(--cyan); color: var(--on-cyan); }
   .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }   /* phone-only copy of the airline, shown by the card layout below 720px */
+  /* playback */
+  .map-foot-r { display: inline-flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-left: auto; }
+  .play-btn { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid var(--cyan); background: var(--cyan); color: var(--on-cyan); border-radius: 3px; padding: 0.3rem 0.75rem 0.3rem 0.55rem; font-family: var(--f-mono); font-size: 0.8rem; font-weight: 600; cursor: pointer; box-shadow: 0 0 16px rgba(var(--cyan-rgb), calc(var(--glow) + 0.1)); }
+  .play-btn svg { width: 15px; height: 15px; }
+  .play-btn:hover { filter: brightness(1.1); }
+  .sec-map { position: relative; }
+  .player { position: absolute; z-index: 1000; top: 1.1rem; right: 1.1rem; width: min(330px, calc(100% - 2.2rem)); padding: 0.75rem 0.85rem 0.8rem; background: var(--box); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; gap: 0.55rem; }
+  .pl-top { display: flex; align-items: baseline; gap: 0.6rem; font-family: var(--f-mono); font-size: 0.78rem; }
+  .pl-k { color: var(--cyan); font-weight: 600; letter-spacing: 0.06em; }
+  .pl-date { color: var(--ink); }
+  .pl-x { margin-left: auto; border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 0.95rem; line-height: 1; padding: 0.1rem 0.2rem; }
+  .pl-x:hover { color: var(--ink-strong); }
+  .pl-fl { display: flex; align-items: center; gap: 0.75rem; min-width: 0; }
+  .pl-tail { flex: none; width: 46px; height: 44px; }
+  .pl-tail .tail-img, .pl-tail .tl-fb { width: 100%; height: 100%; display: block; object-fit: contain; }
+  .pl-tail .tl-fb { clip-path: polygon(0 100%, 62% 100%, 100% 0, 74% 0); background: var(--line-2); }
+  .pl-txt { min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+  .pl-no { display: flex; align-items: baseline; gap: 0.6rem; font-family: var(--f-mono); }
+  .pl-no > b { font-size: 1.15rem; color: var(--ink-strong); }
+  .pl-sub { font-size: 0.82rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pl-bar { height: 3px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .pl-bar span { display: block; height: 100%; background: var(--cyan); transition: width 0.4s; }
+  .pl-ctl { display: flex; align-items: center; gap: 0.35rem; }
+  .pl-b { width: 32px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line-2); background: var(--field); color: var(--ink); border-radius: 3px; cursor: pointer; }
+  .pl-b svg { width: 15px; height: 15px; }
+  .pl-b[data-act="toggle"] { background: var(--cyan); border-color: var(--cyan); color: var(--on-cyan); }
+  .pl-b:hover:not([disabled]) { border-color: var(--cyan); }
+  .pl-b[disabled] { opacity: 0.35; cursor: default; }
+  .pl-spd { align-self: auto; margin-left: 0.2rem; }
+  .pl-spd .chip { padding: 0.28rem 0.45rem; font-size: 0.74rem; }
+  .pl-ctl .fl-go { margin-left: auto; }
+  @media (max-width: 720px) { .player { top: auto; bottom: 3.4rem; right: 0.6rem; left: 0.6rem; width: auto; } }
   /* search palette */
   .fsearch { position: fixed; inset: 0; z-index: 2100; background: var(--overlay); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: flex-start; padding: min(12vh, 110px) 1rem 1rem; }
   .fs-box { width: min(640px, 100%); max-height: calc(100vh - min(12vh, 110px) - 2rem); display: flex; flex-direction: column; background: var(--box); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35); }
@@ -642,8 +674,9 @@
         <div id="map" role="region" aria-label="Map of flight routes"></div>
         <div class="map-foot">
           <span><span class="legend"><i></i><span data-en="Personal" data-zh="私人行程">Personal</span></span><span class="legend"><i class="a"></i><span data-en="Academic" data-zh="学术出行">Academic</span></span></span>
-          <span id="map-sel"></span>
+          <span class="map-foot-r"><span id="map-sel"></span><button type="button" class="play-btn" id="play-btn"></button></span>
         </div>
+        <div class="player hud" id="player" hidden aria-live="polite"></div>
       </div>
       <section class="sec-log">
         <div class="log-head">
@@ -678,7 +711,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
 <script src="site-lang.js"></script>
-<script src="map-base.js?v=202610051600"></script>
+<script src="map-base.js?v=202610051900"></script>
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
 // Data: the flights live inside travel/travel.enc (AES-256-GCM, key derived from the
@@ -885,6 +918,7 @@ function drawArrows(map) {
   st.n++;
 }
 function renderMap(list) {
+  if (PLAY) stopPlay(false);
   initMap(); LAYER.clearLayers(); resetArrows(MAP);
   const C = mapColors(), routes = new Map(), aps = new Map();
   list.forEach(f => {
@@ -942,9 +976,11 @@ function trailGrad(svg) {
   }
   paintTrailGrad(); return g;
 }
-async function flyRoute(f) {
+// opt: speed (1 = normal; can change mid-flight via FLY.speed), onDone (called once the plane is parked; the map then stays
+// where it is instead of zooming back out). FLY.paused freezes the flight in place.
+async function flyRoute(f, opt = {}) {
   stopFly(); if (!f || !MAP) return;
-  const me = FLY = { key: routeKey(f), raf: 0, to: 0, off: [], layer: L.layerGroup().addTo(MAP), model: null, el: null, follow: true };
+  const me = FLY = { key: routeKey(f), raf: 0, to: 0, off: [], layer: L.layerGroup().addTo(MAP), model: null, el: null, follow: true, speed: opt.speed || 1, paused: false };
   const path = A.greatCircle(f.from, f.to, 240), n = path.length - 1, km = A.distKm(f.from, f.to);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches, S = innerWidth < 720 ? 130 : 180;
   // trail: a wide soft glow under a bright core, both in the gradient
@@ -963,7 +999,7 @@ async function flyRoute(f) {
     L.marker(path[n], { icon, interactive: false, keyboard: false, zIndexOffset: 1000 }).addTo(me.layer);
   };
   const endHeading = () => { const pa = MAP.latLngToLayerPoint(path[n - 4]), pb = MAP.latLngToLayerPoint(path[n]); return Math.atan2(pb.y - pa.y, pb.x - pa.x); };
-  if (reduced) { heading = endHeading(); trailTo(n, L.latLng(path[n])); park(); return; }
+  if (reduced) { heading = endHeading(); trailTo(n, L.latLng(path[n])); park(); if (opt.onDone) me.to = setTimeout(() => { if (FLY === me) opt.onDone(); }, 1600 / me.speed); return; }
 
   // the live model (or a plain plane icon without WebGL)
   if (window.Fleet3D) { try { if (await Fleet3D.load()) { await Fleet3D.prepare(f.airline, f.ac || 'A320'); if (FLY === me) me.model = Fleet3D.flyer({ type: f.ac || 'A320', airline: f.airline }, S); } } catch (e) { me.model = null; } }
@@ -988,14 +1024,16 @@ async function flyRoute(f) {
   const dur = Math.min(16000, 6500 + km * 0.8);
   const ease = t => t < 0.5 ? 2 * t * t : 1 - (2 - 2 * t) ** 2 / 2;
   const altAt = t => { const e = Math.min(1, Math.min(t, 1 - t) / 0.18); return e * e * (3 - 2 * e); };   // climb, cruise, descend
-  let t0 = 0, started = false;
+  let last = 0, el = 0, started = false;   // el: flight time so far, advanced by speed and frozen while paused
   const tick = now => {
     if (FLY !== me) return;
-    t0 ||= now; const t = Math.min(1, (now - t0) / dur), { i, ll, a, b } = at(ease(t));
+    const t0 = last === 0; if (!me.paused && last) el += (now - last) * me.speed; last = now;
+    if (me.paused && !t0) { me.raf = requestAnimationFrame(tick); return; }
+    const t = Math.min(1, el / dur), { i, ll, a, b } = at(ease(t));
     // heading from a stretch of path ahead and behind (not one tiny segment), then eased so it never twitches
     const j0 = Math.max(0, i - 3), j1 = Math.min(n, i + 4), pa = MAP.latLngToContainerPoint(path[j0]), pb = MAP.latLngToContainerPoint(path[j1]);
     hdgRaw = Math.atan2(pb.y - pa.y, pb.x - pa.x); let d = hdgRaw - heading; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
-    heading = t0 === now ? hdgRaw : heading + d * 0.15;
+    heading = t0 ? hdgRaw : heading + d * 0.15;
     if (me.follow) { const p = MAP.latLngToContainerPoint(ll), c = MAP.getSize().divideBy(2); if (p.distanceTo(c) >= 1) MAP.panBy(p.subtract(c), { animate: false }); }
     trailTo(i, ll); put(ll, altAt(t), now);
     if (t < 1) { me.raf = requestAnimationFrame(tick); return; }
@@ -1004,13 +1042,13 @@ async function flyRoute(f) {
     me.to = setTimeout(() => {
       if (FLY !== me) return;
       me.model?.destroy(); me.model = null; me.el.remove(); me.el = null; park();
-      if (ALL_BOUNDS) MAP.flyToBounds(ALL_BOUNDS, { maxZoom: 6, duration: 1.6 });
-    }, 700);
+      if (opt.onDone) opt.onDone(); else if (ALL_BOUNDS) MAP.flyToBounds(ALL_BOUNDS, { maxZoom: 6, duration: 1.6 });
+    }, 700 / me.speed);
   };
   const go = () => { if (started || FLY !== me) return; started = true; clearTimeout(me.to); me.el.style.opacity = ''; me.raf = requestAnimationFrame(tick); };
   MAP.once('moveend', go); me.off.push(() => MAP.off('moveend', go));
-  me.to = setTimeout(go, 2500);
-  MAP.flyTo(path[0], z, { duration: 1.2 });
+  me.to = setTimeout(go, 2500 / me.speed);
+  MAP.flyTo(path[0], z, { duration: 1.2 / Math.sqrt(me.speed) });
 }
 
 // Flag wall: the countries flown to or from, each with its number of take-offs and landings; Hong Kong, Macau and Taiwan count as China
@@ -1304,7 +1342,7 @@ function renderLog(list) {
 
 function renderAll() {
   const list = scoped();
-  renderFilters(); renderStats(list); renderMap(list); renderRecords(list); renderFleet(list); renderRanks(list); renderLog(list); renderFlags(list); renderTails(list); renderHub(list); renderFooter();
+  renderFilters(); renderStats(list); renderMap(list); renderPlayBtn(); renderRecords(list); renderFleet(list); renderRanks(list); renderLog(list); renderFlags(list); renderTails(list); renderHub(list); renderFooter();
   if ($('#detail')) renderDetail();
 }
 $('#q').addEventListener('input', e => { Q = e.target.value; renderLog(scoped()); });
@@ -1699,6 +1737,107 @@ document.addEventListener('keydown', e => {
   if ($('#app').hidden || SEARCH || $('.v3d')) return;
   const typing = /^(input|textarea|select)$/i.test(e.target.tagName) || e.target.isContentEditable;
   if ((e.key === '/' && !typing) || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k')) { e.preventDefault(); openSearch(); }
+});
+// ── Playback: the flights in the current filter (year, purpose), oldest first, flown one after another on the main map.
+// Routes already flown stay drawn; a panel shows the flight, the progress, and controls (previous, pause, next, speed, stop).
+let PLAY = null;
+const PLAY_SPEEDS = [1, 2, 4];
+function playLabel() {
+  const zh = LANG === 'zh', n = scoped().length, y = YEAR !== 'all' ? YEAR : '', p = PURPOSE !== 'all' ? tr(PURPOSE) : '';
+  if (zh) return `播放${y ? ` ${y} 年` : '全部'}${p ? `${p}` : ''}的 ${n} 个航班`;
+  return `Play ${y ? `${y}'s` : 'all'} ${n}${p ? ' ' + p.toLowerCase() : ''} flight${n === 1 ? '' : 's'}`;
+}
+function renderPlayBtn() {
+  const b = $('#play-btn'); if (!b) return;
+  b.hidden = !scoped().length || !!PLAY;
+  b.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>${esc(playLabel())}`;
+}
+function startPlay() {
+  const list = [...scoped()].sort((a, b) => String(a.date).localeCompare(String(b.date)) || String(a.dep || '').localeCompare(String(b.dep || '')));
+  if (!list.length || !MAP) return;
+  stopFly(); SEL = null;
+  MAP.removeLayer(LAYER); resetArrows(MAP);   // the full route map steps aside; flown routes build up on their own layer
+  PLAY = { list, i: -1, paused: false, speed: PLAY_SPEEDS[0], layer: L.layerGroup().addTo(MAP), to: 0, done: false };
+  $('#map-sel').hidden = true; renderPlayBtn();
+  const r = $('#map').getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight) $('#map').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  playTo(0);
+}
+// draw the routes flown before flight i (and their airports)
+function playDrawn(i) {
+  const C = mapColors(); PLAY.layer.clearLayers();
+  const aps = new Map();
+  PLAY.list.slice(0, i).forEach(f => {
+    const col = f.purpose === 'academic' ? C.acad : C.route, path = A.greatCircle(f.from, f.to);
+    L.polyline(path, { color: col, weight: 8, opacity: 0.12, interactive: false }).addTo(PLAY.layer);
+    L.polyline(path, { color: col, weight: 2.2, opacity: 0.75, interactive: false }).addTo(PLAY.layer);
+    [f.from, f.to].forEach(a => aps.set(a.iata, a));
+  });
+  aps.forEach(a => L.circleMarker([a.lat, a.lon], { radius: 4, color: C.dot, weight: 2, fillColor: C.dotFill, fillOpacity: 1, interactive: false }).addTo(PLAY.layer));
+}
+function playTo(i) {
+  if (!PLAY) return;
+  clearTimeout(PLAY.to); stopFly();
+  if (i >= PLAY.list.length) return playEnd();
+  PLAY.i = Math.max(0, i); PLAY.done = false; playDrawn(PLAY.i); renderPlayer();
+  const me = PLAY;
+  flyRoute(PLAY.list[PLAY.i], { speed: PLAY.speed, onDone: () => {
+    if (PLAY !== me) return;
+    playDrawn(me.i + 1);
+    me.to = setTimeout(function next() { if (PLAY !== me) return; if (me.paused) { me.to = setTimeout(next, 250); return; } playTo(me.i + 1); }, 900 / me.speed);
+  } });
+  if (FLY) FLY.paused = PLAY.paused;
+}
+function playEnd() {
+  const zh = LANG === 'zh'; PLAY.done = true; PLAY.i = PLAY.list.length - 1; playDrawn(PLAY.list.length); renderPlayer();
+  const b = L.latLngBounds(PLAY.list.flatMap(f => [[f.from.lat, f.from.lon], [f.to.lat, f.to.lon]]));
+  if (b.isValid()) MAP.flyToBounds(b.pad(0.12), { maxZoom: 6, duration: 1.6 });
+}
+function stopPlay(redraw = true) {
+  if (!PLAY) return; const me = PLAY; PLAY = null;
+  clearTimeout(me.to); stopFly(); me.layer.remove(); MAP.addLayer(LAYER);
+  $('#player').hidden = true; $('#player').innerHTML = ''; $('#map-sel').hidden = false;
+  if (redraw) { renderMap(scoped()); if (ALL_BOUNDS) MAP.flyToBounds(ALL_BOUNDS, { maxZoom: 6, duration: 1.2 }); }
+  renderPlayBtn();
+}
+function togglePause() {
+  if (!PLAY) return;
+  if (PLAY.done) { playTo(0); return; }   // ended: play again
+  PLAY.paused = !PLAY.paused; if (FLY) FLY.paused = PLAY.paused; renderPlayer();
+}
+function setPlaySpeed(v) { if (!PLAY) return; PLAY.speed = v; if (FLY) FLY.speed = v; renderPlayer(); }
+function renderPlayer() {
+  const box = $('#player'); if (!PLAY) return;
+  const zh = LANG === 'zh', f = PLAY.list[PLAY.i], n = PLAY.list.length, k = PLAY.i + 1, al = A.airlineName(f.airline, LANG), ak = alKey(f);
+  const ic = { prev: '<path d="M6 5h2v14H6zM20 5v14L9 12z"/>', next: '<path d="M16 5h2v14h-2zM4 5v14l11-7z"/>', pause: '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>', play: '<path d="M8 5.5v13l11-6.5z"/>', again: '<path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/>', stop: '<path d="M6 6h12v12H6z"/>' };
+  const btn = (act, i, label, dis) => `<button type="button" class="pl-b" data-act="${act}" title="${esc(label)}" aria-label="${esc(label)}"${dis ? ' disabled' : ''}><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${ic[i]}</svg></button>`;
+  const mainIc = PLAY.done ? 'again' : PLAY.paused ? 'play' : 'pause', mainL = PLAY.done ? (zh ? '重新播放' : 'Play again') : PLAY.paused ? (zh ? '继续' : 'Resume') : (zh ? '暂停' : 'Pause');
+  box.innerHTML = `<div class="pl-top"><span class="pl-k">${PLAY.done ? esc(zh ? '播放完毕' : 'All flown') : `${k} / ${n}`}</span><span class="pl-date">${esc(fmtDateY(f.date))}</span>
+      <button type="button" class="pl-x" data-act="stop" title="${esc(zh ? '结束播放' : 'Stop')}" aria-label="${esc(zh ? '结束播放' : 'Stop')}">✕</button></div>
+    <div class="pl-fl">${ak ? `<span class="pl-tail"><span class="tl-fb" data-tail="${esc(ak)}"></span></span>` : ''}<div class="pl-txt">
+      <div class="pl-no"><b>${esc(f.no || '—')}</b><span class="route${f.purpose === 'academic' ? ' acad' : ''}"><b>${esc(f.from.iata)}</b><span class="arrow">→</span><b>${esc(f.to.iata)}</b></span></div>
+      <div class="pl-sub">${esc(city(f.from))} – ${esc(city(f.to))} · ${nf(f.km)} km</div>
+      <div class="pl-sub">${esc([al, acName(f), f.reg].filter(Boolean).join(' · '))}</div></div></div>
+    <div class="pl-bar"><span style="width:${(PLAY.done ? 100 : (k - 1) / n * 100).toFixed(1)}%"></span></div>
+    <div class="pl-ctl">${btn('prev', 'prev', zh ? '上一班' : 'Previous', PLAY.i === 0 && !PLAY.done)}${btn('toggle', mainIc, mainL)}${btn('next', 'next', zh ? '下一班' : 'Next', PLAY.done)}
+      <span class="seg box pl-spd">${PLAY_SPEEDS.map(v => `<button type="button" class="chip${PLAY.speed === v ? ' on' : ''}" data-spd="${v}">${v}×</button>`).join('')}</span>
+      <a class="dl fl-go" href="#fl=${esc(encodeURIComponent(f.id))}">${esc(tr('details'))}<span aria-hidden="true">›</span></a></div>`;
+  box.hidden = false;
+  if (ak) paintTails([[ak, f.airline]]);
+}
+$('#play-btn').onclick = startPlay;
+$('#player').addEventListener('click', e => {
+  const b = e.target.closest('[data-act], [data-spd], .fl-go'); if (!b || !PLAY) return;
+  if (b.classList.contains('fl-go')) { if (!PLAY.paused && !PLAY.done) togglePause(); return; }   // opening the flight pauses the show
+  if (b.dataset.spd) return setPlaySpeed(+b.dataset.spd);
+  const act = b.dataset.act;
+  if (act === 'stop') stopPlay(); else if (act === 'toggle') togglePause();
+  else if (act === 'prev') playTo(PLAY.done ? PLAY.list.length - 1 : PLAY.i - 1); else if (act === 'next') playTo(PLAY.i + 1);
+});
+document.addEventListener('keydown', e => {
+  if (!PLAY || $('#detail') || SEARCH || $('.v3d') || /^(input|textarea|select)$/i.test(e.target.tagName)) return;
+  if (e.key === ' ') { e.preventDefault(); togglePause(); }
+  else if (e.key === 'ArrowRight') playTo(PLAY.i + 1); else if (e.key === 'ArrowLeft' && PLAY.i > 0) playTo(PLAY.i - 1);
+  else if (e.key === 'Escape') stopPlay();
 });
 function showApp() { $('#gate').hidden = true; $('#app').hidden = false; $('#btn-lock').hidden = false; $('#btn-search').hidden = false; renderAll(); if (detailOf(location.hash)) renderDetail(); }
 if (LANG !== 'en') applyLang(LANG);   // open in the language remembered from the rest of the site
