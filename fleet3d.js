@@ -180,10 +180,10 @@
         P.ribbon(edge, () => 0.5, 0.66, 1.01, '#E41720');
         P.ribbon(u => edge(u) - 0.035 * Math.sin(Math.PI * Math.min(1, s(u) * 1.1)), u => edge(u) + 0.004, 0.66, 1.01, '#F5CC00'); },
       over: P => { P.title('首都航空', 0.225, 0.15, 0.036, { col: '#1a1a1a', w: 600, cjk: 1, sp: 0.1, anchor: 'end' }); P.title('Capital Airlines', 0.285, 0.15, 0.036, { col: '#1a1a1a', i: 1, w: 700 }); } },
-    KY: { img: 'KY', overOnArt: true, name: 'Kunming Airlines', zh: '昆明航空', belly: '#e9ebee', engine: W, lip: '#c9d0d8', winglet: '#cd1c24', tail: 'ky',
+    KY: { img: 'KY', overOnArt: true, winOnArt: true, name: 'Kunming Airlines', zh: '昆明航空', belly: '#e9ebee', engine: W, lip: '#c9d0d8', winglet: '#cd1c24', tail: 'ky',
       under: P => { P.below(0.42, '#e9ebee'); },
-      over: P => { const a = P.title('昆明航空', 0.165, 0.14, 0.046, { col: '#1a2b6d', w: 800, cjk: 1, sp: 0.1 }); P.title('Kunming Airlines', a[1] + 0.02, 0.14, 0.046, { col: '#1a2b6d', w: 800 }); } },
-    GJ: { img: 'GJ', overOnArt: true, name: 'Loong Air', zh: '长龙航空', belly: '#8EC8EB', engine: W, lip: '#c9d0d8', winglet: '#8EC8EB', tail: 'gj',
+      over: P => { const a = P.title('昆明航空', 0.165, 0.14, 0.046, { col: '#141414', w: 800, cjk: 1, sp: 0.1 }); P.title('Kunming Airlines', a[1] + 0.02, 0.14, 0.046, { col: '#141414', w: 800, i: 1 }); } },
+    GJ: { img: 'GJ', overOnArt: true, winOnArt: true, name: 'Loong Air', zh: '长龙航空', belly: '#8EC8EB', engine: W, lip: '#c9d0d8', winglet: '#8EC8EB', tail: 'gj',
       under: P => {   // sky-blue lower fuselage that rises over the rear fuselage into the blue fin
         const s = u => Math.max(0, Math.min(1, (u - 0.55) / 0.45)), vb = u => 0.31 - 0.3 * s(u) ** 1.5 + 0.1 * Math.max(0, (0.1 - u) / 0.1) ** 1.5;
         P.ribbon(vb, () => 0.5, -0.01, 1.01, '#8EC8EB'); },
