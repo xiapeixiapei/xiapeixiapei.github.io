@@ -481,6 +481,10 @@
   .lang-toggle { display: inline-flex; border: 1px solid var(--line, var(--subtle, #ccd)); border-radius: 100px; overflow: hidden; height: 36px; align-items: stretch; }
   .lang-btn { border: none; background: none; padding: 0 0.75rem; font: inherit; font-size: 0.85rem; font-weight: 600; color: var(--muted); cursor: pointer; }
   .lang-btn.active { background: var(--accent); color: var(--on-accent, #fff); }
+  .fl-date { position: relative; display: flex; gap: 0.4rem; align-items: center; }
+  .fl-date input[type=text] { flex: 1; min-width: 0; }
+  .fl-date input[type=date] { position: absolute; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }
+  .fl-date .btn { padding: 0.35rem 0.55rem; }
 </style>
 </head>
 <body>
@@ -2913,6 +2917,10 @@ function loadAvdb() {
 }
 const FL_CLASSES = [['', '—'], ['economy', 'Economy'], ['premium', 'Premium economy'], ['business', 'Business'], ['first', 'First']];
 let FL_FILTER = '', FL_EDIT = null, FL_FORM = null, FL_EDIT_FORM = null;   // FL_EDIT: id of the flight open for editing in the list
+// Dates are stored as yyyy-mm-dd and shown as dd/mm/yyyy
+const fmtDMY = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || ''); };
+const parseDMY = s => { s = String(s || '').trim(); let m = /^(\d{1,2})[\/.\-\s](\d{1,2})[\/.\-\s](\d{4})$/.exec(s); if (m) { const d = +m[1], mo = +m[2], y = +m[3]; if (d < 1 || d > 31 || mo < 1 || mo > 12) return null; return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`; }
+  m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m ? s : null; };
 const flBlank = () => ({ date: new Date().toISOString().slice(0, 10), no: '', airline: null, from: null, to: null, ac: '', acText: '', reg: '', seat: '', cls: '', purpose: 'personal', dur: null, note: '',
   fare: null, cur: FP.data?.flights?.findLast?.(f => f.cur)?.cur || 'CNY', age: null, dep: '', arr: '' });
 const FL_CURS = ['CNY', 'EUR', 'USD', 'GBP', 'JPY', 'HKD', 'KRW', 'SGD', 'CHF', 'SEK', 'NOK', 'DKK', 'AUD', 'CAD', 'TWD', 'THB', 'AED', 'TRY'];
@@ -3000,7 +3008,7 @@ const adbLocal = t => { const m = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}):(\d{2})/.exec
 async function flAutoFill(F, T, g, calc, say) {
   const no = (F.no || '').trim(), date = F.date;
   if (!/^[A-Z0-9]{2}\d{1,4}[A-Z]?$/.test(no)) return say('Type the flight number first, e.g. GT1023.');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return say('Choose the date first.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || '')) return say('Type the date first, like 17/07/2020.');
   const ap = code => { const a = AVDB.airports.find(x => x.iata === code) || AVDB.airports.find(x => x.icao === code); return a ? apRecord(a) : null; };
   const setAp = (k, rec) => { if (!rec) return; F[k] = rec; g(k).value = `${rec.iata} · ${Aviation.airportName(rec, 'en')}`; g(k + '-h').textContent = `${rec.name}, ${rec.cc}`; };
   const setAc = (code, text) => { if (code) { F.ac = code; F.acText = ''; g('ac').value = code; g('act').hidden = true; } else if (text) { F.ac = ''; F.acText = text; g('ac').value = '__other'; g('act').hidden = false; g('act').value = text; } };
@@ -3040,7 +3048,7 @@ function flFormHtml(F, P, editing) {
     return `<option value="">—</option>` + [...g].map(([m, ts]) => `<optgroup label="${esc(m)}">${ts.map(t => `<option value="${t.code}" ${F.ac === t.code ? 'selected' : ''}>${esc(t.name)} (${t.code})</option>`).join('')}</optgroup>`).join('') + `<option value="__other" ${!F.ac && F.acText ? 'selected' : ''}>Other (type it in)…</option>`; })();
   return `  <div class="card fl-form" id="${P}form"><h3>${editing ? 'Edit flight' : 'Add a flight'}</h3>
     <div class="row fl-row">
-      <div class="field"><label for="${P}date">Date</label><input id="${P}date" type="date" value="${esc(F.date)}"></div>
+      <div class="field"><label for="${P}date">Date</label><div class="fl-date"><input id="${P}date" type="text" inputmode="numeric" value="${esc(fmtDMY(F.date))}" placeholder="dd/mm/yyyy" class="mono" autocomplete="off"><input id="${P}datep" type="date" value="${esc(F.date)}" tabindex="-1" aria-hidden="true"><button type="button" class="btn sm" id="${P}cal" title="Pick from a calendar">📅</button></div></div>
       <div class="field"><label for="${P}no">Flight number</label><input id="${P}no" type="text" value="${esc(F.no)}" placeholder="e.g. KL897" autocomplete="off" class="mono"><div class="hint">The airline is filled in from the first two characters.</div>
         <div class="toolbar" style="margin:0.45rem 0 0"><button class="btn sm" id="${P}auto" type="button" title="Route, scheduled times, aircraft and registration from the flight number and date">⚡ Auto-fill from flight number</button><span class="hint" id="${P}auto-msg" style="margin:0"></span></div></div>
     </div>
@@ -3089,7 +3097,11 @@ function wireFlightForm(P, F, T, editId, onDone) {
   ['from', 'to'].forEach(k => suggest(k, k + '-sug', searchAirports, apLabel, a => { F[k] = apRecord(a); g(k).value = `${a.iata} · ${Aviation.airportName(a, 'en')}`; g(k + '-h').textContent = `${a.name}, ${a.cc}`; calc(); }));
   suggest('al', 'al-sug', searchAirlines, a => `<span><b class="mono">${esc(a.iata)}</b> · ${esc(a.name)}${Aviation.AIRLINE_ZH[a.iata] ? ` · ${esc(Aviation.AIRLINE_ZH[a.iata])}` : ''}</span><span class="m">${esc(a.cc)}</span>`, a => { F.airline = alRecord(a); g('al').value = `${a.iata} · ${a.name}`; });
   g('al').addEventListener('change', e => { const t = e.target.value.trim(); if (!t) F.airline = null; else if (!F.airline || !t.endsWith(F.airline.name)) F.airline = { iata: '', icao: '', name: t, zh: '' }; });
-  g('date').onchange = e => { F.date = e.target.value; };
+  // the date is typed as dd/mm/yyyy (also accepts dd.mm.yyyy, dd-mm-yyyy or yyyy-mm-dd); the calendar button opens the native picker
+  g('date').addEventListener('input', e => { const iso = parseDMY(e.target.value); if (iso) { F.date = iso; g('datep').value = iso; } });
+  g('date').addEventListener('blur', e => { const iso = parseDMY(e.target.value); if (iso) e.target.value = fmtDMY(iso); });
+  g('cal').onclick = () => { const d = g('datep'); try { d.showPicker(); } catch (err) { d.focus(); d.click(); } };
+  g('datep').onchange = e => { if (e.target.value) { F.date = e.target.value; g('date').value = fmtDMY(F.date); } };
   g('auto').onclick = () => flAutoFill(F, T, g, calc, m => { g('auto-msg').textContent = m || ''; });
   g('no').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); g('auto').click(); } });
   g('no').addEventListener('input', e => {
@@ -3111,7 +3123,8 @@ function wireFlightForm(P, F, T, editId, onDone) {
   g('fare').oninput = e => { F.fareText = e.target.value; };
   g('cur').onchange = e => { F.cur = e.target.value; };
   g('save').onclick = () => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(F.date || '')) return msg('Choose a date.');
+    if (!parseDMY(g('date').value)) return msg('Date: write it like 17/07/2020, or pick one from the calendar.');
+    F.date = parseDMY(g('date').value);
     if (!F.from || !F.to) return msg('Choose both airports from the suggestions.');
     if (F.from.iata === F.to.iata) return msg('From and To are the same airport.');
     const txt = (k, v) => F[k + 'Text'] !== undefined ? F[k + 'Text'] : v;
