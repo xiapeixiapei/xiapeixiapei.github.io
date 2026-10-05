@@ -95,9 +95,10 @@
     '3U': { img: '3U', name: 'Sichuan Airlines', zh: '四川航空', belly: '#cfd3d9', engine: W, lip: '#c9d0d8', winglet: '#d61e28', tail: '3u',
       under: P => { P.below(0.42, '#cfd3d9'); P.band(0.27, 0.3, '#c8102e'); },
       over: P => { const a = P.title('四川航空', 0.17, tv(0.05), 0.05, { col: '#1b5bb5', w: 700, cjk: 1, sp: 0.12 }); P.title('SICHUAN AIRLINES', a[1] + 0.02, tv(0.044), 0.044, { col: '#1b5bb5', w: 800, i: 1 }); } },
-    ZH: { img: 'ZH', overOnArt: true, name: 'Shenzhen Airlines', zh: '深圳航空', belly: '#e9ebee', engine: W, lip: '#c9d0d8', winglet: '#cd1e2b', tail: 'zh',
-      under: P => { P.below(0.42, '#e9ebee'); },
-      over: P => { const a = P.title('Shenzhen Airlines', 0.15, 0.142, 0.05, { col: '#1a1a1a', i: 1, w: 800 }); P.title('深圳航空', a[1] + 0.02, 0.142, 0.05, { col: '#1a1a1a', w: 700, cjk: 1, sp: 0.08 }); } },
+    ZH: { img: 'ZH', overOnArt: true, winOnArt: true, name: 'Shenzhen Airlines', zh: '深圳航空', belly: '#e4e6ea', engine: W, lip: '#c9d0d8', winglet: '#d6161f', tail: 'zh',
+      under: P => { P.below(0.42, '#e4e6ea'); },
+      // Chinese title forward of the English on both sides, in dark navy, as on the aircraft
+      over: P => { const a = P.title('深圳航空', 0.15, tv(0.05), 0.05, { col: '#1d2b4f', w: 700, cjk: 1, sp: 0.1 }); P.title('Shenzhen Airlines', a[1] + 0.018, tv(0.05), 0.05, { col: '#1d2b4f', w: 700 }); } },
     FM: { name: 'Shanghai Airlines', zh: '上海航空', engine: W, lip: '#c9d0d8', winglet: '#c8102e', tail: 'fm',
       under: P => {   // red cheat band below the windows that widens aft of the wing and climbs to the crown at the fin root; a thin white swoosh rides its upper edge
         const s = u => Math.max(0, Math.min(1, (u - 0.55) / 0.45)), top = u => 0.3 - 0.02 * u - 0.3 * s(u) ** 1.6, bot = u => 0.36 + 0.14 * Math.min(1, u / 0.7) ** 0.8;
@@ -444,7 +445,7 @@
     gt(x, w, h, f) { bg(x, w, h, '#1a44b8'); LOGO.guilin(x, f.cx + f.s * 0.02, f.cy - f.s * 0.02, f.s * 1.05, '#ffffff'); },
     hu(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.1, '#e0a526'); },
     '3u'(x, w, h, f) { bg(x, w, h, '#c8102e'); x.strokeStyle = '#f5c400'; x.lineWidth = f.s * 0.06; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(f.cx - f.s * 0.2 + i * f.s * 0.13, f.cy + f.s * 0.35 - i * f.s * 0.12, f.s * 0.45, Math.PI * 1.15, Math.PI * 1.75); x.stroke(); } },
-    zh(x, w, h, f) { bg(x, w, h, '#c8102e'); disc(x, f.cx, f.cy, f.s * 0.4, '#f2b632'); LOGO.egret(x, f.cx, f.cy, f.s * 0.55, '#c8102e'); },
+    zh(x, w, h, f) { bg(x, w, h, '#d6161f'); LOGO.egret(x, f.cx, f.cy, f.s * 0.85, '#dea958'); },   // fallback before the baked fin loads
     fm(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.egret(x, f.cx, f.cy, f.s * 0.95, '#ffffff'); },
     klm(x, w, h, f) {   // white fin, crown over bold KLM in the upper half; the fuselage blue climbs a little onto the fin root
       bg(x, w, h, '#f7f8fa'); band(x, f, 0.9, 1.1, 0.97, 1.1, '#00a1de');
