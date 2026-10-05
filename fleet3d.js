@@ -92,9 +92,14 @@
         P.ribbon(rb, gb, 0.17, 1, '#e0a526'); P.ribbon(rt, rb, 0.17, 1, '#c8102e'); },
       over: P => { const a = P.title([{ logo: 'hna', col: '#c8102e' }], 0.13, tv(0.05), 0.055); const b = P.title('海南航空', a[1] + 0.008, tv(0.048), 0.048, { col: '#c8102e', w: 600, cjk: 1, sp: 0.15 });
         P.title('Hainan Airlines', b[1] + 0.025, tv(0.046), 0.046, { col: '#c8102e', w: 700 }); } },
-    '3U': { img: '3U', name: 'Sichuan Airlines', zh: '四川航空', belly: '#cfd3d9', engine: W, lip: '#c9d0d8', winglet: '#d61e28', tail: '3u',
-      under: P => { P.below(0.42, '#cfd3d9'); P.band(0.27, 0.3, '#c8102e'); },
-      over: P => { const a = P.title('四川航空', 0.17, tv(0.05), 0.05, { col: '#1b5bb5', w: 700, cjk: 1, sp: 0.12 }); P.title('SICHUAN AIRLINES', a[1] + 0.02, tv(0.044), 0.044, { col: '#1b5bb5', w: 800, i: 1 }); } },
+    '3U': { name: 'Sichuan Airlines', zh: '四川航空', belly: '#e1e4e8', engine: W, lip: '#c9d0d8', winglet: '#d7141f', tail: '3u',
+      under: P => {   // red cheatline under the windows from the nose, widening aft; behind the rear door it wraps the whole rear fuselage up to the fin
+        P.below(0.43, '#e1e4e8');
+        const sm = t => { t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }, grow = u => Math.max(0, Math.min(1, (u - 0.03) / 0.75));
+        const top = u => 0.226 * (1 - sm((u - 0.8) / 0.13)), bot = u => 0.233 + 0.075 * grow(u) ** 1.2 + (0.5 - 0.308) * sm((u - 0.8) / 0.15);
+        P.ribbon(top, bot, 0.025, 1.01, '#d7141f', 160); },
+      over: P => { const a = P.title([{ logo: 'sichuan', s: 1.35, dy: -0.02 }, { gap: 0.25 }, '四川航空'], 0.1, tv(0.05), 0.05, { col: '#1f5bb6', w: 700, cjk: 1, sp: 0.18, fromNose: true });
+        P.title('SICHUAN AIRLINES', a[1] + 0.02, tv(0.044), 0.044, { col: '#1f5bb6', w: 800, i: 1 }); } },
     ZH: { img: 'ZH', overOnArt: true, winOnArt: true, name: 'Shenzhen Airlines', zh: '深圳航空', belly: '#e4e6ea', engine: W, lip: '#c9d0d8', winglet: '#d6161f', tail: 'zh',
       under: P => { P.below(0.42, '#e4e6ea'); },
       // Chinese title forward of the English on both sides, in dark navy, as on the aircraft
@@ -204,7 +209,7 @@
       over: P => { P.title([{ t: 'EMBRAER', w: 900, sp: 0.08 }], 0.12, tv(0.05), 0.05, { col: '#0b2a6f' }); } },
   };
   // Baked livery textures (liveries/<key>.jpg in the fuselage UV layout, liveries/<key>-fin.jpg = port | starboard fin, LE→TE across, tip→root down),
-  // made from FlightGear community livery textures with tools/bake-livery.py. Loaded on demand; the painted scheme stands in until then.
+  // made from FlightGear community livery textures, photos and official artwork with the scripts in tools/livery/ (see tools/livery/LIVERIES.md). Loaded on demand; the painted scheme stands in until then.
   const ART = new Map(), ART_WAIT = [];
   function artOf(liv) { const a = liv.img && ART.get(liv.img); return a && a.ready ? a : null; }
   function loadArt(liv) {
@@ -284,6 +289,26 @@
       x.beginPath(); x.roundRect(-0.42, 0.12, 0.84, 0.13, 0.03); x.fill();
       [[-0.33, 0.0], [-0.12, -0.06], [0.12, -0.06], [0.33, 0.0]].forEach(([a, b]) => { x.beginPath(); x.arc(a, b, 0.105, 0, Math.PI * 2); x.fill(); });
       x.beginPath(); x.arc(0, -0.08, 0.06, 0, Math.PI * 2); x.fill(); x.fillRect(-0.035, -0.42, 0.07, 0.3); x.fillRect(-0.12, -0.33, 0.24, 0.07); x.restore();
+    },
+    sichuan(x, cx, cy, s) {   // Sichuan Airlines: upright white oval with a blue rim, a blue gull over blue water bands that gather at the bottom
+      x.save(); x.translate(cx, cy); x.scale(s, s);
+      const rx = 0.41, ry = 0.5, B = '#1f5bb6';
+      x.fillStyle = B; x.beginPath(); x.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#ffffff'; x.beginPath(); x.ellipse(0, 0, rx - 0.035, ry - 0.035, 0, 0, Math.PI * 2); x.fill();
+      x.save(); x.beginPath(); x.ellipse(0, 0, rx - 0.035, ry - 0.035, 0, 0, Math.PI * 2); x.clip();
+      x.strokeStyle = B; x.lineCap = 'round'; x.lineJoin = 'round';
+      for (let i = 0; i < 4; i++) {   // water: bands from the left rim sweep right and dip to a point at the bottom centre; shorter ones fan out to the right rim
+        const y = 0.04 + i * 0.1; x.lineWidth = 0.05;
+        x.beginPath(); x.moveTo(-0.47, y + 0.03); x.bezierCurveTo(-0.26, y - 0.06, -0.06, y - 0.04, 0.0, y + 0.06); x.bezierCurveTo(0.03, y + 0.12, 0.04, 0.32 + i * 0.03, 0.03, 0.52); x.stroke();
+        x.beginPath(); x.moveTo(0.02, y + 0.07); x.bezierCurveTo(0.12, y - 0.03, 0.3, y - 0.05, 0.47, y - 0.02); x.stroke();
+      }
+      x.restore();
+      // gull in the upper half: wings raised in a shallow V, body slanting down to the right
+      x.save(); x.translate(0.02, -0.23); x.fillStyle = B; x.beginPath();
+      x.moveTo(-0.01, 0.04); x.bezierCurveTo(-0.06, -0.03, -0.13, -0.08, -0.25, -0.09); x.bezierCurveTo(-0.15, -0.04, -0.08, 0.02, -0.04, 0.08);   // left wing
+      x.lineTo(0.04, 0.07); x.bezierCurveTo(0.08, -0.01, 0.15, -0.09, 0.25, -0.15); x.bezierCurveTo(0.17, -0.07, 0.11, 0.01, 0.09, 0.08);          // right wing
+      x.lineTo(0.15, 0.13); x.lineTo(0.02, 0.1); x.closePath(); x.fill(); x.restore();
+      x.restore();
     },
     kapok(x, cx, cy, s, col = '#e5131d') {   // China Southern: red kapok flower with a white outline
       x.save(); x.translate(cx, cy); x.scale(s, s); x.lineJoin = 'round'; x.lineCap = 'round';
@@ -444,12 +469,13 @@
     g5(x, w, h, f) { bg(x, w, h, '#0033a6'); along(x, f, 0, 0.12, '#50c0e8'); LOGO.egret(x, f.cx, f.cy, f.s * 0.9, '#ffffff'); },
     gt(x, w, h, f) { bg(x, w, h, '#1a44b8'); LOGO.guilin(x, f.cx + f.s * 0.02, f.cy - f.s * 0.02, f.s * 1.05, '#ffffff'); },
     hu(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.hna(x, f.cx + f.s * 0.05, f.cy - f.s * 0.05, f.s * 1.1, '#e0a526'); },
-    '3u'(x, w, h, f) { bg(x, w, h, '#c8102e'); x.strokeStyle = '#f5c400'; x.lineWidth = f.s * 0.06; for (let i = 0; i < 4; i++) { x.beginPath(); x.arc(f.cx - f.s * 0.2 + i * f.s * 0.13, f.cy + f.s * 0.35 - i * f.s * 0.12, f.s * 0.45, Math.PI * 1.15, Math.PI * 1.75); x.stroke(); } },
+    '3u'(x, w, h, f) { bg(x, w, h, '#d7141f'); LOGO.sichuan(x, f.cx + f.s * 0.02, f.cy - f.s * 0.02, f.s * 0.95); },   // all-red fin with the gull-and-water oval
     zh(x, w, h, f) { bg(x, w, h, '#d6161f'); LOGO.egret(x, f.cx, f.cy, f.s * 0.85, '#dea958'); },   // fallback before the baked fin loads
     fm(x, w, h, f) { bg(x, w, h, '#c8102e'); LOGO.egret(x, f.cx, f.cy, f.s * 0.95, '#ffffff'); },
     klm(x, w, h, f) {   // white fin, crown over bold KLM in the upper half; the fuselage blue climbs a little onto the fin root
       bg(x, w, h, '#f7f8fa'); band(x, f, 0.9, 1.1, 0.97, 1.1, '#00a1de');
-      const cx = f.cx + f.s * 0.05, cy = f.cy - f.s * 0.3; LOGO.klm(x, cx, cy - f.s * 0.3, f.s * 0.5, '#00a1de'); lab(x, f, 'KLM', cx, cy + f.s * 0.12, f.s * 0.5, '#00a1de', { w: 900 }); },
+      const ty = f.cy - f.s * 0.12, a = f.at(ty / f.h), chord = a.xt - a.xl, size = Math.min(f.s * 0.44, chord * 0.66 / 2.2), cx = (a.xl + a.xt) / 2;
+      LOGO.klm(x, cx, ty - size * 1.05, size * 1.05, '#00a1de'); lab(x, f, 'KLM', cx, ty, size, '#00a1de', { w: 900 }); },
     af(x, w, h, f) { bg(x, w, h, '#ffffff'); [[0.36, 0.47], [0.52, 0.62], [0.67, 0.76]].forEach(([a, b]) => along(x, f, a, b, '#002157')); along(x, f, 0.81, 0.95, '#e2001a'); },
     lh(x, w, h, f) { bg(x, w, h, '#0a1d4f'); LOGO.crane(x, f.cx, f.cy + f.s * 0.04, f.s * 0.95, '#ffffff'); },
     ay(x, w, h, f) { bg(x, w, h, '#0b8bd0'); for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? '#2aa3e2' : '#0a6fb2'; x.fillRect(0, h * (0.42 + i * 0.07), w, h * 0.028); }
@@ -506,7 +532,8 @@
       for (let y = 0; y < h; y++) {
         const a = f.at(y / h), sy = Math.min(SH - 1, Math.floor(y / h * SH));
         x.save(); if (mirror) { x.translate(a.xl + a.xt, 0); x.scale(-1, 1); }
-        x.drawImage(art.fin, mirror ? S : 0, sy, S, 1, a.xl - 2, y, a.xt - a.xl + 4, 1); x.restore();
+        const cut = S * 0.025;   // trim the outermost columns: source sheets often carry a grey leading or trailing edge there
+        x.drawImage(art.fin, (mirror ? S : 0) + cut, sy, S - 2 * cut, 1, a.xl - 2, y, a.xt - a.xl + 4, 1); x.restore();
       }
       return c;
     }
@@ -536,7 +563,9 @@
         if (w > 0.4 * cw) return P.title(parts, u, v, hv * 0.4 * cw / w, o);   // keep long names off the tail
         const x0 = U(u) - (o.anchor === 'end' ? w : o.anchor === 'center' ? w / 2 : 0);
         x.save(); x.translate(x0, V(v)); x.scale(1, 1 / k); runParts(x, parts, size, base); x.restore();
-        x.save(); x.translate(x0 + w, ch - V(v)); x.rotate(Math.PI); x.scale(1, 1 / k); runParts(x, parts, size, base); x.restore();
+        const rev = q => typeof q === 'string' ? [...q].reverse().join('') : (q.t ? { ...q, t: [...q.t].reverse().join('') } : q);
+        const partsB = o.fromNose ? [...parts].reverse().map(rev) : parts;   // starboard side: characters run from the nose, as Chinese titles are painted
+        x.save(); x.translate(x0 + w, ch - V(v)); x.rotate(Math.PI); x.scale(1, 1 / k); runParts(x, partsB, size, base); x.restore();
         return [x0 / cw, (x0 + w) / cw];
       },
     };
@@ -795,7 +824,7 @@
     tailIcon(airline, px = 160) {
       const liv = liveryOf(airline, 'A320'), key = 'tail|' + liv.key + '|' + px + '|' + (artOf(liv) ? 'art' : 'paint');
       if (SPRITES.has(key)) return SPRITES.get(key);
-      const F = { aspect: 1.05, poly: [[0, 1], [0.62, 1], [1, 0], [0.74, 0]] }, src = paintTail(liv, false, F);
+      const F = { aspect: 1.05, poly: [[0, 1], [0.8, 1], [1, 0], [0.5, 0]] }, src = paintTail(liv, false, F);   // a fuller outline than the real fin, so wide logos fit
       const c = cnv(Math.round(px * F.aspect), px), x = c.getContext('2d');
       x.beginPath(); F.poly.forEach(([u, v], i) => x[i ? 'lineTo' : 'moveTo'](u * c.width, v * c.height)); x.closePath(); x.save(); x.clip();
       x.drawImage(src, 0, 0, c.width, c.height); x.restore();
