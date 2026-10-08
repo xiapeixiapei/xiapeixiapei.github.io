@@ -6,6 +6,7 @@
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
 <script src="site-lang.js"></script>
+<script src="site-nav.js"></script>
 <script src="admin-zh.js"></script>
 <script src="city-icons.js"></script>
 <script src="aviation.js"></script>
@@ -62,6 +63,32 @@
   .field { margin-bottom: 0.9rem; min-width: 0; }
   .row { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   .row.two { grid-template-columns: 1fr 1fr; }
+  .tf-row { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); align-items: start; }
+  .tf + .tf { margin-top: 0.5rem; }
+  .tf-in { display: flex; gap: 0.3rem; align-items: center; } .tf-in input { flex: 1; min-width: 0; }
+  .tf-btn { flex: none; width: 2rem; padding-left: 0; padding-right: 0; font-family: Georgia, serif; }
+  .tf-prev { margin-top: 0.25rem; padding: 0.15rem 0.1rem; font-family: var(--font-head, Georgia, serif); font-size: 1.35rem; font-weight: 300; line-height: 1.25; color: var(--ink); overflow-wrap: anywhere; }
+  .tf-prev em { font-style: italic; color: var(--accent); } .tf-prev strong { font-weight: 700; }
+  .tp-day { border: 1px solid var(--subtle); border-radius: 10px; padding: 0.6rem 0.7rem; margin: 0.7rem 0; background: var(--card-2, var(--card)); }
+  .tp-day-h { display: grid; grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; margin-bottom: 0.4rem; }
+  .tp-day-h input { padding: 0.3rem 0.5rem; font-size: 0.92em; }
+  .tp-it { border: 1px solid var(--subtle); border-left: 3px solid var(--accent-light); border-radius: 8px; padding: 0.5rem 0.6rem; margin: 0.45rem 0; background: var(--card); }
+  .tp-it.mv { border-left-color: #e07a1f; }
+  .tp-it-h { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+  .tp-it-h select { width: auto; padding: 0.3rem 0.4rem; }
+  .tp-it-h input { padding: 0.3rem 0.5rem; } .tp-time { width: 7.5rem !important; } .tp-no { width: 10rem !important; } .tp-ac { width: 7.5rem !important; } .tp-al { margin: 0; white-space: nowrap; }
+  .tp-tools { margin-left: auto; display: flex; gap: 0.2rem; } .tp-tools .btn { padding: 0.15rem 0.5rem; }
+  .tp-two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+  .tp-loc { margin-top: 0.4rem; } .tp-lab { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .tp-row { display: flex; gap: 0.35rem; align-items: center; margin-top: 0.25rem; } .tp-row input { flex: 1; min-width: 0; padding: 0.3rem 0.5rem; }
+  .tp-row .tp-iata { flex: none; width: 6.5rem; }
+  .tp-coord { flex: none; font-size: 0.8rem; color: var(--warn, #8a5300); white-space: nowrap; } .tp-coord.ok { color: var(--ok, #2f7a4f); }
+  .tp-res { margin-top: 0.3rem; display: grid; gap: 0.25rem; }
+  .tp-note { padding: 0.3rem 0.5rem; font-size: 0.92em; }
+  .tp-foot { margin-top: 0.4rem; } .tp-row .tp-price { flex: none; width: 10.5rem; } .tp-foot .btn { flex: none; white-space: nowrap; }
+  .tp-add { display: flex; flex-wrap: wrap; gap: 0.3rem; align-items: center; margin-top: 0.5rem; }
+  @media (max-width: 700px) { .tp-two { grid-template-columns: 1fr; } .tp-day-h { grid-template-columns: auto 1fr auto; } .tp-day-h input { grid-column: 1 / -1; } }
+  .thumb .tools .btn.cover.on { color: #b8860b; border-color: #e0b84a; background: rgba(224, 184, 74, 0.14); }
   .hint { font-size: 15px; color: var(--muted); margin-top: 0.3rem; }
   .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem; border: 1px solid var(--subtle); border-radius: 6px; background: var(--card); cursor: pointer; font-weight: 500; transition: all .2s; white-space: nowrap; }
   .btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -177,6 +204,20 @@
   .tv-results { display: grid; gap: 0.3rem; margin-top: 0.6rem; }
   .tv-res { display: flex; justify-content: space-between; gap: 0.8rem; align-items: center; text-align: left; padding: 0.5rem 0.8rem; border: 1px solid var(--subtle); border-radius: 6px; background: var(--card); cursor: pointer; }
   .tv-res:hover { border-color: var(--accent); background: var(--highlight); }
+  .fl-links { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin-bottom: 0.4rem; }
+  .fl-link { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.55rem; border: 1px solid var(--subtle); border-radius: 100px; background: var(--card); font-size: 0.85rem; color: var(--ink); }
+  .fl-link.on { border-color: var(--accent); background: var(--highlight); }
+  .fl-link button { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0 0.1rem; font-size: 0.8rem; }
+  .fl-link button:hover { color: var(--err); }
+  button.fl-link.sug, label.fl-link.sug { cursor: pointer; border-style: dashed; font: inherit; font-size: 0.85rem; }
+  button.fl-link.sug:hover { border-color: var(--accent); border-style: solid; }
+  .fl-link .plus { color: var(--accent); font-weight: 600; }
+  label.fl-link { display: inline-flex; margin: 0; font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--ink); }
+  label.fl-link input { width: auto; margin: 0; }
+  .fl-pick { width: auto; max-width: 100%; padding: 0.25rem 0.5rem; }
+  .fl-match { display: grid; gap: 0.6rem; margin-bottom: 0.4rem; }
+  .fl-mrow > b { margin-right: 0.3rem; }
+  .fl-pl { color: var(--accent); white-space: nowrap; }
   .tv-res .m { color: var(--muted); font-size: 15px; white-space: nowrap; }
   .tv-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
   .tv-top { margin: -0.2rem 0 0.9rem; }
@@ -931,7 +972,7 @@ function showLogin(opts = {}) {
     const frame = inner => `<div class="login"><div class="login-card">
       <div class="login-brand"><span class="login-name">${esc(SITE_NAME || 'Site Manager')}</span><span class="login-sub">Site Manager · ${esc(REPO.owner ? REPO.owner + '/' + REPO.name : location.host)}</span></div>
       ${inner}</div>
-      <p class="login-foot"><a href="index.html">← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}<span class="lang-toggle"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></span></p></div>`;
+      <p class="login-foot"><a href="index.html" data-back>← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}<span class="lang-toggle"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></span></p></div>`;
     root.innerHTML = frame('<p class="hint" style="text-align:center;padding:1.5rem 0">Checking sign-in…</p>');
     if (!REPO.owner || !REPO.name) await new Promise(ok => {
       root.innerHTML = frame(`<h2>Which repository?</h2>
@@ -1072,7 +1113,7 @@ async function ensureSignedIn() {
           <h2>Can't reach GitHub</h2><p class="hint" style="margin:0.4rem 0 1rem">${esc(e.message)}</p>
           <button class="btn primary block" id="lg-retry" type="button">Try again</button>
           <p class="hint" style="text-align:center;margin-top:0.8rem"><a href="#" id="lg-fresh">Sign in again instead</a></p></div>
-          <p class="login-foot"><a href="index.html">← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}<span class="lang-toggle"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></span></p></div>`;
+          <p class="login-foot"><a href="index.html" data-back>← Back to website</a>${REPO.owner ? ` · <a href="#" onclick="try{localStorage.setItem('sm_repo','{}')}catch(e){};location.reload();return false;" title="Use a different GitHub repository">Change repository</a>` : ''}<span class="lang-toggle"><button type="button" class="lang-btn${LANG === 'en' ? ' active' : ''}" data-lang="en">EN</button><button type="button" class="lang-btn${LANG === 'zh' ? ' active' : ''}" data-lang="zh">中</button></span></p></div>`;
         $('#lg-retry').onclick = () => { root.innerHTML = ''; ensureSignedIn().then(resolve); };
         $('#lg-fresh').onclick = ev => { ev.preventDefault(); root.innerHTML = ''; clearSession(); showLogin().then(resolve); };
       });
@@ -1096,12 +1137,13 @@ const TABS = [
   ['photos', 'Photos'],
   ['travel', 'Footprints'],
   ['flights', 'Flights'],
+  ['plans', 'Trip plans'],
   ['cv', 'CV & site settings'],
   ['json', 'Raw JSON'],
 ];
 function tabCount(id) {
   if (!C) return '';
-  return { research: C.research_interests.length, education: C.education.length, publications: C.publications.length, awards: C.awards.length, photos: C.carousels.flat().length, travel: FP.data ? FP.data.places.length : '', flights: FP.data ? (FP.data.flights || []).length : '' }[id] ?? '';
+  return { research: C.research_interests.length, education: C.education.length, publications: C.publications.length, awards: C.awards.length, photos: C.carousels.flat().length, travel: FP.data ? FP.data.places.length : '', flights: FP.data ? (FP.data.flights || []).length : '', plans: FP.data ? (FP.data.plans || []).length : '' }[id] ?? '';
 }
 function renderNav() {
   $('#nav').innerHTML = TABS.map(([id, label]) => `<button data-tab="${id}" class="${TAB === id ? 'active' : ''}">${label}<span class="count">${tabCount(id)}</span></button>`).join('');
@@ -1127,6 +1169,42 @@ function biField(label, obj, key, type = 'text') {
   return `<div class="field"><label>${label}</label><div class="row two">
     <div>${bind(obj[key], 'en', type, 'placeholder="English"')}</div>
     <div>${bind(obj[key], 'zh', type, 'placeholder="中文"')}</div></div></div>`;
+}
+// A page title in two languages: B / I buttons mark the selected words **bold** or *italic*, with a live preview
+function titleField(label, obj, key) {
+  obj[key] ||= { en: '', zh: '' };
+  const one = l => `<div class="tf"><div class="tf-in">${bind(obj[key], l, 'text', `placeholder="${l === 'en' ? 'English' : '中文'}"`)}<button type="button" class="btn sm tf-btn" data-wrap="b" title="Bold"><b>B</b></button><button type="button" class="btn sm tf-btn" data-wrap="i" title="Italic"><i>I</i></button></div><div class="tf-prev" translate="no">${SiteLang.richTitle(obj[key][l]) || '&nbsp;'}</div></div>`;
+  return `<div class="field"><label>${label}</label>${one('en')}${one('zh')}</div>`;
+}
+// Toggle bold or italic on the selected words (nothing selected: the whole title). The title is read as characters
+// with their marks, the selection is changed, and the marks are written back as * italic, ** bold, *** both.
+function toggleMark(inp, kind) {
+  const v = inp.value, box = document.createElement('div'), chars = [];
+  box.innerHTML = SiteLang.richTitle(v);
+  (function walk(n, b, i) { for (const c of n.childNodes) { if (c.nodeType === 3) { const t = c.nodeValue; for (let x = 0; x < t.length; x++) chars.push({ ch: t[x], b, i }); } else walk(c, b || c.tagName === 'STRONG', i || c.tagName === 'EM'); } })(box, false, false);
+  const at = []; for (let x = 0, j = 0; x <= v.length; x++) { at[x] = j; if (x < v.length && j < chars.length && v[x] === chars[j].ch) j++; }   // text box offset → character
+  let s = at[inp.selectionStart ?? 0], e = at[inp.selectionEnd ?? 0];
+  if (s === e) { s = 0; e = chars.length; }
+  if (s === e) return;
+  const k = kind === 'b' ? 'b' : 'i', on = !chars.slice(s, e).every(c => c[k]);
+  for (let x = s; x < e; x++) chars[x][k] = on;
+  let out = '', ns = 0, ne = 0;
+  for (let x = 0; x < chars.length;) {
+    let y = x; while (y < chars.length && chars[y].b === chars[x].b && chars[y].i === chars[x].i) y++;
+    const m = '*'.repeat((chars[x].b ? 2 : 0) + (chars[x].i ? 1 : 0));
+    if (s >= x && s < y) ns = out.length + m.length + (s - x);
+    if (e > x && e <= y) ne = out.length + m.length + (e - x);
+    out += m + chars.slice(x, y).map(c => c.ch).join('') + m; x = y;
+  }
+  inp.value = out; inp.focus(); inp.setSelectionRange(ns, ne);
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+}
+function wireTitleFields(root) {
+  root.querySelectorAll('.tf').forEach(box => {
+    const inp = box.querySelector('input'), prev = box.querySelector('.tf-prev');
+    inp.addEventListener('input', () => { prev.innerHTML = SiteLang.richTitle(inp.value) || '&nbsp;'; });
+    box.querySelectorAll('[data-wrap]').forEach(b => { b.onmousedown = e => e.preventDefault(); b.onclick = () => toggleMark(inp, b.dataset.wrap); });
+  });
 }
 function field(label, obj, key, type = 'text', hint = '', extra = '') {
   return `<div class="field"><label>${label}</label>${bind(obj, key, type, extra)}${hint ? `<div class="hint">${hint}</div>` : ''}</div>`;
@@ -1173,7 +1251,7 @@ function render() {
   BIND.clear();
   renderNav();
   const v = $('#view');
-  const fn = { overview: viewOverview, profile: viewProfile, research: viewResearch, education: viewEducation, publications: viewPublications, awards: viewAwards, photos: viewPhotos, travel: viewFootprints, flights: viewFlights, cv: viewCV, json: viewJSON }[TAB];
+  const fn = { overview: viewOverview, profile: viewProfile, research: viewResearch, education: viewEducation, publications: viewPublications, awards: viewAwards, photos: viewPhotos, travel: viewFootprints, flights: viewFlights, plans: viewPlans, cv: viewCV, json: viewJSON }[TAB];
   v.innerHTML = ''; fn(v); wireBindings(v);
 }
 
@@ -1833,7 +1911,7 @@ function renderAccount() {
 // with a content key kept inside travel.enc (travel/*.bin).
 // ─────────────────────────────────────────────────────────────────────────────
 const TRAVEL_MIN_PW = 8;
-const FP = { file: 'travel/travel.enc', pubFile: 'academic/academic.json', data: null, orig: '', remote: undefined, sha: null, pubOrig: null, pubSha: null, key: null, ckey: null, loading: false, err: '', urls: new Map() };
+const FP = { file: 'travel/travel.enc', pubFile: 'academic/academic.json', plansFile: 'plans/plans.json', data: null, orig: '', remote: undefined, sha: null, pubOrig: null, pubSha: null, plansOrig: null, plansSha: null, key: null, ckey: null, loading: false, err: '', urls: new Map() };
 const KIND_OPTIONS = [['conference', 'Conference'], ['visit', 'Research visit'], ['workshop', 'Workshop / summer school']];
 const TRIP_OPTIONS = [['', 'No label'], ['lived', 'Lived here'], ['leisure', 'Leisure trip'], ['nature', 'Hiking & nature'], ['family', 'Family & friends'], ['business', 'Business trip'], ['transit', 'Transit / stopover']];
 const TALK_OPTIONS = [['', 'No presentation'], ['oral', 'Oral presentation'], ['poster', 'Poster presentation'], ['invited', 'Invited talk'], ['keynote', 'Keynote']];
@@ -1867,7 +1945,7 @@ async function ghDeleteFile(path, message) {
 function normalizeFP(d) {
   d.v ||= 1; d.places ||= []; d.flights ||= [];
   d.title ||= { en: 'Places I have *been*', zh: '我的旅行足迹' }; d.intro ||= { en: '', zh: '' };
-  d.pub_title ||= { en: 'Academic *footprint*', zh: '学术足迹' }; d.pub_intro ||= { en: 'Conferences, workshops and research visits.', zh: '参加过的学术会议、研讨会与学术访问。' };
+  d.pub_title ||= { en: 'Academic *footprint*', zh: '学术足迹' }; d.fl_title ||= { en: 'My Air Times', zh: '云间岁月' }; d.plan_title ||= { en: 'Trip planner', zh: '旅行规划' }; d.covers ||= {}; d.plans ||= []; d.pub_intro ||= { en: 'Conferences, workshops and research visits.', zh: '参加过的学术会议、研讨会与学术访问。' };
   d.places.forEach(p => { p.id ||= 'pl-' + rid(); p.photos ||= []; p.note ||= { en: '', zh: '' }; p.city ||= { en: '', zh: '' }; p.country ||= { en: '', zh: '' }; p.when ||= '';
     p.academic = !!p.academic; p.trip ||= ''; p.icon ||= ''; p.kind ||= 'conference'; p.event ||= { en: '', zh: '' }; p.talk ||= ''; p.talk_type ||= '';
     p.sights ||= []; p.sights.forEach(g => { g.name ||= { en: '', zh: '' }; g.tags ||= []; });
@@ -1879,7 +1957,8 @@ const OPEN_COUNTRIES = new Set(); let COUNTRIES_TOUCHED = false, PLACE_FILTER = 
 const FP_FOLDS = new Set();   // footprints settings cards opened this session (closed by default)
 const fold = x => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 function placeMatches(p, q) {
-  const hay = fold([p.city?.en, p.city?.zh, p.country?.en, p.country?.zh, p.cc, p.when, p.event?.en, p.event?.zh, p.talk, p.note?.en, p.note?.zh, p.pnote?.en, p.pnote?.zh,
+  const pr = groupCC(p) === 'CN' ? provOfPlace(p) : null;
+  const hay = fold([pr?.en, pr?.zh, pr ? pr.en.replace(/\s+/g, '') + ' ' + pr.zh + '省' : '', p.city?.en, p.city?.zh, p.country?.en, p.country?.zh, p.cc, p.when, p.event?.en, p.event?.zh, p.talk, p.note?.en, p.note?.zh, p.pnote?.en, p.pnote?.zh,
     ...(p.sights || []).flatMap(g => [g.name?.en, g.name?.zh])].join(' '));
   return fold(q).split(/\s+/).filter(Boolean).every(t => hay.includes(t));
 }
@@ -1951,13 +2030,15 @@ async function loadFootprints() {
   try { const r = await ghGetFile(FP.file); FP.sha = r.sha; FP.remote = JSON.parse(b64dec(r.content)); }
   catch (e) { if (/404/.test(e.message)) { FP.sha = null; FP.remote = null; } else { FP.remote = undefined; FP.err = e.message; } }
   try { const r = await ghGetFile(FP.pubFile); FP.pubOrig = b64dec(r.content); FP.pubSha = r.sha; } catch (e) { FP.pubOrig = ''; FP.pubSha = null; }
+  try { const r = await ghGetFile(FP.plansFile); FP.plansOrig = b64dec(r.content); FP.plansSha = r.sha; } catch (e) { FP.plansOrig = ''; FP.plansSha = null; }
   FP.loading = false;
-  if (TAB === 'travel' || TAB === 'flights') render();
+  if (TAB === 'travel' || TAB === 'flights' || TAB === 'plans') render();
 }
 async function unlockFootprints(password) {
   const { bundle, key, salt, iter } = await decryptBundle(FP.remote, password);
   FP.data = normalizeFP(bundle); FP.orig = JSON.stringify(FP.data); FP.key = { key, salt, iter }; FP.ckey = await importContentKey(FP.data.key);
 }
+const derivePlans = d => ({ v: 1, title: d.plan_title, updated: new Date().toISOString().slice(0, 10), plans: d.plans || [] });
 async function saveFootprints(message = 'Update footprints via Site Manager') {
   const file = await encryptBundle(FP.data, FP.key.key, FP.key.salt, FP.key.iter);
   file.note = 'Private travel map for travel.html: AES-256-GCM, key derived from the travel password. Photos in this folder are encrypted with a content key stored inside.';
@@ -1970,6 +2051,12 @@ async function saveFootprints(message = 'Update footprints via Site Manager') {
   if (strip(pub) !== strip(FP.pubOrig)) {
     const r2 = await ghPutFile(FP.pubFile, b64enc(pub), 'Update academic footprint (public export)', FP.pubSha);
     FP.pubSha = r2.content.sha; FP.pubOrig = pub;
+  }
+  // Trip plans are public: plan.html reads them in clear from plans/plans.json (the rest of the bundle stays encrypted)
+  const plans = JSON.stringify(derivePlans(FP.data), null, 2) + '\n';
+  if (strip(plans) !== strip(FP.plansOrig)) {
+    const r3 = await ghPutFile(FP.plansFile, b64enc(plans), 'Update trip plans (public export)', FP.plansSha);
+    FP.plansSha = r3.content.sha; FP.plansOrig = plans;
   }
 }
 async function rememberTravelPassword(pw) {
@@ -2951,6 +3038,7 @@ function mergeDuplicates(flights) {   // keeps the first of each group, filling 
   flDupGroups(flights).forEach(([keep, ...rest]) => rest.forEach(d => {
     FL_FIELDS.forEach(k => { if (flEmpty(keep[k]) && !flEmpty(d[k])) keep[k] = d[k]; });
     if (d.purpose === 'academic') keep.purpose = 'academic';
+    (FP.data?.places || []).forEach(p => { if ((p.flights || []).includes(d.id)) { linkFlight(p, d.id, false); linkFlight(p, keep.id, true); } });
     flights.splice(flights.indexOf(d), 1); removed++;
   }));
   return removed;
@@ -2983,6 +3071,36 @@ const alRecord = a => ({ iata: a.iata, icao: a.icao || '', name: a.name, zh: Avi
 const parseDur = s => { const m = /^\s*(\d{1,2})\s*[:h]\s*(\d{1,2})/.exec(String(s || '')); return m ? (+m[1]) * 60 + (+m[2]) : (/^\s*\d+\s*$/.test(s || '') ? +s : null); };
 const fmtDur = m => m ? `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}` : '';
 const flRoute = f => `${f.from?.iata || '???'} → ${f.to?.iata || '???'}`;
+// ── Places ↔ flights. A place keeps the ids of the flights that took you there or away (p.flights); travel.html shows them
+// as chips that open the flight on flights.html. A flight belongs to the city of each of its airports: the nearest place
+// within 80 km of the airport (PEK and PKX → Beijing, KIX → Osaka, XNN → Xining). No date check: flying to a city means
+// going to that city. New flights are linked this way when added; suggestions cover the rest.
+const AIRPORT_CITY_KM = 80;
+function airportPlace(ap, places) {
+  let best = null, bd = AIRPORT_CITY_KM;
+  if (ap && typeof ap.lat === 'number') for (const p of places) { if (typeof p.lat !== 'number' || typeof p.lon !== 'number') continue; const d = haversine(ap.lat, ap.lon, p.lat, p.lon); if (d < bd) { bd = d; best = p; } }
+  return best;
+}
+// place id → [{ f, inb, km }] for flights not linked yet (inb: landed there; otherwise took off from there)
+function flightSuggestionMap(T) {
+  const out = new Map(), places = T.places || [], memo = new Map(), placeOf = ap => { const k = ap?.iata || JSON.stringify([ap?.lat, ap?.lon]); if (!memo.has(k)) memo.set(k, airportPlace(ap, places)); return memo.get(k); };
+  for (const f of T.flights || []) {
+    if (!f.from || !f.to) continue;
+    [[f.to, true], [f.from, false]].forEach(([ap, inb]) => { const p = placeOf(ap); if (!p || (p.flights || []).includes(f.id) || (out.get(p.id) || []).some(x => x.f === f)) return;
+      out.set(p.id, (out.get(p.id) || []).concat({ f, inb, km: Math.round(haversine(ap.lat, ap.lon, p.lat, p.lon)) })); });
+  }
+  out.forEach(l => l.sort((a, b) => String(a.f.date).localeCompare(String(b.f.date))));
+  return out;
+}
+const flightSuggestions = (p, T) => flightSuggestionMap(T).get(p.id) || [];
+function autoLinkFlight(f, places) { [f.from, f.to].forEach(ap => { const p = airportPlace(ap, places || []); if (p) linkFlight(p, f.id, true); }); }
+function linkFlight(p, id, on) {
+  const cur = p.flights || [];
+  if (on && !cur.includes(id)) p.flights = cur.concat(id);
+  if (!on) { p.flights = cur.filter(x => x !== id); if (!p.flights.length) delete p.flights; }
+}
+function unlinkFlightEverywhere(id) { (FP.data?.places || []).forEach(p => { if ((p.flights || []).includes(id)) linkFlight(p, id, false); }); }
+const flPlaceNames = id => (FP.data?.places || []).filter(p => (p.flights || []).includes(id)).map(p => p.city.en || p.city.zh || '?');
 
 // The flight form: once at the top to add a flight (prefix 'fl-'), and in place of a list row while that flight is edited (prefix 'fe-')
 // ── Auto-fill from the flight number and date ──
@@ -3140,13 +3258,172 @@ function wireFlightForm(P, F, T, editId, onDone) {
     const dup = T.flights.find(f => f.id !== rec.id && flKey(f) === flKey(rec));
     if (dup) return msg(`Already logged: ${dup.date} ${dup.no || ''} ${flRoute(dup)} (same flight number, date and route). Edit that one instead.`);
     if (editId) { const i = T.flights.findIndex(f => f.id === editId); if (i >= 0) T.flights[i] = rec; toast('Flight updated. Publish to save.'); FL_EDIT = null; FL_EDIT_FORM = null; }
-    else { T.flights.push(rec); toast(`Added ${flRoute(rec)}. Publish to save.`); FL_FORM = Object.assign(flBlank(), { date: F.date, purpose: F.purpose }); }
+    else { T.flights.push(rec); autoLinkFlight(rec, T.places); const pl = flPlaceNames(rec.id); toast(`Added ${flRoute(rec)}${pl.length ? ` (linked to ${pl.join(', ')})` : ''}. Publish to save.`); FL_FORM = Object.assign(flBlank(), { date: F.date, purpose: F.purpose }); }
     markDirty(); onDone();
   };
   if (g('cancel')) g('cancel').onclick = () => { FL_EDIT = null; FL_EDIT_FORM = null; onDone(); };
   if (g('clear')) g('clear').onclick = () => { FL_FORM = flBlank(); onDone(); };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Trip plans: itineraries stored inside the encrypted footprints bundle (FP.data.plans), shown on plan.html
+// (same travel password). A trip has a start date and a list of days; each day a list of items in order:
+// stops (city, sight, stay, food, other) with a location, and moves (flight, train, bus, car, ferry, walk)
+// from one location to another. plan.html draws them as one route.
+// ─────────────────────────────────────────────────────────────────────────────
+const PLAN_KINDS = [['city', 'City'], ['sight', 'Sight'], ['stay', 'Stay'], ['food', 'Food'], ['other', 'Other place'], ['flight', 'Flight'], ['train', 'Train'], ['bus', 'Bus'], ['car', 'Car / taxi'], ['ferry', 'Ferry'], ['walk', 'Walk']];
+const PLAN_MOVES = new Set(['flight', 'train', 'bus', 'car', 'ferry', 'walk']);
+const PLAN_OPEN = new Set(), PLAN_RES = new Map(), PLAN_Q = new Map();   // trips open for editing; search results and queries per location field
+const planLoc = () => ({ name: { en: '', zh: '' }, lat: null, lon: null, cc: '' });
+const hasLoc = o => o && typeof o.lat === 'number' && typeof o.lon === 'number';
+function planItem(kind) {
+  const it = { id: 'ti-' + rid(), kind, time: '', note: '' };
+  if (PLAN_MOVES.has(kind)) Object.assign(it, { no: '', dep: '', arr: '', from: planLoc(), to: planLoc() }); else Object.assign(it, planLoc());
+  return it;
+}
+function planDay(start, i) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(start || ''); if (!m) return ''; return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + i)).toISOString().slice(0, 10); }
+const planWd = iso => iso ? new Date(iso + 'T00:00:00Z').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }) : '';
+// change an item's kind, keeping what still fits (a stop's place becomes a move's destination and back)
+function setPlanKind(it, kind) {
+  const was = PLAN_MOVES.has(it.kind), now = PLAN_MOVES.has(kind); it.kind = kind;
+  if (was === now) return;
+  if (now) { it.to = hasLoc(it) || it.name?.en || it.name?.zh ? { name: it.name || { en: '', zh: '' }, lat: it.lat ?? null, lon: it.lon ?? null, cc: it.cc || '' } : planLoc(); it.from = planLoc(); Object.assign(it, { no: it.no || '', dep: it.dep || it.time || '', arr: it.arr || '' }); delete it.name; delete it.lat; delete it.lon; delete it.cc; }
+  else { const o = hasLoc(it.to) ? it.to : hasLoc(it.from) ? it.from : planLoc(); Object.assign(it, { name: o.name, lat: o.lat, lon: o.lon, cc: o.cc || '' }); it.time ||= it.dep || ''; ['from', 'to', 'no', 'dep', 'arr'].forEach(k => delete it[k]); }
+}
+// the nearest located point before this item in the trip (else after it): where to look for sights by name
+function planRef(trip, id) {
+  const pts = []; let at = -1;
+  trip.days.forEach(d => (d.items || []).forEach(it => {
+    if (it.id === id) at = pts.length;
+    if (PLAN_MOVES.has(it.kind)) { if (hasLoc(it.from)) pts.push(it.from); if (hasLoc(it.to)) pts.push(it.to); } else if (hasLoc(it)) pts.push(it);
+  }));
+  return pts[at - 1] || pts[at] || pts[0] || null;
+}
+// Search a place: towns and cities (geocoding), plus sights, stations and hotels by name near the trip's route; "lat, lon" works too
+async function planSearch(q, ref, kind) {
+  const ll = /^\s*(-?\d{1,2}(?:\.\d+)?)\s*[, ]\s*(-?\d{1,3}(?:\.\d+)?)\s*$/.exec(q);
+  if (ll) return [{ name: { en: '', zh: '' }, lat: +ll[1], lon: +ll[2], cc: '', sub: 'coordinates' }];
+  const geo = geocode(q).then(rs => rs.slice(0, 6).map(r => ({ name: { en: r.city.en || r.city.zh, zh: r.city.zh || r.city.en }, lat: r.lat, lon: r.lon, cc: r.cc || '', sub: [r.admin, r.country?.en].filter(Boolean).join(', ') }))).catch(() => []);
+  const near = ref ? findSightByName({ lat: ref.lat, lon: ref.lon, cc: ref.cc || '', city: ref.name || { en: '', zh: '' } }, q).then(rs => rs.slice(0, 8).map(r => ({ name: r.name, lat: r.lat, lon: r.lon, cc: ref.cc || '', sub: `${Math.round(r.dist)} km away · ${r.src}` }))).catch(() => []) : Promise.resolve([]);
+  const [g, n] = await Promise.all([geo, near]);
+  return kind === 'city' ? [...g, ...n] : [...n, ...g];
+}
+// Prices: any item can carry one (a ticket, a night, an entrance), typed as "€89", "¥1,280" or "320 EUR"
+const CUR_SIGN = { EUR: '€', CNY: '¥', USD: '$', GBP: '£', JPY: 'JP¥', HKD: 'HK$' };
+const planPrice = it => typeof it.price === 'number' ? `${CUR_SIGN[it.cur] || ''}${it.price.toLocaleString('en')}${CUR_SIGN[it.cur] ? '' : ' ' + (it.cur || '')}`.trim() : '';
+const planCur = T => (T.plans || []).flatMap(p => p.days.flatMap(d => d.items || [])).findLast(x => x.cur)?.cur || 'EUR';
+// Google Flights has no public API: a search for this flight's route and day opens in a new tab
+const gflightsUrl = (it, date) => it.from?.iata && it.to?.iata ? `https://www.google.com/travel/flights?q=${encodeURIComponent(`Flights from ${it.from.iata} to ${it.to.iata} on ${date || ''} one way`.replace(/\s+/g, ' '))}` : '';
+// the airline of a flight number ("VY1234" → Vueling): its livery paints the 3D model on plan.html
+const planAirlineHint = it => { const m = /^\s*([A-Z0-9]{2})\s*\d/i.exec(it.no || ''), al = m && AVDB.airlines?.find(a => a.iata === m[1].toUpperCase()); return al ? `<span class="hint tp-al" title="Airline from the flight number: its livery is used for the 3D model">${esc(al.name)}</span>` : ''; };
+const planAirport = code => { const ap = AVDB.byIata?.get(String(code || '').trim().toUpperCase()); return ap ? { ...apRecord(ap), name: { en: ap.city || ap.name, zh: cityZhNear(ap) || ap.city || ap.name } } : null; };
+
+function viewPlans(v) {
+  if (!FP.data) { viewFootprints(v, `<h2>Trip plans</h2><p class="lead">Trip plans are kept with the footprints (sign in with the <b>travel password</b> to edit them) and published in clear on the public <a href="plan.html" target="_blank">plan.html</a>.</p>`); return; }
+  const T = FP.data; T.plans ||= [];
+  if (!AVDB.airports) { v.innerHTML = `<h2>Trip plans</h2><div class="card"><p class="hint">Loading the airport list…</p></div>`; loadAvdb().then(() => { if (TAB === 'plans') render(); }, e => toast('Could not load the airport list: ' + e.message, true)); return; }
+  v.innerHTML = `<h2>Trip plans</h2><div class="tv-head tv-top"><span class="pill ok">${T.plans.length} trip${T.plans.length === 1 ? '' : 's'}</span><span class="hint">Public on <a href="plan.html" target="_blank">plan.html</a> (no password) · saved with <b>Publish changes</b>.</span><button class="btn sm primary" id="tp-new">+ New trip</button></div>
+    <p class="hint" style="margin:-0.4rem 0 1rem">A trip is a start date and its days. Add the stops of each day in order (cities, sights, hotels, food) and how you move between them (flights by airport code, trains, buses, cars, ferries, walks); the page draws the route on a map, one colour per day, and can play it back. Search finds towns, and sights, stations or hotels near the places already in the trip; coordinates (52.37, 4.90) work too.</p>
+    <div id="tp-list"></div>`;
+  $('#tp-new').onclick = () => { const p = { id: 'tp-' + rid(), title: { en: '', zh: '' }, start: new Date().toISOString().slice(0, 10), note: '', days: [{ title: { en: '', zh: '' }, items: [] }] }; T.plans.unshift(p); PLAN_OPEN.add(p.id); markDirty(); renderPlanList(T); };
+  renderPlanList(T);
+}
+function renderPlanList(T) {
+  const box = $('#tp-list'); if (!box) return;
+  const sorted = [...T.plans].sort((a, b) => String(b.start).localeCompare(String(a.start)));
+  const kindOpts = sel => PLAN_KINDS.map(([k, l]) => `<option value="${k}" ${k === sel ? 'selected' : ''}>${l}</option>`).join('');
+  const resHtml = key => { const rs = PLAN_RES.get(key); if (!rs) return ''; return `<div class="tp-res">${rs.length ? rs.map((r, i) => `<button type="button" class="tv-res" data-tp-pick="${esc(key)}|${i}"><span>${tvFlag(r.cc)} <b>${esc(r.name.zh && r.name.zh !== r.name.en ? `${r.name.en} · ${r.name.zh}` : r.name.en || r.name.zh || `${r.lat}, ${r.lon}`)}</b></span><span class="m">${esc(r.sub || '')}</span></button>`).join('') : '<p class="hint">Nothing found. Try another name, the English or Chinese name, or paste coordinates.</p>'}</div>`; };
+  const locHtml = (it, field, label) => {
+    const o = field ? (it[field] ||= planLoc()) : it, key = `${it.id}|${field}`; o.name ||= { en: '', zh: '' };
+    if (it.kind === 'flight' && field) { const ap = o.iata ? o : null;
+      return `<div class="tp-loc"><span class="tp-lab">${label}</span><div class="tp-row"><input type="text" class="mono tp-iata" data-tp-iata="${esc(key)}" value="${esc(o.iata || '')}" maxlength="3" placeholder="IATA, e.g. AMS" style="text-transform:uppercase"><span class="hint tp-ap">${ap ? `${tvFlag(ap.cc)} ${esc(ap.name.en)}${ap.name.zh && ap.name.zh !== ap.name.en ? ' · ' + esc(ap.name.zh) : ''} <span class="m">${esc(ap.iata)}</span>` : 'airport code'}</span></div></div>`; }
+    return `<div class="tp-loc"><span class="tp-lab">${label}</span><div class="tp-row"><input type="search" data-tp-q="${esc(key)}" value="${esc(PLAN_Q.get(key) || '')}" placeholder="Search a town, sight, station, hotel … or 52.37, 4.90"><button type="button" class="btn sm" data-tp-find="${esc(key)}">Find</button></div>
+      <div class="tp-row">${bind(o.name, 'en', 'text', 'placeholder="Name (EN)"')}${bind(o.name, 'zh', 'text', 'placeholder="名称（中文）"')}<span class="tp-coord ${hasLoc(o) ? 'ok' : ''}" title="${hasLoc(o) ? 'Location set' : 'No location yet: search above'}">${hasLoc(o) ? `📍 ${o.lat.toFixed(3)}, ${o.lon.toFixed(3)}` : 'no location'}</span></div>${resHtml(key)}</div>`;
+  };
+  const itemHtml = (it, p, di, ii) => {
+    const mv = PLAN_MOVES.has(it.kind);
+    return `<div class="tp-it${mv ? ' mv' : ''}" data-it="${esc(it.id)}"><div class="tp-it-h"><select data-tp-kind="${esc(it.id)}" title="What is it">${kindOpts(it.kind)}</select>
+        ${mv ? `${bind(it, 'no', 'text', `placeholder="${it.kind === 'flight' ? 'Flight no. KL897' : it.kind === 'train' ? 'Train no. G1' : 'No. (optional)'}" class="tp-no" data-tp-no="${esc(it.id)}"`)}${it.kind === 'flight' ? `${bind(it, 'ac', 'text', 'placeholder="Aircraft A320" class="tp-ac" maxlength="4" style="text-transform:uppercase" title="ICAO type code (A320, B738, A21N …): the 3D model flown on plan.html. Without one, an A320."')}${planAirlineHint(it)}` : ''}${bind(it, 'dep', 'text', 'placeholder="Dep 08:10" class="tp-time"')}${bind(it, 'arr', 'text', 'placeholder="Arr 10:30" class="tp-time"')}` : bind(it, 'time', 'text', 'placeholder="Time 09:00" class="tp-time"')}
+        <span class="tp-tools"><button type="button" class="btn sm" data-tp-mv="${esc(it.id)}|up" title="Move up (to the day before at the top)">↑</button><button type="button" class="btn sm" data-tp-mv="${esc(it.id)}|down" title="Move down (to the next day at the bottom)">↓</button><button type="button" class="btn sm danger" data-tp-mv="${esc(it.id)}|del" title="Remove">✕</button></span></div>
+      ${mv ? `<div class="tp-two">${locHtml(it, 'from', 'From')}${locHtml(it, 'to', 'To')}</div>` : locHtml(it, '', 'Where')}
+      <div class="tp-row tp-foot"><input type="text" class="tp-price" data-tp-price="${esc(it.id)}" value="${esc(planPrice(it))}" placeholder="${mv ? 'Price, e.g. €89' : it.kind === 'stay' ? 'Price, e.g. €120' : 'Price (optional)'}" title="Price: €89, ¥1,280 or 320 EUR. Added up on plan.html.">${it.kind === 'flight' && gflightsUrl(it, planDay(p.start, di)) ? `<a class="btn sm" href="${esc(gflightsUrl(it, planDay(p.start, di)))}" target="_blank" rel="noopener" title="Search this route and day on Google Flights">Google Flights ↗</a>` : ''}${bind(it, 'note', 'text', 'placeholder="Note (optional): tickets, booking, what to see …" class="tp-note"')}</div></div>`;
+  };
+  box.innerHTML = sorted.map(p => {
+    const open = PLAN_OPEN.has(p.id), end = planDay(p.start, p.days.length - 1), n = p.days.reduce((s, d) => s + (d.items || []).length, 0);
+    return `<div class="item place ${open ? 'open' : ''}" data-trip="${esc(p.id)}"><div class="item-head" data-tp-toggle="${esc(p.id)}"><div class="title"><span class="chev">${open ? '▾' : '▸'}</span> ${esc(p.title.en || p.title.zh || 'New trip')}${p.title.zh && p.title.en && p.title.zh !== p.title.en ? ` <span class="tv-country-zh">${esc(p.title.zh)}</span>` : ''} <span class="hint" style="display:inline">· ${esc(p.start || '?')} → ${esc(end || '?')} · ${p.days.length} day${p.days.length === 1 ? '' : 's'}, ${n} item${n === 1 ? '' : 's'}</span></div>
+        <div class="tools"><a class="btn sm" href="plan.html#trip=${encodeURIComponent(p.id)}" target="_blank" title="Open on plan.html (after publishing)">↗</a><button type="button" class="btn sm danger" data-tp-deltrip="${esc(p.id)}" title="Delete this trip">✕</button></div></div>
+      <div class="pbody" ${open ? '' : 'hidden'}>${open ? `${biField('Trip title', p, 'title')}
+        <div class="row" style="grid-template-columns:200px 1fr;align-items:start"><div class="field"><label>Start date</label><input type="date" data-tp-start="${esc(p.id)}" value="${esc(p.start || '')}"></div>${field('Note', p, 'note', 'textarea', '', 'rows="2" placeholder="Optional: what the trip is about, who comes along …"')}</div>
+        ${p.days.map((d, di) => { d.items ||= []; d.title ||= { en: '', zh: '' }; const date = planDay(p.start, di);
+          return `<div class="tp-day"><div class="tp-day-h"><b>Day ${di + 1}</b><span class="hint">${esc(planWd(date))}</span>${bind(d.title, 'en', 'text', 'placeholder="Day title (optional), e.g. Old town"')}${bind(d.title, 'zh', 'text', 'placeholder="当天标题（可选）"')}<button type="button" class="btn sm danger" data-tp-delday="${esc(p.id)}|${di}" title="Remove this day">✕</button></div>
+            ${d.items.map((it, ii) => itemHtml(it, p, di, ii)).join('') || '<p class="hint" style="margin:0.3rem 0">Nothing planned yet.</p>'}
+            <div class="tp-add"><span class="hint">Add:</span>${PLAN_KINDS.map(([k, l]) => `<button type="button" class="tagbtn" data-tp-add="${esc(p.id)}|${di}|${k}">${l}</button>`).join('')}</div></div>`; }).join('')}
+        <div class="toolbar"><button type="button" class="btn sm" data-tp-addday="${esc(p.id)}">+ Add a day</button></div>` : ''}</div></div>`;
+  }).join('') || '<p class="hint">No trips yet. Press <b>+ New trip</b>.</p>';
+  wireBindings(box);
+  const findTrip = id => T.plans.find(p => p.id === id);
+  const findItem = id => { for (const p of T.plans) for (const [di, d] of p.days.entries()) { const ii = (d.items || []).findIndex(x => x.id === id); if (ii >= 0) return { p, d, di, ii, it: d.items[ii] }; } return null; };
+  const again = () => renderPlanList(T);
+  box.querySelectorAll('[data-tp-toggle]').forEach(h => h.onclick = e => { if (e.target.closest('.tools')) return; const id = h.dataset.tpToggle; PLAN_OPEN.has(id) ? PLAN_OPEN.delete(id) : PLAN_OPEN.add(id); again(); });
+  box.querySelectorAll('[data-tp-deltrip]').forEach(b => b.onclick = () => {
+    if (!b.dataset.confirm) { b.dataset.confirm = '1'; b.textContent = 'Delete?'; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ''; b.textContent = '✕'; } }, 2500); return; }
+    T.plans.splice(T.plans.indexOf(findTrip(b.dataset.tpDeltrip)), 1); markDirty(); again(); renderNavCounts();
+  });
+  box.querySelectorAll('[data-tp-start]').forEach(inp => inp.onchange = () => { const p = findTrip(inp.dataset.tpStart); if (/^\d{4}-\d{2}-\d{2}$/.test(inp.value)) { p.start = inp.value; markDirty(); again(); } });
+  box.querySelectorAll('[data-tp-addday]').forEach(b => b.onclick = () => { findTrip(b.dataset.tpAddday).days.push({ title: { en: '', zh: '' }, items: [] }); markDirty(); again(); });
+  box.querySelectorAll('[data-tp-delday]').forEach(b => b.onclick = () => {
+    const [id, di] = b.dataset.tpDelday.split('|'), p = findTrip(id);
+    if (p.days.length === 1) return toast('A trip needs at least one day.', true);
+    if (p.days[+di].items.length && !b.dataset.confirm) { b.dataset.confirm = '1'; b.textContent = 'Remove day?'; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ''; b.textContent = '✕'; } }, 2500); return; }
+    p.days.splice(+di, 1); markDirty(); again();
+  });
+  box.querySelectorAll('[data-tp-add]').forEach(b => b.onclick = () => { const [id, di, k] = b.dataset.tpAdd.split('|'); findTrip(id).days[+di].items.push(planItem(k)); markDirty(); again(); });
+  box.querySelectorAll('[data-tp-kind]').forEach(s => s.onchange = () => { const f = findItem(s.dataset.tpKind); setPlanKind(f.it, s.value); markDirty(); again(); });
+  box.querySelectorAll('[data-tp-mv]').forEach(b => b.onclick = () => {
+    const [id, act] = b.dataset.tpMv.split('|'), f = findItem(id); if (!f) return;
+    const { p, d, di, ii, it } = f;
+    if (act === 'del') { d.items.splice(ii, 1); [...PLAN_RES.keys()].filter(k => k.startsWith(id + '|')).forEach(k => PLAN_RES.delete(k)); }
+    if (act === 'up') { if (ii > 0) [d.items[ii - 1], d.items[ii]] = [d.items[ii], d.items[ii - 1]]; else if (di > 0) { d.items.splice(ii, 1); p.days[di - 1].items.push(it); } }
+    if (act === 'down') { if (ii < d.items.length - 1) [d.items[ii + 1], d.items[ii]] = [d.items[ii], d.items[ii + 1]]; else if (di < p.days.length - 1) { d.items.splice(ii, 1); p.days[di + 1].items.unshift(it); } }
+    markDirty(); again();
+  });
+  const doFind = async key => {
+    const [id, fieldKey] = key.split('|'), f = findItem(id), inp = box.querySelector(`[data-tp-q="${CSS.escape(key)}"]`), q = inp?.value.trim(); if (!f || !q) return;
+    const btn = box.querySelector(`[data-tp-find="${CSS.escape(key)}"]`); if (btn) { btn.disabled = true; btn.textContent = '…'; }
+    PLAN_Q.set(key, q);
+    try { PLAN_RES.set(key, await planSearch(q, planRef(f.p, id), f.it.kind)); } catch (e) { toast('Search failed: ' + e.message, true); }
+    again();
+  };
+  box.querySelectorAll('[data-tp-find]').forEach(b => b.onclick = () => doFind(b.dataset.tpFind));
+  box.querySelectorAll('[data-tp-q]').forEach(inp => inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); doFind(inp.dataset.tpQ); } });
+  box.querySelectorAll('[data-tp-pick]').forEach(b => b.onclick = () => {
+    const parts = b.dataset.tpPick.split('|'), i = +parts.pop(), key = parts.join('|'), [id, fieldKey] = parts, f = findItem(id), r = PLAN_RES.get(key)?.[i]; if (!f || !r) return;
+    const o = fieldKey ? (f.it[fieldKey] ||= planLoc()) : f.it;
+    o.name = { en: r.name.en || o.name?.en || '', zh: r.name.zh || o.name?.zh || '' }; o.lat = Math.round(r.lat * 1e5) / 1e5; o.lon = Math.round(r.lon * 1e5) / 1e5; o.cc = r.cc || o.cc || '';
+    PLAN_RES.delete(key); PLAN_Q.delete(key); markDirty(); again();
+  });
+  box.querySelectorAll('[data-tp-iata]').forEach(inp => inp.onchange = () => {
+    const [id, fieldKey] = inp.dataset.tpIata.split('|'), f = findItem(id), ap = planAirport(inp.value);
+    if (!inp.value.trim()) { f.it[fieldKey] = planLoc(); markDirty(); again(); return; }
+    if (!ap) return toast(`No airport with the code ${inp.value.trim().toUpperCase()}.`, true);
+    f.it[fieldKey] = ap; markDirty(); again();
+  });
+  box.querySelectorAll('[data-tp-price]').forEach(inp => inp.onchange = () => {
+    const f = findItem(inp.dataset.tpPrice); if (!f) return;
+    const { fare, cur } = parseFare(inp.value);
+    if (inp.value.trim() && fare === null) return toast('Write the price as €89, ¥1,280 or 320 EUR.', true);
+    if (fare === null) { delete f.it.price; delete f.it.cur; } else { f.it.price = fare; f.it.cur = cur || planCur(T); }
+    inp.value = planPrice(f.it); markDirty();
+  });
+  // a flight number you have flown before fills in the airports
+  box.querySelectorAll('[data-tp-no]').forEach(inp => inp.addEventListener('change', () => {
+    const f = findItem(inp.dataset.tpNo); if (!f || f.it.kind !== 'flight') return;
+    if (f.it.from?.iata && f.it.to?.iata) { again(); return; }
+    const prev = (T.flights || []).findLast(x => flNo(x.no) === flNo(inp.value) && x.from?.iata && x.to?.iata); if (!prev) { again(); return; }
+    f.it.from = planAirport(prev.from.iata) || f.it.from; f.it.to = planAirport(prev.to.iata) || f.it.to;
+    if (!f.it.dep && prev.dep) f.it.dep = String(prev.dep).replace(/\+\d$/, ''); if (!f.it.ac && prev.ac) f.it.ac = prev.ac; markDirty(); again(); toast(`Airports filled in from your earlier ${flNo(inp.value)}.`);
+  }));
+}
 function viewFlights(v) {
   if (!FP.data) { viewFootprints(v, `<h2>Flights</h2><p class="lead">The flight log is stored encrypted together with the footprints and opens with the same <b>travel password</b> on <a href="flights.html" target="_blank">flights.html</a>.</p>`); return; }
   const T = FP.data; T.flights ||= [];
@@ -3207,13 +3484,13 @@ function viewFlights(v) {
       if (FL_EDIT === f.id) { html += `<div class="fl-inline">${flFormHtml(FL_EDIT_FORM, 'fe-', true)}</div>`; return; }
       html += `<div class="fl-item"><span class="mono fl-d">${esc(f.date.slice(5))}</span><span class="mono fl-n">${esc(f.no || '—')}</span>
         <span class="fl-r"><b class="mono">${esc(f.from?.iata)}</b> → <b class="mono">${esc(f.to?.iata)}</b> <span class="hint" style="display:inline">${esc(Aviation.airportName(f.from, 'en'))} – ${esc(Aviation.airportName(f.to, 'en'))}</span></span>
-        <span class="fl-m">${esc(f.airline?.name || '')}${f.ac || f.acText ? ' · ' + esc(Aviation.typeName(f.ac, 'en', f.acText)) : ''} · ${km.toLocaleString('en')} km${f.dep || f.arr ? ` · <span class="mono">${esc(f.dep || '—')}→${esc(f.arr || '—')}</span>` : ''}${f.fare ? ` · ${esc(f.fare.toLocaleString('en'))} ${esc(f.cur || '')}` : ''}${f.age ? ` · ${esc(f.age)} yrs` : ''}${f.purpose === 'academic' ? ' <span class="pill acad">academic</span>' : ''}</span>
+        <span class="fl-m">${esc(f.airline?.name || '')}${f.ac || f.acText ? ' · ' + esc(Aviation.typeName(f.ac, 'en', f.acText)) : ''} · ${km.toLocaleString('en')} km${f.dep || f.arr ? ` · <span class="mono">${esc(f.dep || '—')}→${esc(f.arr || '—')}</span>` : ''}${f.fare ? ` · ${esc(f.fare.toLocaleString('en'))} ${esc(f.cur || '')}` : ''}${f.age ? ` · ${esc(f.age)} yrs` : ''}${f.purpose === 'academic' ? ' <span class="pill acad">academic</span>' : ''}${(n => n.length ? ` <span class="fl-pl" title="Linked places (edit in Footprints)">📍 ${esc(n.join(' · '))}</span>` : '')(flPlaceNames(f.id))}</span>
         <span class="fl-t"><button class="btn sm" data-fl-edit="${i}">Edit</button><button class="btn sm danger" data-fl-del="${i}" title="Delete" aria-label="Delete">✕</button></span></div>`;
     });
     $('#fl-list').innerHTML = html + '</div>';
     // Edit opens the form in place of the row (one at a time); Save or Cancel closes it and the list redraws where it is
     $('#fl-list').querySelectorAll('[data-fl-edit]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flEdit]; FL_EDIT = f.id; FL_EDIT_FORM = JSON.parse(JSON.stringify({ ...flBlank(), ...f, cur: f.cur || flBlank().cur })); renderList(); $('#fe-no')?.focus(); });
-    $('#fl-list').querySelectorAll('[data-fl-del]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flDel]; if (!confirm(`Delete ${f.date} ${f.no || ''} ${flRoute(f)}?`)) return; T.flights.splice(+b.dataset.flDel, 1); if (FL_EDIT === f.id) { FL_EDIT = null; FL_EDIT_FORM = null; } markDirty(); render(); });
+    $('#fl-list').querySelectorAll('[data-fl-del]').forEach(b => b.onclick = () => { const f = T.flights[+b.dataset.flDel]; if (!confirm(`Delete ${f.date} ${f.no || ''} ${flRoute(f)}?`)) return; T.flights.splice(+b.dataset.flDel, 1); unlinkFlightEverywhere(f.id); if (FL_EDIT === f.id) { FL_EDIT = null; FL_EDIT_FORM = null; } markDirty(); render(); });
     if (FL_EDIT && FL_EDIT_FORM) wireFlightForm('fe-', FL_EDIT_FORM, T, FL_EDIT, () => { const y = scrollY; render(); scrollTo(0, y); });
   };
   renderList();
@@ -3281,7 +3558,7 @@ function importFlightsCsv(text, flights) {
       from: apRecord(a), to: apRecord(b), ac: ty ? ty.code : '', acText: ty ? '' : acS, reg: g('reg').toUpperCase(), seat: g('seat').toUpperCase(),
       cls: /first|^3$/.test(clsS) ? 'first' : /business|^2$/.test(clsS) ? 'business' : /premium|\+|^4$/.test(clsS) ? 'premium' : /econ|^1$/.test(clsS) ? 'economy' : '',
       purpose: /academ|conference|business|work|^2$/.test(purS) ? 'academic' : 'personal', dur: parseDur(g('dur')), note: g('note'), ...extra });
-    byKey.set(flKey(flights[flights.length - 1]), flights[flights.length - 1]); added++;
+    byKey.set(flKey(flights[flights.length - 1]), flights[flights.length - 1]); autoLinkFlight(flights[flights.length - 1], FP.data?.places); added++;
   });
   return { added: added + updated, msg: `Imported ${added} flight${added === 1 ? '' : 's'}${updated ? `, updated ${updated} already in the list` : ''}${skipped ? `, ${skipped} already in the list unchanged` : ''}${bad.length ? `; rows ${bad.slice(0, 8).join(', ')}${bad.length > 8 ? '…' : ''} skipped (date or airport not recognised)` : ''}.` };
 }
@@ -3352,11 +3629,15 @@ function viewFootprints(v, introOverride) {
     <span class="sort-seg" id="tv-sort" role="group" aria-label="Sort"><button type="button" data-psort="name" class="${PLACE_SORT === 'name' ? 'on' : ''}">A–Z</button><button type="button" data-psort="date" class="${PLACE_SORT === 'date' ? 'on' : ''}">Newest first</button></span>
     <button class="btn sm" type="button" id="tv-open-all">Expand all</button><button class="btn sm" type="button" id="tv-close-all">Collapse all</button></div>
   <div id="tv-places"></div>
-  <div class="tv-folds">${foldCard('pages', 'Page titles &amp; introductions', 'travel.html and academic.html', `<p class="hint" style="margin-bottom:0.8rem">One list of places for two pages. <a href="travel.html" target="_blank">travel.html</a> shows everything and opens only with the <b>travel password</b> (share it with family and friends; it gives no access to this manager). Entries ticked as <b>academic visit</b> are also published, in clear, on the public <a href="academic.html" target="_blank">academic.html</a>.</p>
-    <div class="row two">
-      <div><h3 style="font-size:1.1rem">Travel page (private)</h3>${biField('Title (use *asterisks* for the italic blue word)', T, 'title')}${biField('Introduction', T, 'intro', 'textarea')}</div>
-      <div><h3 style="font-size:1.1rem">Academic page (public)</h3>${biField('Title', T, 'pub_title')}${biField('Introduction', T, 'pub_intro', 'textarea')}</div></div>
-    <div class="toolbar"><a class="btn sm" href="travel.html" target="_blank">Open travel.html ↗</a><a class="btn sm" href="academic.html" target="_blank">Open academic.html ↗</a></div>`)}
+  <div class="tv-folds">${foldCard('pages', 'Page titles &amp; introductions', 'travel, academic, flights and trip planner', `<p class="hint" style="margin-bottom:0.8rem">One list of places for two pages. <a href="travel.html" target="_blank">travel.html</a> shows everything and opens only with the <b>travel password</b> (share it with family and friends; it gives no access to this manager). Entries ticked as <b>academic visit</b> are also published, in clear, on the public <a href="academic.html" target="_blank">academic.html</a>.</p>
+    <p class="hint" style="margin-bottom:0.8rem">Titles: select words, then press B (bold) or I (italic, in the page’s accent colour); with nothing selected it applies to the whole title. The text box shows them as **bold** and *italic*.</p>
+    <div class="row tf-row">
+      <div><h3 style="font-size:1.1rem">Travel page (private)</h3>${titleField('Title', T, 'title')}${biField('Introduction', T, 'intro', 'textarea')}</div>
+      <div><h3 style="font-size:1.1rem">Academic page (public)</h3>${titleField('Title', T, 'pub_title')}${biField('Introduction', T, 'pub_intro', 'textarea')}</div>
+      <div><h3 style="font-size:1.1rem">Flights page (private)</h3>${titleField('Title', T, 'fl_title')}</div>
+      <div><h3 style="font-size:1.1rem">Trip planner (public)</h3>${titleField('Title', T, 'plan_title')}</div></div>
+    <div class="toolbar"><a class="btn sm" href="travel.html" target="_blank">Open travel.html ↗</a><a class="btn sm" href="academic.html" target="_blank">Open academic.html ↗</a><a class="btn sm" href="flights.html" target="_blank">Open flights.html ↗</a><a class="btn sm" href="plan.html" target="_blank">Open plan.html ↗</a></div>`)}
+  ${(T.flights || []).length ? foldCard('flmatch', 'Link flights to places', `${T.places.filter(p => (p.flights || []).length).length} places linked · ${[...flightSuggestionMap(T).values()].reduce((n, l) => n + l.length, 0)} suggestions`, `<p class="hint" style="margin-bottom:0.6rem">Each place can list the flights that took you there or away; travel.html shows them on the place and they open the flight on flights.html, which links back. A flight belongs to the city of each of its airports: the nearest place within ${AIRPORT_CITY_KM} km (PEK and PKX → Beijing, KIX → Osaka). New flights are linked this way when you add them; below are the flights not linked yet. Untick any that are wrong, then link. One-off links can also be added in each place's <b>Flights</b> field.</p><div id="tv-flmatch"></div>`) : ''}
   ${foldCard('check', 'Check all tags', '5A, national parks, World Heritage', `<div class="toolbar" style="margin:0"><button class="btn sm primary" id="tv-check">✓ Check all tags</button>
     <span class="hint" style="margin:0">Re-checks every saved sight: 5A against the official list (358, May 2025), national parks against the official rule, and World Heritage / 5A-area grouping. Tags you set by hand are checked too.</span></div>
     <div id="tv-check-out"></div>`, 'tag-check')}
@@ -3370,6 +3651,7 @@ function viewFootprints(v, introOverride) {
       <div class="toolbar"><button class="btn sm" type="submit" id="tv-chgo">Change travel password</button><span class="hint" id="tv-chmsg"></span></div></form>`)}</div>`;
 
   v.querySelectorAll('details.fold').forEach(d => d.addEventListener('toggle', () => { if (d.open) FP_FOLDS.add(d.dataset.fold); else FP_FOLDS.delete(d.dataset.fold); }));
+  wireTitleFields(v);
 
   // Search
   const doSearch = async () => {
@@ -3418,6 +3700,7 @@ function viewFootprints(v, introOverride) {
       <div class="field"><label>Sights &amp; landmarks (${p.sights.length})</label><div id="tv-sg-${i}"></div>
         <div class="toolbar" style="margin-top:0.5rem"><button class="btn sm" data-sg-find="${i}">Find landmarks nearby</button><input type="text" data-sg-q="${i}" placeholder="or search by name, e.g. 外滩" style="width:auto;flex:1;min-width:160px;padding:0.25rem 0.5rem"><button class="btn sm" data-sg-name="${i}">Find</button><button class="btn sm" data-sg-add="${i}">Add manually</button><button class="btn sm" data-sg-tr="${i}" title="Fill in or redo the English names of Chinese sights">Translate names</button><span class="hint" id="tv-sg-msg-${i}"></span></div>
         <div id="tv-sg-res-${i}"></div></div>
+      ${T.flights?.length ? `<div class="field"><label id="tv-fl-n-${i}">Flights (${(p.flights || []).length})</label><div id="tv-fl-${i}"></div></div>` : ''}
       <div class="field"><label>Photos (${p.photos.length})</label><div class="thumbs" id="tv-ph-${i}"></div>
         ${p.academic ? `<p class="hint">${p.photos.filter(isPublicPhoto).length} public (academic page) · ${p.photos.filter(x => !isPublicPhoto(x)).length} private (travel page only, encrypted). Use the 🌐 / 🔒 button on a photo to switch.</p>` : ''}
         ${!p.academic && p.photos.some(isPublicPhoto) ? `<p class="hint">${p.photos.filter(isPublicPhoto).length} photo(s) are stored unencrypted (uploaded while this entry was academic). Use 🔒 to make them private.</p>` : ''}
@@ -3455,7 +3738,7 @@ function viewFootprints(v, introOverride) {
     box.querySelectorAll('[data-acad], select[data-kind], select[data-talk]').forEach(el => el.addEventListener('change', () => setTimeout(renderPlaces, 0)));
     box.querySelectorAll('[data-addvisit]').forEach(a => a.onclick = e => { e.preventDefault(); const inp = box.querySelector(`[data-when="${a.dataset.addvisit}"]`); if (!inp) return; inp.value = inp.value.trim() ? inp.value.trim().replace(/;?\s*$/, '; ') : ''; inp.dispatchEvent(new Event('input')); inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); });
     box.querySelectorAll('input[maxlength="2"]').forEach(inp => inp.addEventListener('change', () => { inp.value = inp.value.toUpperCase(); inp.dispatchEvent(new Event('input')); }));
-    T.places.forEach((p, i) => { if (!box.querySelector(`.item[data-i="${i}"]`)) return; renderThumbs(p, i); wireUpload(p, i); renderSights(p, i); wireSights(p, i); });
+    T.places.forEach((p, i) => { if (!box.querySelector(`.item[data-i="${i}"]`)) return; renderThumbs(p, i); wireUpload(p, i); renderSights(p, i); wireSights(p, i); renderPlaceFlights(p, i); });
     const slot = $('#tv-drafts'), tmp = $('#tv-draft-tmp');
     if (slot) { slot.innerHTML = ''; slot.hidden = !tmp;
       if (tmp) { slot.append(...tmp.children); tmp.remove();
@@ -3500,6 +3783,22 @@ function viewFootprints(v, introOverride) {
     for (const g of todo) { if (force) delete trCache()[g.name.zh]; const { en, via } = await translateName(g.name.zh, g.lat, g.lon); if (en && (force || needsEn(g.name))) { g.name.en = en; n++; } }
     if (n) markDirty(); renderSights(p, i);
     if (msg) msg.textContent = n ? `${n} English name${n === 1 ? '' : 's'} filled in (Wikidata, MyMemory or pinyin). Edit any of them below.` : 'No English name could be found; type one in.';
+  };
+  // Flights linked to a place: linked ones (✕ to unlink), suggestions (click to link), and a picker for any other flight
+  const renderPlaceFlights = (p, i) => {
+    const box = $('#tv-fl-' + i); if (!box) return;
+    const byId = new Map(T.flights.map(f => [f.id, f])), sug = flightSuggestions(p, T);
+    const linked = (p.flights || []).map(id => byId.get(id)).filter(Boolean).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    const dir = f => typeof p.lat !== 'number' ? '' : haversine(p.lat, p.lon, f.to.lat, f.to.lon) <= haversine(p.lat, p.lon, f.from.lat, f.from.lon) ? '↘' : '↗';
+    const rest = T.flights.filter(f => !(p.flights || []).includes(f.id)).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+    box.innerHTML = `<div class="fl-links">${linked.length ? linked.map(f => `<span class="fl-link on" title="${esc(Aviation.airportName(f.from, 'en'))} → ${esc(Aviation.airportName(f.to, 'en'))}">${dir(f)} <span class="mono">${esc(f.date)}</span> <b class="mono">${esc(f.no || '—')}</b> ${esc(flRoute(f))}<button type="button" data-fl-unlink="${esc(f.id)}" title="Unlink" aria-label="Unlink">✕</button></span>`).join('') : '<span class="hint" style="margin:0">No flights linked yet.</span>'}</div>
+      ${sug.length ? `<div class="fl-links"><span class="hint" style="margin:0">Suggested:</span>${sug.map(x => `<button type="button" class="fl-link sug" data-fl-link="${esc(x.f.id)}" title="${x.inb ? 'Lands' : 'Takes off'} here (airport ${x.km} km from the centre) · click to link">${x.inb ? '↘' : '↗'} <span class="mono">${esc(x.f.date)}</span> <b class="mono">${esc(x.f.no || '—')}</b> ${esc(flRoute(x.f))} <span class="plus">+ link</span></button>`).join('')}${sug.length > 1 ? `<button type="button" class="btn sm" data-fl-linkall>Link all ${sug.length}</button>` : ''}</div>` : ''}
+      ${rest.length ? `<select data-fl-pick class="fl-pick"><option value="">+ Link another flight…</option>${rest.map(f => `<option value="${esc(f.id)}">${esc(f.date)} · ${esc(f.no || '—')} · ${esc(flRoute(f))} · ${esc(f.to?.city || '')}</option>`).join('')}</select>` : ''}`;
+    const done = () => { markDirty(); const n = $('#tv-fl-n-' + i); if (n) n.textContent = `Flights (${(p.flights || []).length})`; renderPlaceFlights(p, i); };
+    box.querySelectorAll('[data-fl-unlink]').forEach(b => b.onclick = () => { linkFlight(p, b.dataset.flUnlink, false); done(); });
+    box.querySelectorAll('[data-fl-link]').forEach(b => b.onclick = () => { linkFlight(p, b.dataset.flLink, true); done(); });
+    const all = box.querySelector('[data-fl-linkall]'); if (all) all.onclick = () => { sug.forEach(x => linkFlight(p, x.f.id, true)); done(); };
+    const pick = box.querySelector('[data-fl-pick]'); if (pick) pick.onchange = () => { if (pick.value) { linkFlight(p, pick.value, true); done(); } };
   };
   const renderSights = (p, i) => {
     renderUploadSight(p, i);
@@ -3606,12 +3905,18 @@ function viewFootprints(v, introOverride) {
     $(`[data-sg-add="${i}"]`).onclick = () => { p.sights.push({ pub: p.academic ? false : undefined, id: 's-' + rid(), name: { en: '', zh: '' }, lat: null, lon: null, tags: [], enwiki: '', zhwiki: '' }); markDirty(); renderSights(p, i); renderThumbs(p, i); };
     renderResults(p, i);
   };
+  // the province a photo can be the cover of (its tile on the phone travel page), for places in China
+  const COVER_ON = 'Cover of this province on the phone travel page. Click to use the first photo again.', COVER_OFF = 'Use as the cover of this province on the phone travel page (without a choice, the first photo is used)';
+  const coverBtn = (pr, ph) => { const on = T.covers?.[pr.zh] === ph.id;
+    return `<button class="btn cover${on ? ' on' : ''}" data-pact="cover" data-cover-prov="${esc(pr.zh)}" data-phid="${esc(ph.id)}" title="${on ? COVER_ON : COVER_OFF}">${on ? '★' : '☆'}</button>`; };
+  const paintCovers = zh => document.querySelectorAll(`[data-cover-prov="${CSS.escape(zh)}"]`).forEach(b => { const on = T.covers?.[zh] === b.dataset.phid; b.classList.toggle('on', on); b.textContent = on ? '★' : '☆'; b.title = on ? COVER_ON : COVER_OFF; });
   const renderThumbs = (p, i) => {
     const box = $('#tv-ph-' + i); if (!box) return;
+    const pr = groupCC(p) === 'CN' ? provOfPlace(p) : null;
     box.innerHTML = p.photos.map((ph, j) => `<div class="thumb tv" data-j="${j}"><div class="ph"><img alt="" hidden>…</div>
       <div class="cap">${bind(ph.caption ||= { en: '', zh: '' }, 'en', 'text', 'placeholder="Caption (EN)"')}${bind(ph.caption, 'zh', 'text', 'placeholder="说明（中文）"')}</div>
       ${p.sights.length ? `<div class="ph-sg">${p.sights.map(g => `<button type="button" class="tagbtn ${(ph.sights || []).includes(g.id) ? 'on' : ''}" data-tag="5a" data-psg="${esc(g.id)}" title="Shown when visitors hover this sight">${esc(g.name.zh && g.name.zh !== g.name.en ? g.name.zh : g.name.en || 'sight')}</button>`).join('')}</div>` : ''}
-      <div class="tools"><button class="btn" title="Move left" data-pact="left" ${j === 0 ? 'disabled' : ''}>←</button><button class="btn" title="Move right" data-pact="right" ${j === p.photos.length - 1 ? 'disabled' : ''}>→</button><button class="btn danger" data-pact="del">✕</button>${p.academic || isPublicPhoto(ph) ? `<button class="btn vis ${isPublicPhoto(ph) ? 'pub' : ''}" data-pact="vis" title="${isPublicPhoto(ph) ? 'Public: shown on the academic page. Click to make it private.' : 'Private: travel page only. Click to make it public.'}">${isPublicPhoto(ph) ? '🌐 public' : '🔒 private'}</button>` : ''}</div></div>`).join('') || '<p class="hint" style="grid-column:1/-1">No photos yet.</p>';
+      <div class="tools"><button class="btn" title="Move left" data-pact="left" ${j === 0 ? 'disabled' : ''}>←</button><button class="btn" title="Move right" data-pact="right" ${j === p.photos.length - 1 ? 'disabled' : ''}>→</button><button class="btn danger" data-pact="del">✕</button>${pr && ph.id ? coverBtn(pr, ph) : ''}${p.academic || isPublicPhoto(ph) ? `<button class="btn vis ${isPublicPhoto(ph) ? 'pub' : ''}" data-pact="vis" title="${isPublicPhoto(ph) ? 'Public: shown on the academic page. Click to make it private.' : 'Private: travel page only. Click to make it public.'}">${isPublicPhoto(ph) ? '🌐 public' : '🔒 private'}</button>` : ''}</div></div>`).join('') || '<p class="hint" style="grid-column:1/-1">No photos yet.</p>';
     wireBindings(box);
     box.querySelectorAll('.thumb').forEach(el => {
       const j = Number(el.dataset.j), ph = p.photos[j], img = el.querySelector('img');
@@ -3623,6 +3928,10 @@ function viewFootprints(v, introOverride) {
       });
       el.querySelectorAll('[data-pact]').forEach(b => b.onclick = async () => {
         const act = b.dataset.pact;
+        if (act === 'cover') {
+          T.covers ||= {}; if (T.covers[pr.zh] === ph.id) delete T.covers[pr.zh]; else T.covers[pr.zh] = ph.id;
+          markDirty(); paintCovers(pr.zh); toast(T.covers[pr.zh] ? 'Province cover set. Publish changes to show it.' : 'The province uses its first photo again.'); return;
+        }
         if (act === 'left' && j > 0) [p.photos[j - 1], p.photos[j]] = [p.photos[j], p.photos[j - 1]];
         if (act === 'right' && j < p.photos.length - 1) [p.photos[j + 1], p.photos[j]] = [p.photos[j], p.photos[j + 1]];
         if (act === 'vis') {
@@ -3634,7 +3943,7 @@ function viewFootprints(v, introOverride) {
         if (act === 'del') {
           if (!b.dataset.confirm) { b.dataset.confirm = '1'; b.textContent = 'Delete?'; setTimeout(() => { if (b.isConnected) { b.dataset.confirm = ''; b.textContent = '✕'; } }, 2500); return; }
           b.disabled = true; b.textContent = '…';
-          try { await ghDeleteFile(ph.full, 'Remove photo'); await ghDeleteFile(ph.thumb, 'Remove photo'); p.photos.splice(j, 1); await saveFootprints('Remove photo'); toast('Photo deleted.'); }
+          try { await ghDeleteFile(ph.full, 'Remove photo'); await ghDeleteFile(ph.thumb, 'Remove photo'); p.photos.splice(j, 1); for (const k in T.covers || {}) if (T.covers[k] === ph.id) delete T.covers[k]; await saveFootprints('Remove photo'); toast('Photo deleted.'); }
           catch (e) { toast(e.message, true); }
         }
         markDirty(); renderThumbs(p, i);
@@ -3678,6 +3987,19 @@ function viewFootprints(v, introOverride) {
   document.querySelectorAll('[data-psort]').forEach(b => b.onclick = () => { PLACE_SORT = b.dataset.psort; try { localStorage.setItem('sm_place_sort', PLACE_SORT); } catch (e) {}
     document.querySelectorAll('[data-psort]').forEach(x => x.classList.toggle('on', x.dataset.psort === PLACE_SORT)); renderPlaces(); });
   $('#tv-open-all').onclick = () => { COUNTRIES_TOUCHED = true; T.places.forEach(x => { OPEN_COUNTRIES.add(groupCC(x)); if (groupCC(x) === 'CN') OPEN_PROVS.add(provOfPlace(x)?.zh || '—'); }); renderPlaces(); };
+  const renderFlMatch = () => {
+    const box = $('#tv-flmatch'); if (!box) return;
+    const sm = flightSuggestionMap(T), rows = T.places.map((p, i) => ({ p, i, sug: sm.get(p.id) || [] })).filter(r => r.sug.length).sort((a, b) => String(a.sug[0].f.date).localeCompare(String(b.sug[0].f.date)));
+    const linkedIds = new Set(T.places.flatMap(p => p.flights || [])), loose = T.flights.filter(f => !linkedIds.has(f.id)).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+    box.innerHTML = (rows.length ? `<div class="fl-match">${rows.map(r => `<div class="fl-mrow"><b>${esc(r.p.city.en || r.p.city.zh)}</b> <span class="hint" style="display:inline">${esc(r.p.when)}</span><div class="fl-links">${r.sug.map(x => `<label class="fl-link sug"><input type="checkbox" checked data-m="${r.i}" value="${esc(x.f.id)}"> ${x.inb ? '↘' : '↗'} <span class="mono">${esc(x.f.date)}</span> <b class="mono">${esc(x.f.no || '—')}</b> ${esc(flRoute(x.f))} <span class="hint" style="display:inline;margin:0">${x.km} km</span></label>`).join('')}</div></div>`).join('')}</div>
+      <div class="toolbar"><button class="btn sm primary" type="button" id="tv-flmatch-go">Link ticked flights</button><span class="hint" style="margin:0" id="tv-flmatch-msg"></span></div>` : '<p class="hint">No new suggestions: every matching flight is already linked.</p>')
+      + (loose.length ? `<p class="hint" style="margin-top:0.8rem">Flights not linked to any place (${loose.length}): ${loose.map(f => `<span class="mono">${esc(f.date)} ${esc(f.no || '—')} ${esc(flRoute(f))}</span>`).join(' · ')}</p>` : '');
+    const go = $('#tv-flmatch-go'); if (go) go.onclick = () => {
+      let n = 0; box.querySelectorAll('input[data-m]:checked').forEach(c => { const p = T.places[+c.dataset.m]; if (p && !(p.flights || []).includes(c.value)) { linkFlight(p, c.value, true); n++; } });
+      if (!n) return; markDirty(); toast(`Linked ${n} flight${n === 1 ? '' : 's'} to places. Publish to save.`); render();
+    };
+  };
+  renderFlMatch();
   $('#tv-close-all').onclick = () => { COUNTRIES_TOUCHED = true; OPEN_COUNTRIES.clear(); OPEN_PROVS.clear(); OPEN_PLACES.clear(); renderPlaces(); };
 
   // One-click tag check

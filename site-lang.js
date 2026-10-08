@@ -5,7 +5,9 @@
  * - SiteLang.translator(dict, root): translate UI text at runtime from an English → Chinese dictionary.
  *   Text nodes, placeholders, titles and aria-labels whose trimmed text matches a key are swapped; originals are kept so
  *   the page can switch back. A MutationObserver keeps newly rendered content translated. Used by pages whose markup
- *   is generated from many templates (the Site Manager); the public pages carry data-en / data-zh attributes instead. */
+ *   is generated from many templates (the Site Manager); the public pages carry data-en / data-zh attributes instead.
+ *   Elements marked translate="no" are left alone.
+ * - SiteLang.richTitle(s) / plainTitle(s): a page title with **bold** and *italic* marks, as HTML or as plain text. */
 (function () {
   const KEY = 'site-lang';
   const valid = l => l === 'zh' || l === 'en';
@@ -40,10 +42,11 @@
         else if (cur !== o[a]) el.setAttribute(a, o[a]);
       }
     }
+    const keep = el => !el || ['SCRIPT', 'STYLE', 'TEXTAREA'].includes(el.tagName) || !!el.closest('[translate="no"]');   // left as typed (e.g. a preview of your own text)
     function walk(node) {
-      if (node.nodeType === 3) { if (!['SCRIPT', 'STYLE', 'TEXTAREA'].includes(node.parentElement?.tagName)) textNode(node); return; }
+      if (node.nodeType === 3) { if (!keep(node.parentElement)) textNode(node); return; }
       if (node.nodeType !== 1) return;
-      if (['SCRIPT', 'STYLE', 'TEXTAREA'].includes(node.tagName)) return;
+      if (keep(node)) return;
       attrs(node);
       for (let c = node.firstChild; c; c = c.nextSibling) walk(c);
     }
@@ -58,5 +61,11 @@
     }
     return { apply, refresh: () => run(), get on() { return on; } };
   }
-  window.SiteLang = { initial, stored, set, translator, KEY };
+  // Page titles typed in the Site Manager: **bold**, *italic* (shown in the accent colour), ***both***
+  const escH = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  function richTitle(s) {
+    return escH(s).replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  }
+  const plainTitle = s => String(s == null ? '' : s).replace(/\*+/g, '').trim();
+  window.SiteLang = { initial, stored, set, translator, richTitle, plainTitle, KEY };
 })();

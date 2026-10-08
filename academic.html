@@ -6,6 +6,7 @@
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
 <script src="site-lang.js"></script>
+<script src="site-nav.js"></script>
 <script src="city-icons.js"></script>
 <script src="site-search.js" defer></script>
 <meta name="description" content="Conferences and academic visits, shown on a map.">
@@ -93,6 +94,7 @@
   .hero h1 { font-family: var(--font-head); font-weight: 300; font-size: 2.6rem; line-height: 1.15; }
   body.zh .hero h1 { font-family: var(--font-head); font-weight: 300; }
   .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero h1 strong { font-weight: 600; }
   .hero .intro { color: var(--muted); margin-top: 0.5rem; max-width: 620px; font-size: 1.05rem; }
   .stats { display: flex; gap: 2rem; }
   .stat { text-align: center; }
@@ -639,7 +641,6 @@
     <div id="map" role="region" aria-label="Map of visited places"></div>
     <div class="map-note">
       <span><span class="legend"><i></i> <span data-en="Visited country / province" data-zh="到访过的国家 / 省份">Visited country / province</span></span> &nbsp; <span class="legend"><b></b> <span data-en="City" data-zh="城市">City</span></span></span>
-      <span data-en="Click a province, city or sight to jump to its entry; names in the popup can be copied." data-zh="点击省份、城市或景点可跳到对应条目；弹出框里的地名可以复制。">Click a province, city or sight to jump to its entry; names in the popup can be copied.</span>
     </div>
     </div>
     <nav class="split-nav" id="fp-nav" aria-label="Places"></nav>
@@ -951,12 +952,14 @@ function renderHeader() {
   const nCountries = new Set(places.map(p => normCC(p.cc) || t(p.country))).size;
   const nPhotos = places.reduce((n, p) => n + (p.photos || []).length, 0);
   const title = t(DATA.title) || (PRIVATE ? (LANG === 'zh' ? '我的旅行足迹' : 'Places I have been') : (LANG === 'zh' ? '学术足迹' : 'Academic footprint'));
-  $('#title').innerHTML = esc(title).replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  $('#title').innerHTML = SiteLang.richTitle(title);
+  document.title = SiteLang.plainTitle(title) + (window.SITE_OWNER?.[LANG] ? ' | ' + window.SITE_OWNER[LANG] : '');
   $('#intro').textContent = t(DATA.intro) || '';
   $('#intro').hidden = !t(DATA.intro);
   // Highlights: how many World Heritage sites and 5A scenic areas appear in the visited sights
   const sights = places.flatMap(p => p.sights || []);
-  const nWH = new Set(sights.filter(x => x.whsite || (x.tags || []).some(k => k.startsWith('wh'))).map(x => x.whsite ? 'p' + x.whsite.id : 's' + x.id)).size, n5A = new Set(places.flatMap(p => (p.sights || []).filter(isFiveA).map(sg => a5Entry(sg, p).key)).filter(Boolean)).size, nNP = sights.filter(x => (x.tags || []).includes('national-park')).length;
+  const nWH = new Set(sights.filter(x => x.whsite || (x.tags || []).some(k => k.startsWith('wh'))).map(x => x.whsite ? 'p' + x.whsite.id : 's' + x.id)).size, n5A = new Set(places.flatMap(p => (p.sights || []).filter(isFiveA).map(sg => a5Entry(sg, p).key)).filter(Boolean)).size, nNP = new Set(sights.filter(x => (x.tags || []).includes('national-park')).map(npKey)).size;
+  if (!NAT_PARKS_PUB && sights.some(x => (x.tags || []).includes('national-park'))) loadNatParks().then(() => renderHeader());
   if (!FIVE_A_OFF && places.some(p => (p.sights || []).some(isFiveA))) loadFiveAOff().then(() => { renderHeader(); renderHeritage(); });
   if (!PROVINCE_CC.CN.data && places.some(p => normCC(p.cc) === 'CN')) loadProvinces().then(d => { if (d) { renderHeader(); renderHeritage(); } });
   const hl = [];
@@ -1487,6 +1490,16 @@ function wireNav() {
   }, { rootMargin: '-35% 0px -55% 0px' });
   document.querySelectorAll('#list .city').forEach(c => NAV_IO.observe(c));
 }
+// ── National parks: one count per park (a park's parts, e.g. 扎陵湖 in 三江源, are the same park) ──
+let NAT_PARKS_PUB = null;
+function loadNatParks() { return loadNatParks.p ||= fetch('national-parks.json').then(r => r.json()).then(d => (NAT_PARKS_PUB = d)).catch(() => (NAT_PARKS_PUB = { cn: [] })); }
+const npRaw = x => String(x || '').toLowerCase().replace(/[\s·・,，。.()（）'’-]/g, '');
+function npKey(sg) {
+  const zh = npRaw(sg.name?.zh), en = npRaw(sg.name?.en);
+  for (const park of NAT_PARKS_PUB?.cn || [])
+    if ([park.zh, park.en, ...(park.aka || [])].some(n => { const r = npRaw(n); return r.length >= 2 && ((zh && zh.includes(r)) || (en && r.length >= 5 && en.includes(r))); })) return 'np:' + park.zh;
+  return 's:' + (sg.name?.zh || sg.name?.en || sg.id);
+}
 function placeById(id) { return (DATA.places || []).find(p => p.id === id); }
 function focusPlace(id) {
   const p = placeById(id); if (!p || !MAP) return;
@@ -1755,6 +1768,7 @@ fetch('content.json', { cache: 'no-cache' }).then(r => r.json()).then(c => {
   document.querySelectorAll('.site-owner').forEach(el => { el.textContent = p.name_en || ''; });
   const lang = typeof LANG !== 'undefined' ? LANG : 'en', o = window.SITE_OWNER[lang];
   if (typeof PRIVATE !== 'undefined') document.title = (PRIVATE ? (lang === 'zh' ? '旅行足迹' : 'Travel') : (lang === 'zh' ? '学术足迹' : 'Academic footprint')) + (o ? ' | ' + o : '');
+  if (typeof DATA !== 'undefined' && DATA && !document.getElementById('app').hidden) renderHeader();   // the page's own title, with the name
 }).catch(() => {});
 </script>
 </body>

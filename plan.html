@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="site-fonts.js"></script>
+<script src="site-theme.js"></script>
+<script src="site-lang.js"></script>
+<script src="site-nav.js"></script>
+<meta name="robots" content="noindex, nofollow">
+<title>Trip planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" crossorigin="">
+<style>
+  /* Trip planner: public itineraries (plans/plans.json, exported by the Site Manager). */
+  :root {
+    --on-accent: #ffffff; --ink-2: #334155; --card-2: #fbfcfe; --hover-border: #b9cbe3;
+    --paper-rgb: 245, 247, 250; --card-rgb: 255, 255, 255; --accent-rgb: 27, 79, 138; --highlight-rgb: 214, 227, 245;
+    --err: #b42318; --ok: #2f7a4f; --ok-bg: #e6f3ea; --warn: #8a5300; --warn-bg: #fcefd6;
+    --font-head: 'Source Serif 4', 'Noto Serif SC', Georgia, serif; --font-body: 'Source Sans 3', 'Noto Sans SC', system-ui, sans-serif;
+    --ink: #0d1b2a; --paper: #f5f7fa; --accent: #1b4f8a; --accent-light: #3b7dd8;
+    --subtle: #d3dce7; --muted: #647387; --highlight: #d6e3f5; --card-bg: #ffffff; --shadow: rgba(13, 27, 42, 0.06);
+    --map-ring: #ffffff;
+  }
+  html[data-theme="dark"] {
+    --ink: #e3e9f1; --ink-2: #c5cfdb; --paper: #0e141c; --paper-rgb: 14, 20, 28;
+    --accent: #8fb9ef; --accent-light: #6fa3e6; --accent-rgb: 143, 185, 239; --subtle: #2a3747; --muted: #97a5b7;
+    --highlight: #1c2d44; --highlight-rgb: 28, 45, 68; --card-bg: #151e2a; --card-2: #18222f; --card-rgb: 21, 30, 42; --shadow: rgba(0, 0, 0, 0.35);
+    --on-accent: #0b1320; --hover-border: #3d5675; --err: #ff8f80; --ok: #7fcf9e; --ok-bg: #16301f; --warn: #f0c46a; --warn-bg: #3a2d12;
+    --map-ring: #0e141c;
+    color-scheme: dark;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { overflow-x: clip; }
+  body { font-family: var(--font-body); background: var(--paper); color: var(--ink); line-height: 1.6; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+  a { color: var(--accent); }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  [hidden] { display: none !important; }
+
+  /* Top bar (same as the travel page) */
+  /* a solid bar: a blurred one would re-blur the map under it on every frame */
+  .top-bar { position: sticky; top: 0; z-index: 1000; background: var(--paper); border-bottom: 1px solid var(--subtle); }
+  .top-bar-inner { margin: 0 auto; padding: 0 1.4rem; height: 60px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .back-link { display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; color: var(--accent); font-family: 'Pinyon Script', cursive; font-size: 1.68rem; white-space: nowrap; }
+  .back-arrow { font-family: var(--font-body); font-size: 1.1rem; }
+  .bar-right { display: flex; align-items: center; gap: 0.9rem; }
+  .lang-toggle { display: flex; border: 1px solid var(--subtle); border-radius: 100px; overflow: hidden; }
+  .lang-btn { border: none; background: none; padding: 0.25rem 0.75rem; font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+  .lang-btn.active { background: var(--accent); color: var(--on-accent); }
+  .icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 1px solid var(--subtle); border-radius: 100px; background: var(--card-bg); color: var(--muted); transition: all 0.2s; text-decoration: none; }
+  .icon-btn:hover { color: var(--accent); border-color: var(--accent); }
+  .icon-btn svg { width: 15px; height: 15px; }
+
+  /* Page: the whole window. On wide screens a panel on the left scrolls by itself and the map fills everything else;
+     the page itself does not scroll, so the map never moves under the reader */
+  .shell { display: grid; grid-template-columns: clamp(360px, 30vw, 560px) minmax(0, 1fr); height: calc(100vh - 61px); height: calc(100dvh - 61px); }
+  body.app-on { overflow: hidden; }
+  .panel { overflow-y: auto; overscroll-behavior: contain; border-right: 1px solid var(--subtle); padding: 1rem 1.1rem 2rem; background: var(--paper); scrollbar-width: thin; }
+  .p-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; margin-bottom: 0.7rem; }
+  .p-head h1 { font-family: var(--font-head); font-weight: 300; font-size: 2rem; line-height: 1.15; }
+  .p-head h1 em { font-style: italic; color: var(--accent); }
+  .p-head h1 strong { font-weight: 600; }
+  .p-head .sub { color: var(--muted); font-size: 0.9rem; }
+  .stage { position: relative; min-width: 0; }
+
+  /* Trips */
+  .trips { display: flex; gap: 0.6rem; overflow-x: auto; padding: 0.2rem 0.1rem 0.7rem; scrollbar-width: thin; }
+  .trip { flex: none; min-width: 190px; max-width: 280px; text-align: left; border: 1px solid var(--subtle); background: var(--card-bg); border-radius: 12px; padding: 0.6rem 0.85rem; text-decoration: none; color: var(--ink); transition: border-color 0.2s, box-shadow 0.2s; }
+  .trip:hover { border-color: var(--hover-border); }
+  .trip.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .trip b { display: block; font-family: var(--font-head); font-weight: 600; font-size: 1.05rem; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .trip small { display: block; color: var(--muted); font-size: 0.82rem; }
+  .badge { display: inline-block; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.05rem 0.45rem; border-radius: 100px; margin-left: 0.3rem; vertical-align: 1px; }
+  .badge.now { background: var(--ok-bg); color: var(--ok); }
+  .badge.soon { background: var(--highlight); color: var(--accent); }
+  .badge.past { background: rgba(var(--highlight-rgb), 0.5); color: var(--muted); }
+
+  #map { position: absolute; inset: 0; background: var(--highlight); }
+  /* floating on the map: the days at the bottom, the legend top right */
+  .dock { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 700; max-width: calc(100% - 32px); display: flex; align-items: center; gap: 0.35rem; padding: 0.35rem; border-radius: 100px; background: var(--card-bg); border: 1px solid var(--subtle); box-shadow: 0 8px 28px rgba(13, 27, 42, 0.18); overflow-x: auto; scrollbar-width: none; }
+  .dock::-webkit-scrollbar { display: none; }
+  .dock:empty { display: none; }
+  .dock button { flex: none; border: none; background: none; border-radius: 100px; padding: 0.3rem 0.75rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem; color: var(--ink); white-space: nowrap; }
+  .dock button:hover { background: var(--highlight); }
+  .dock button.on { background: var(--accent); color: var(--on-accent); }
+  .dock .dd { width: 0.6rem; height: 0.6rem; border-radius: 100px; background: var(--dc); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7); }
+  .dock .sep { flex: none; width: 1px; align-self: stretch; margin: 0.2rem 0.15rem; background: var(--subtle); }
+  .dock #btn-play { background: var(--accent); color: var(--on-accent); font-weight: 600; }
+  .dock #btn-play svg { width: 12px; height: 12px; }
+  .legend { position: absolute; top: 12px; right: 12px; z-index: 700; background: var(--card-bg); border: 1px solid var(--subtle); border-radius: 10px; box-shadow: 0 6px 20px rgba(13, 27, 42, 0.14); font-size: 0.8rem; color: var(--muted); max-width: 240px; }
+  .legend summary { cursor: pointer; padding: 0.35rem 0.7rem; font-weight: 600; color: var(--ink); list-style: none; }
+  .legend summary::-webkit-details-marker { display: none; }
+  .legend summary::after { content: ' ▾'; color: var(--muted); }
+  .legend[open] summary::after { content: ' ▴'; }
+  .legend .lg { display: grid; gap: 0.25rem; padding: 0 0.75rem 0.6rem; }
+  .legend span { display: inline-flex; align-items: center; gap: 0.45rem; }
+  .legend svg { width: 30px; height: 8px; flex: none; }
+
+  /* Trip summary */
+  .sum { background: var(--card-bg); border: 1px solid var(--subtle); border-radius: 12px; padding: 0.9rem 1rem; margin-bottom: 0.8rem; }
+  .sum h2 { font-family: var(--font-head); font-weight: 400; font-size: 1.5rem; line-height: 1.25; }
+  .sum .dates { color: var(--muted); font-size: 0.9rem; }
+  .sum .note { margin-top: 0.4rem; font-size: 0.93rem; color: var(--ink-2); white-space: pre-line; }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.55rem; }
+  .chip { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; padding: 0.12rem 0.55rem; border-radius: 100px; background: var(--highlight); color: var(--accent); }
+  .chip svg { width: 13px; height: 13px; }
+
+  /* Days */
+  .day { background: var(--card-bg); border: 1px solid var(--subtle); border-radius: 12px; margin-bottom: 0.7rem; overflow: hidden; transition: border-color 0.2s, opacity 0.2s; }
+  .day.on { border-color: var(--dc); box-shadow: 0 0 0 1px var(--dc) inset; }
+  .days.focus .day:not(.on) { opacity: 0.55; }
+  .day-h { width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.9rem; background: none; border: none; text-align: left; border-bottom: 1px solid var(--subtle); }
+  .day-h:hover { background: rgba(var(--highlight-rgb), 0.35); }
+  .dn { flex: none; width: 2.1rem; height: 2.1rem; border-radius: 100px; background: var(--dc); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; font-weight: 700; font-size: 0.95rem; }
+  .dn small { font-size: 0.55rem; font-weight: 600; letter-spacing: 0.04em; opacity: 0.9; }
+  .dt { min-width: 0; flex: 1; }
+  .dt b { display: block; font-weight: 600; line-height: 1.3; }
+  .dt small { color: var(--muted); font-size: 0.82rem; }
+  .today { font-size: 0.7rem; font-weight: 700; color: var(--ok); background: var(--ok-bg); border-radius: 100px; padding: 0.05rem 0.45rem; margin-left: 0.3rem; }
+  .items { list-style: none; padding: 0.35rem 0; }
+  .it { display: grid; grid-template-columns: 3.1rem 1.7rem minmax(0, 1fr); gap: 0.15rem 0.5rem; align-items: start; padding: 0.38rem 0.9rem; cursor: pointer; position: relative; }
+  .it:hover, .it.hot { background: rgba(var(--highlight-rgb), 0.45); }
+  .it .tm { font-variant-numeric: tabular-nums; font-size: 0.85rem; color: var(--muted); padding-top: 0.12rem; }
+  .it .ic { width: 1.7rem; height: 1.7rem; border-radius: 100px; display: flex; align-items: center; justify-content: center; background: var(--highlight); color: var(--accent); }
+  .it.mv .ic { background: var(--dc); color: #fff; }
+  .it .ic svg { width: 15px; height: 15px; }
+  .it .nm { font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+  .it .nm .k { font-weight: 500; font-size: 0.75rem; color: var(--muted); margin-left: 0.35rem; }
+  .it .ds { grid-column: 3; font-size: 0.84rem; color: var(--muted); line-height: 1.4; overflow-wrap: anywhere; }
+  .it .ds .no { font-family: ui-monospace, Menlo, Consolas, monospace; color: var(--ink-2); font-weight: 600; }
+  .it .nt { grid-column: 3; font-size: 0.86rem; color: var(--ink-2); white-space: pre-line; }
+  .it .pr { font-weight: 600; color: var(--ok); font-variant-numeric: tabular-nums; }
+  .it .gf { font-size: 0.8rem; text-decoration: none; white-space: nowrap; } .it .gf:hover { text-decoration: underline; }
+  .dsum { flex: none; font-size: 0.82rem; font-weight: 600; color: var(--ok); font-variant-numeric: tabular-nums; }
+  .budget { margin-top: 0.6rem; padding: 0.5rem 0.7rem; border-radius: 8px; background: var(--ok-bg); color: var(--ok); }
+  .budget b { display: block; font-size: 1.02rem; font-variant-numeric: tabular-nums; }
+  .budget small { display: block; font-size: 0.82rem; opacity: 0.9; } .budget .bn { opacity: 0.7; }
+  .empty-day { padding: 0.5rem 0.9rem 0.7rem; color: var(--muted); font-size: 0.88rem; }
+  .empty { background: var(--card-bg); border: 1px dashed var(--subtle); border-radius: 12px; padding: 2rem; text-align: center; color: var(--muted); }
+
+  /* Map */
+  .leaflet-container { font-family: inherit; }
+  .leaflet-tile-pane { filter: grayscale(0.55) saturate(0.85) brightness(1.04) contrast(0.95); }
+  html[data-theme="dark"] .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) grayscale(0.5) brightness(0.82) contrast(0.92); }
+  .leaflet-tooltip { background: var(--card-bg); color: var(--ink); border-color: var(--subtle); }
+  .leaflet-tooltip-top::before { border-top-color: var(--card-bg); }
+  .leaflet-bar a, .leaflet-bar a:hover { background-color: var(--card-bg); color: var(--ink); border-bottom-color: var(--subtle); }
+  .leaflet-container .leaflet-control-attribution { background: rgba(var(--paper-rgb), 0.8); color: var(--muted); }
+  .stop-pin { width: 26px; height: 26px; border-radius: 100px; background: var(--c); color: #fff; border: 2px solid var(--map-ring); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; transition: transform 0.2s; }
+  .stop-pin svg { width: 13px; height: 13px; }
+  .stop-pin.small { width: 14px; height: 14px; border-width: 2px; }
+  .stop-pin.hot { transform: scale(1.35); }
+  .leaflet-marker-icon.dim { opacity: 0.3; }
+  .tt b { font-weight: 600; } .tt small { color: var(--muted); display: block; }
+  .fly3d { position: absolute; left: 0; top: 0; z-index: 640; pointer-events: none; will-change: transform; }
+  .fly3d canvas { display: block; }
+  .runner { width: 16px; height: 16px; border-radius: 100px; background: var(--accent); border: 3px solid var(--map-ring); box-shadow: 0 0 0 4px rgba(var(--accent-rgb), 0.3), 0 2px 8px rgba(0, 0, 0, 0.35); }
+  .runner.mode { width: 28px; height: 28px; border-width: 2px; display: flex; align-items: center; justify-content: center; color: #fff; background: var(--c); }
+  .runner.mode svg { width: 15px; height: 15px; }
+
+  /* phones and narrow windows: the map on top, the plan below it, the page scrolls */
+  @media (max-width: 900px) {
+    .shell { display: flex; flex-direction: column-reverse; height: auto; }
+    body.app-on { overflow: visible; }
+    .panel { overflow: visible; border-right: none; padding: 0.9rem 16px 2.5rem; }
+    .stage { height: 56vh; min-height: 320px; }
+    .dock { bottom: 34px; }
+    .leaflet-container .leaflet-control-attribution { font-size: 9px; line-height: 1.3; }
+    .legend { top: 10px; right: 10px; }
+  }
+  @media (max-width: 640px) {
+    .top-bar-inner { padding: 0 12px; height: 54px; gap: 0.5rem; }
+    .back-link { font-size: 1.35rem; }
+    .bar-right { gap: 0.4rem; }
+    .lang-btn { padding: 0.25rem 0.55rem; }
+    .p-head h1 { font-size: 1.7rem; }
+    .it { padding: 0.38rem 0.7rem; grid-template-columns: 2.8rem 1.6rem minmax(0, 1fr); }
+  }
+  @media (max-width: 400px) { .back-link > span:not(.back-arrow) { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <a href="index.html" class="back-link"><span class="back-arrow">←</span> <span class="site-owner">Home</span></a>
+    <div class="bar-right">
+      <a class="icon-btn" href="travel.html" id="btn-travel" data-tip-en="Travel map" data-tip-zh="旅行足迹" title="Travel map" aria-label="Travel map">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+      </a>
+      <a class="icon-btn" href="flights.html" id="btn-flights" data-tip-en="My Air Times: flight log" data-tip-zh="云间岁月：飞行记录" title="My Air Times: flight log" aria-label="Flight log">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+      </a>
+      <button type="button" class="icon-btn theme-btn" data-theme-toggle aria-label="Switch to dark mode"></button>
+      <div class="lang-toggle" id="lang-toggle">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="zh">中</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="shell">
+    <aside class="panel" id="panel">
+      <div class="p-head"><h1 id="title"></h1><span class="sub" id="sub"></span></div>
+      <div class="trips" id="trips" role="tablist"></div>
+      <div class="side" id="side"></div>
+    </aside>
+    <section class="stage" id="stage">
+      <div id="map" role="region" aria-label="Map of the trip"></div>
+      <div class="dock" id="dock" role="toolbar" aria-label="Days"></div>
+      <details class="legend" id="legend"></details>
+    </section>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" crossorigin=""></script>
+<script src="map-base.js"></script>
+<script src="aviation.js"></script>
+<script src="fleet3d.js?v=202610052000"></script>
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// Trip planner. plans/plans.json (public; written by the Site Manager, which keeps the plans with the footprints)
+// carries the trips:
+//   plans: [{ id, title: {en, zh}, start: 'yyyy-mm-dd', note, days: [{ title: {en, zh}, items: [item] }] }]
+//   item:  { id, kind, time, name: {en, zh}, lat, lon, note }                       a stop (city, sight, stay, food, other)
+//          { id, kind, time, no, dep, arr, from: {name, lat, lon, iata?}, to: {…}, note }   a move (flight, train, bus, car, ferry, walk)
+// The map draws the whole route in order: line colour = day, line style = how you travel.
+// ─────────────────────────────────────────────────────────────────────────────
+const FILE = 'plans/plans.json';
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+let LANG = window.SiteLang ? SiteLang.initial() : 'en', DATA = null, PLANS = [], MAP = null, LAYER = null, CUR = null, DAY = null, PLAY = null, HOT = null;
+const zh = () => LANG === 'zh';
+const t = o => typeof o === 'string' ? o : (o?.[LANG] || o?.en || o?.zh || '');
+const nf = n => Math.round(n).toLocaleString(zh() ? 'zh-CN' : 'en');
+
+// ── How you get around, and the kinds of stops ──
+const IC = {
+  flight: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>',
+  train: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M8 21l2-4M16 21l-2-4"/><circle cx="9" cy="13.5" r=".6" fill="currentColor"/><circle cx="15" cy="13.5" r=".6" fill="currentColor"/></svg>',
+  bus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="15" rx="2"/><path d="M4 11h16M7 18v2M17 18v2"/><circle cx="8" cy="14.5" r=".6" fill="currentColor"/><circle cx="16" cy="14.5" r=".6" fill="currentColor"/></svg>',
+  car: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-4l2-5h14l2 5v4h-2"/><path d="M3 13h18"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M9.5 17h5"/></svg>',
+  ferry: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 19c2 1.4 4 1.4 6 0 2 1.4 4 1.4 6 0 2 1.4 4 1.4 6 0"/><path d="M4.5 15.5 6 10h12l1.5 5.5"/><path d="M12 10V4M9 6.5h6"/></svg>',
+  walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="1.7"/><path d="m9 21 2.5-6.5L14 17v4M7.5 12l3-4 3 2 2.5 3M11 8l-.5 6.5"/></svg>',
+  city: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l5-3v15M9 21V4l6 3v14M15 21v-9l5 2v7M3 21h18"/></svg>',
+  sight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 20 6-10 4 6 3-4 5 8z"/><circle cx="17" cy="6" r="2"/></svg>',
+  stay: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 19V6M3 14h18v5M21 14v-1a3 3 0 0 0-3-3h-7v4"/><circle cx="7" cy="11" r="1.6"/></svg>',
+  food: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M5 3v5a2 2 0 0 0 4 0V3M17 21V3c-2 1.5-3 4-3 7h3"/></svg>',
+  other: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.4"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg>',
+  stop: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>'
+};
+// line styles on the map; every line takes its day's colour
+const MOVES = {
+  flight: { en: 'Flight', zh: '航班', dash: '9 7', weight: 3 },
+  train: { en: 'Train', zh: '火车', rail: true, weight: 5 },
+  bus: { en: 'Bus', zh: '大巴', weight: 4 },
+  car: { en: 'Car', zh: '汽车', weight: 4, dash: '14 5' },
+  ferry: { en: 'Ferry', zh: '轮渡', dash: '2 7', weight: 4 },
+  walk: { en: 'Walk', zh: '步行', dash: '1 6', weight: 3 }
+};
+const STOPS = { city: ['City', '城市'], sight: ['Sight', '景点'], stay: ['Stay', '住宿'], food: ['Food', '美食'], other: ['Place', '地点'] };
+const isMove = it => !!MOVES[it?.kind];
+const kindName = k => MOVES[k] ? MOVES[k][LANG] : (STOPS[k] || STOPS.other)[zh() ? 1 : 0];
+const DAY_COLORS = ['#2563c9', '#e07a1f', '#1f9d6b', '#c2410c', '#8b5cf6', '#0e9bb5', '#d6336c', '#7c8a12', '#b45309', '#4f46e5'];
+const dayColor = i => DAY_COLORS[i % DAY_COLORS.length];
+
+// ── Data: plans/plans.json, written by the Site Manager when it publishes (public, no password) ──
+async function loadPlans() {
+  const r = await fetch(FILE + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  DATA = { plan_title: j.title, plans: j.plans || [] };
+  PLANS = DATA.plans.filter(p => p && (p.days || []).length);
+}
+
+// ── Dates ──
+const TODAY = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+function dayDate(start, i) { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(start || ''); if (!m) return ''; const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3] + i)); return d.toISOString().slice(0, 10); }
+const endDate = p => dayDate(p.start, p.days.length - 1);
+function fmtDate(iso, withYear) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); if (!m) return '';
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  const wd = d.toLocaleDateString(zh() ? 'zh-CN' : 'en-GB', { weekday: 'short', timeZone: 'UTC' });
+  return zh() ? `${withYear ? m[1] + '年' : ''}${+m[2]}月${+m[3]}日 ${wd}` : `${wd} ${+m[3]} ${d.toLocaleDateString('en-GB', { month: 'short', timeZone: 'UTC' })}${withYear ? ' ' + m[1] : ''}`;
+}
+function fmtRange(p) {
+  const a = p.start, b = endDate(p); if (!a) return '';
+  const sameYear = a.slice(0, 4) === b.slice(0, 4);
+  return `${fmtDate(a, true)} – ${fmtDate(b, !sameYear)}`;
+}
+const tripState = p => { if (!p.start) return 'soon'; const e = endDate(p); return TODAY < p.start ? 'soon' : TODAY > e ? 'past' : 'now'; };
+function sortedPlans() {
+  const rank = { now: 0, soon: 1, past: 2 };
+  return [...PLANS].sort((a, b) => rank[tripState(a)] - rank[tripState(b)] || (tripState(a) === 'past' ? String(b.start).localeCompare(String(a.start)) : String(a.start).localeCompare(String(b.start))));
+}
+
+// ── The route: stops and moves in order, with links between places the plan does not say how you get between ──
+const loc = o => o && typeof o.lat === 'number' && typeof o.lon === 'number' && !(o.lat === 0 && o.lon === 0) ? o : null;
+function km(a, b) { const R = 6371, r = Math.PI / 180, dLa = (b.lat - a.lat) * r, dLo = (b.lon - a.lon) * r; return 2 * R * Math.asin(Math.sqrt(Math.sin(dLa / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dLo / 2) ** 2)); }
+function route(p) {
+  const segs = [], pins = []; let last = null, n = 0;
+  p.days.forEach((d, di) => (d.items || []).forEach((it, ii) => {
+    if (isMove(it)) {
+      const a = loc(it.from), b = loc(it.to);
+      if (a && last && km(last, a) > 1) segs.push({ mode: 'link', a: last, b: a, di });
+      if (a && b) segs.push({ mode: it.kind, a, b, di, ii, it, km: km(a, b) });
+      if (a) pins.push({ ...a, di, ii, it, end: 'from' }); if (b) pins.push({ ...b, di, ii, it, end: 'to' });
+      last = b || a || last;
+    } else if (loc(it)) {
+      if (last && km(last, it) > 0.3) segs.push({ mode: 'link', a: last, b: it, di });
+      pins.push({ lat: it.lat, lon: it.lon, di, ii, it, n: it.kind === 'city' ? ++n : 0 }); last = it;   // cities are numbered in order
+    }
+  }));
+  return { segs, pins };
+}
+function segPath(s) {
+  if (s.mode === 'flight' && window.Aviation?.greatCircle) return Aviation.greatCircle(s.a, s.b, 64);
+  return [[s.a.lat, s.a.lon], [s.b.lat, s.b.lon]];
+}
+// Prices typed in the Site Manager ({ price, cur } on any item), added up per currency
+const money = (v, cur) => { try { return new Intl.NumberFormat(zh() ? 'zh-CN' : 'en-GB', { style: 'currency', currency: cur || 'EUR', maximumFractionDigits: Number.isInteger(v) ? 0 : 2 }).format(v); } catch (e) { return `${nf(v)} ${cur || ''}`.trim(); } };
+const hasPrice = it => typeof it?.price === 'number' && it.price > 0;
+function sumPrices(items) { const m = {}; items.filter(hasPrice).forEach(it => { const c = it.cur || 'EUR'; m[c] = (m[c] || 0) + it.price; }); return m; }
+const moneyList = m => Object.entries(m).map(([c, v]) => money(Math.round(v * 100) / 100, c)).join(' + ');
+const gflightsUrl = (it, date) => it.from?.iata && it.to?.iata ? `https://www.google.com/travel/flights?q=${encodeURIComponent(`Flights from ${it.from.iata} to ${it.to.iata} on ${date || ''} one way`)}` : '';
+const placeName = o => t(o?.name) || (o?.iata ? o.iata : '');
+const apLabel = o => { const n = placeName(o); return o?.iata && n !== o.iata ? `${n} ${o.iata}`.trim() : n; };   // "北京 PEK"
+
+// ── Header and trips ──
+function renderTitle() {
+  const own = DATA?.plan_title?.[LANG]?.trim(), s = own || (zh() ? '旅行规划' : 'Trip planner');
+  $('#title').innerHTML = SiteLang.richTitle(s); document.title = SiteLang.plainTitle(s) + (window.SITE_OWNER?.[LANG] ? ' | ' + window.SITE_OWNER[LANG] : '');
+}
+function renderTrips() {
+  const list = sortedPlans();
+  const now = list.filter(p => tripState(p) !== 'past').length;
+  $('#sub').textContent = PLANS.length ? (zh() ? `${PLANS.length} 段行程${now ? ` · ${now} 段未完成` : ''}` : `${PLANS.length} ${PLANS.length === 1 ? 'trip' : 'trips'}${now ? ` · ${now} ahead` : ''}`) : '';
+  $('#trips').hidden = list.length < 2;
+  const badge = s => `<span class="badge ${s}">${s === 'now' ? (zh() ? '进行中' : 'Now') : s === 'soon' ? (zh() ? '待出发' : 'Upcoming') : (zh() ? '已结束' : 'Past')}</span>`;
+  $('#trips').innerHTML = list.map(p => `<a class="trip${p === CUR ? ' on' : ''}" href="#trip=${encodeURIComponent(p.id)}" role="tab" aria-selected="${p === CUR}"><b>${esc(t(p.title) || (zh() ? '未命名行程' : 'Untitled trip'))}</b><small>${esc(fmtRange(p))}${badge(tripState(p))}</small><small>${p.days.length} ${zh() ? '天' : p.days.length === 1 ? 'day' : 'days'}</small></a>`).join('');
+}
+
+// ── One trip: summary, then the days ──
+function itemHtml(it, di, ii) {
+  const time = isMove(it) ? (it.dep || it.time || '') : (it.time || '');
+  const price = hasPrice(it) ? `<span class="pr">${esc(money(it.price, it.cur))}</span>` : '';
+  if (isMove(it)) {
+    const a = it.from || {}, b = it.to || {}, d = loc(a) && loc(b) ? km(a, b) : 0, gf = it.kind === 'flight' ? gflightsUrl(it, dayDate(CUR.start, di)) : '';
+    const name = it.kind === 'flight' ? `${apLabel(a) || '?'} → ${apLabel(b) || '?'}` : `${placeName(a) || '?'} → ${placeName(b) || '?'}`;
+    const ds = [it.no ? `<span class="no">${esc(it.no)}</span>` : '', it.dep || it.arr ? esc(`${it.dep || '…'} → ${it.arr || '…'}`) : '', d ? `${nf(d)} km` : '', price,
+      gf ? `<a class="gf" href="${esc(gf)}" target="_blank" rel="noopener" title="${zh() ? '在 Google Flights 上查看这条航线当天的价格' : 'Fares for this route and day on Google Flights'}">Google Flights ↗</a>` : ''].filter(Boolean).join(' · ');
+    return `<li class="it mv" data-di="${di}" data-ii="${ii}"><span class="tm">${esc(time)}</span><span class="ic" title="${esc(kindName(it.kind))}">${IC[it.kind]}</span><span class="nm">${esc(name)}<span class="k">${esc(kindName(it.kind))}</span></span>${ds ? `<span class="ds">${ds}</span>` : ''}${it.note ? `<span class="nt">${esc(it.note)}</span>` : ''}</li>`;
+  }
+  return `<li class="it" data-di="${di}" data-ii="${ii}"><span class="tm">${esc(time)}</span><span class="ic" title="${esc(kindName(it.kind))}">${IC[it.kind] || IC.other}</span><span class="nm">${esc(placeName(it) || kindName(it.kind))}<span class="k">${esc(kindName(it.kind))}</span></span>${price ? `<span class="ds">${price}</span>` : ''}${it.note ? `<span class="nt">${esc(it.note)}</span>` : ''}</li>`;
+}
+function renderTrip() {
+  const p = CUR, side = $('#side');
+  if (!p) { $('#dock').innerHTML = ''; side.innerHTML = `<div class="empty">${zh() ? '还没有行程。在 Site Manager →「旅行规划」中添加。' : 'No trips planned yet. Add one in the Site Manager → Trip plans.'}</div>`; renderMap(); return; }
+  const { segs, pins } = route(p);
+  const cities = new Set(p.days.flatMap(d => (d.items || []).filter(it => it.kind === 'city').map(it => placeName(it)))).size;
+  const byMode = {}; segs.filter(s => s.mode !== 'link').forEach(s => { (byMode[s.mode] ||= { n: 0, km: 0 }); byMode[s.mode].n++; byMode[s.mode].km += s.km; });
+  const chips = Object.entries(byMode).map(([m, v]) => `<span class="chip">${IC[m]}${v.n} ${esc(MOVES[m][LANG])}${v.km >= 1 ? ` · ${nf(v.km)} km` : ''}</span>`);
+  if (cities) chips.unshift(`<span class="chip">${IC.city}${cities} ${zh() ? '座城市' : cities === 1 ? 'city' : 'cities'}</span>`);
+  const total = segs.reduce((n, s) => n + km(s.a, s.b), 0);
+  // budget: everything with a price, split into getting around, stays and the rest (tickets, food …)
+  const all = p.days.flatMap(d => d.items || []), budget = sumPrices(all);
+  const parts = [[all.filter(isMove), zh() ? '交通' : 'transport'], [all.filter(it => it.kind === 'stay'), zh() ? '住宿' : 'stays'], [all.filter(it => !isMove(it) && it.kind !== 'stay'), zh() ? '门票餐饮等' : 'tickets, food …']]
+    .map(([l, name]) => [sumPrices(l), name]).filter(([m]) => Object.keys(m).length);
+  const budgetHtml = Object.keys(budget).length ? `<div class="budget"><b>${zh() ? '预算' : 'Budget'} ${esc(moneyList(budget))}</b>${parts.length > 1 ? `<small>${parts.map(([m, name]) => `${esc(name)} ${esc(moneyList(m))}`).join(' · ')}</small>` : ''}<small class="bn">${zh() ? `已填价格 ${all.filter(hasPrice).length} / ${all.length} 项` : `${all.filter(hasPrice).length} of ${all.length} items priced`}</small></div>` : '';
+  side.innerHTML = `<div class="sum"><h2>${esc(t(p.title) || (zh() ? '未命名行程' : 'Untitled trip'))}</h2>
+      <div class="dates">${esc(fmtRange(p))} · ${p.days.length} ${zh() ? '天' : p.days.length === 1 ? 'day' : 'days'}${total >= 1 ? ` · ${zh() ? '全程约' : 'about'} ${nf(total)} km` : ''}</div>
+      ${t(p.note) ? `<p class="note">${esc(t(p.note))}</p>` : ''}${chips.length ? `<div class="chips">${chips.join('')}</div>` : ''}${budgetHtml}
+</div>
+    <div class="days${DAY !== null ? ' focus' : ''}">${p.days.map((d, di) => { const date = dayDate(p.start, di);
+      return `<section class="day${DAY === di ? ' on' : ''}" style="--dc:${dayColor(di)}" data-day-card="${di}"><button type="button" class="day-h" data-day="${di}"><span class="dn"><small>${zh() ? '第' : 'DAY'}</small>${di + 1}</span><span class="dt"><b>${esc(t(d.title) || dayAuto(d) || fmtDate(date))}${date === TODAY ? `<span class="today">${zh() ? '今天' : 'Today'}</span>` : ''}</b><small>${esc(fmtDate(date, false))}</small></span>${Object.keys(sumPrices(d.items || [])).length ? `<span class="dsum">${esc(moneyList(sumPrices(d.items || [])))}</span>` : ''}</button>
+        ${(d.items || []).length ? `<ul class="items">${d.items.map((it, ii) => itemHtml(it, di, ii)).join('')}</ul>` : `<p class="empty-day">${zh() ? '自由活动' : 'Free day'}</p>`}</section>`; }).join('')}</div>`;
+  // the days on the map: the whole trip, one chip per day, and Play
+  $('#dock').innerHTML = `<button type="button" data-day="all" class="${DAY === null ? 'on' : ''}">${zh() ? '全部' : 'All'}</button>${p.days.map((d, di) => `<button type="button" data-day="${di}" class="${DAY === di ? 'on' : ''}" style="--dc:${dayColor(di)}" title="${esc(t(d.title) || dayAuto(d) || '')} · ${esc(fmtDate(dayDate(p.start, di)))}"><span class="dd"></span>${zh() ? `第${di + 1}天` : `Day ${di + 1}`}</button>`).join('')}${segs.length ? `<span class="sep"></span><button type="button" id="btn-play">${PLAY ? IC.stop : IC.play}<span>${PLAY ? (zh() ? '停止' : 'Stop') : (zh() ? '播放轨迹' : 'Play')}</span></button>` : ''}`;
+  document.querySelectorAll('#side [data-day], #dock [data-day]').forEach(b => b.onclick = () => focusDay(b.dataset.day === 'all' ? null : +b.dataset.day));
+  side.querySelectorAll('.it').forEach(li => { li.onclick = e => { if (!e.target.closest('a')) focusItem(+li.dataset.di, +li.dataset.ii); }; li.onmouseenter = () => hotItem(+li.dataset.di, +li.dataset.ii, true); li.onmouseleave = () => hotItem(+li.dataset.di, +li.dataset.ii, false); });
+  $('#btn-play')?.addEventListener('click', () => PLAY ? stopPlay() : startPlay());
+  renderMap(segs, pins);
+}
+// a day without its own title: the cities it goes through ("Amsterdam → Paris"). Cities come from the city stops and
+// the ends of longer moves; a station or an airport near one of the trip's city stops goes by that city (Lisbon, not
+// Lisboa Santa Apolónia)
+function dayAuto(d) {
+  const out = [], cities = CUR.days.flatMap(x => (x.items || []).filter(it => it.kind === 'city' && loc(it)));
+  const cityNear = o => loc(o) ? cities.find(c => km(c, o) < 30) : null;
+  const add = (o, city) => {
+    if (!city) { const c = cityNear(o); if (c) { o = c; city = true; } }
+    const name = placeName(o); if (!name) return;
+    const prev = out[out.length - 1], near = prev && loc(o) && prev.at && km(prev.at, o) < 30;
+    if (near) { if (city && !prev.city) Object.assign(prev, { name, at: o, city }); return; }
+    if (prev?.name === name) return;
+    out.push({ name, at: loc(o), city });
+  };
+  for (const it of d.items || []) {
+    if (it.kind === 'city') add(it, true);
+    else if (isMove(it) && loc(it.from) && loc(it.to) && km(it.from, it.to) >= 30) { add(it.from, false); add(it.to, false); }
+  }
+  return out.slice(0, 4).map(x => x.name).join(' → ');
+}
+
+const NARROW = () => matchMedia('(max-width: 900px)').matches;
+// scroll the panel (not the page) so an element shows, without smooth scrolling fighting the map animation
+function panelTo(el) {
+  const pn = $('#panel'), r = el.getBoundingClientRect(), pr = pn.getBoundingClientRect();
+  if (r.top < pr.top + 8 || r.bottom > pr.bottom - 8) pn.scrollTop += r.top - pr.top - pn.clientHeight / 3;
+}
+
+// ── Map ──
+function legendHtml() {
+  const line = m => { const s = MOVES[m]; return `<svg viewBox="0 0 30 8" aria-hidden="true">${s.rail ? '<line x1="0" y1="4" x2="30" y2="4" stroke="var(--muted)" stroke-width="5"/><line x1="0" y1="4" x2="30" y2="4" stroke="var(--card-bg)" stroke-width="1.6" stroke-dasharray="4 3"/>' : `<line x1="0" y1="4" x2="30" y2="4" stroke="var(--muted)" stroke-width="${Math.min(s.weight, 3.5)}" stroke-linecap="round" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''}/>`}</svg>`; };
+  return Object.keys(MOVES).map(m => `<span>${line(m)}${esc(MOVES[m][LANG])}</span>`).join('') + `<span><svg viewBox="0 0 30 8" aria-hidden="true"><line x1="0" y1="4" x2="30" y2="4" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.7"/></svg>${zh() ? '其他移动' : 'Other moves'}</span>` + `<span>${zh() ? '颜色 = 第几天' : 'Colour = day'}</span>`;
+}
+function ensureMap() {
+  if (MAP) return;
+  MAP = L.map('map', { worldCopyJump: true, minZoom: 2, maxZoom: 18, zoomControl: true, attributionControl: true, zoomSnap: 0.5 }).setView([30, 60], 2);
+  MAP.attributionControl.setPrefix('');
+  MapBase.attach(MAP, LANG);
+  new ResizeObserver(() => MAP.invalidateSize({ pan: false })).observe($('#stage'));
+}
+let PIN_MARKERS = [], SEG_LINES = [];
+function renderMap(segs, pins) {
+  ensureMap(); MapBase.setLang(LANG);
+  const lg = $('#legend'); lg.hidden = !CUR;
+  if (CUR) { const was = lg.dataset.init ? lg.open : !NARROW(); lg.innerHTML = `<summary>${zh() ? '图例' : 'Legend'}</summary><div class="lg">${legendHtml()}</div>`; lg.open = was; lg.dataset.init = '1'; }
+  if (LAYER) LAYER.remove(); LAYER = L.layerGroup().addTo(MAP); PIN_MARKERS = []; SEG_LINES = [];
+  if (!CUR) return;
+  if (!segs) ({ segs, pins } = route(CUR));
+  for (const s of segs) {
+    const path = segPath(s), c = dayColor(s.di), st = MOVES[s.mode], parts = [];
+    if (s.mode === 'link') parts.push(L.polyline(path, { color: c, weight: 1.8, opacity: 0.6, dashArray: '3 5', interactive: false }));
+    else if (st.rail) { parts.push(L.polyline(path, { color: c, weight: st.weight, opacity: 0.95, lineCap: 'butt' })); parts.push(L.polyline(path, { color: '#ffffff', weight: 1.6, opacity: 0.95, dashArray: '5 4', lineCap: 'butt', interactive: false })); }
+    else parts.push(L.polyline(path, { color: c, weight: st.weight, opacity: 0.9, dashArray: st.dash || null, lineCap: 'round' }));
+    if (s.it) parts[0].bindTooltip(segTip(s), { sticky: true, className: 'tt' }).on('click', () => focusItem(s.di, s.ii));
+    parts.forEach(l => l.addTo(LAYER)); SEG_LINES.push({ s, parts, w: s.mode === 'link' ? 1.8 : st.weight });
+  }
+  for (const p of pins) {
+    const c = dayColor(p.di), move = isMove(p.it);
+    const html = move ? `<div class="stop-pin small" style="--c:${c}"></div>` : `<div class="stop-pin" style="--c:${c}">${p.it.kind === 'city' ? p.n : (IC[p.it.kind] || IC.other)}</div>`;
+    const m = L.marker([p.lat, p.lon], { icon: L.divIcon({ className: '', html, iconSize: move ? [14, 14] : [26, 26], iconAnchor: move ? [7, 7] : [13, 13] }), zIndexOffset: move ? 0 : 500, keyboard: false })
+      .bindTooltip(pinTip(p), { direction: 'top', offset: [0, move ? -6 : -12], className: 'tt' }).on('click', () => focusItem(p.di, p.ii)).addTo(LAYER);
+    PIN_MARKERS.push({ p, m });
+  }
+  applyDayDim(); fitTo(DAY);
+}
+function pinTip(p) {
+  const it = p.it, date = dayDate(CUR.start, p.di), day = `${zh() ? `第 ${p.di + 1} 天` : `Day ${p.di + 1}`} · ${fmtDate(date)}`;
+  if (isMove(it)) { const o = it[p.end]; return `<b>${esc(it.kind === 'flight' ? apLabel(o) : placeName(o))}</b><small>${esc(kindName(it.kind))}${it.no ? ' ' + esc(it.no) : ''} · ${esc(day)}</small>`; }
+  return `<b>${esc(placeName(it))}</b><small>${esc(kindName(it.kind))}${it.time ? ' · ' + esc(it.time) : ''} · ${esc(day)}</small>`;
+}
+function segTip(s) {
+  const it = s.it, a = it.kind === 'flight' ? apLabel(it.from) : placeName(it.from), b = it.kind === 'flight' ? apLabel(it.to) : placeName(it.to);
+  return `<b>${esc(kindName(it.kind))}${it.no ? ' ' + esc(it.no) : ''}</b><small>${esc(a)} → ${esc(b)}</small><small>${[it.dep || it.arr ? `${it.dep || '…'} → ${it.arr || '…'}` : '', `${nf(s.km)} km`].filter(Boolean).map(esc).join(' · ')}</small>`;
+}
+function applyDayDim() {
+  SEG_LINES.forEach(({ s, parts }) => parts.forEach(l => l.setStyle({ opacity: DAY === null || s.di === DAY ? (s.mode === 'link' ? 0.6 : 0.92) : 0.15 })));
+  PIN_MARKERS.forEach(({ p, m }) => { const el = m.getElement(); if (el) el.classList.toggle('dim', DAY !== null && p.di !== DAY); m.setZIndexOffset(DAY !== null && p.di === DAY ? 1000 : (isMove(p.it) ? 0 : 500)); });
+}
+function boundsOf(di) {
+  const pts = PIN_MARKERS.filter(({ p }) => di === null || p.di === di).map(({ p }) => [p.lat, p.lon]);
+  SEG_LINES.filter(({ s }) => di === null || s.di === di).forEach(({ s }) => { pts.push([s.a.lat, s.a.lon], [s.b.lat, s.b.lon]); });
+  return pts.length ? L.latLngBounds(pts) : null;
+}
+// room for the day dock at the bottom (and the legend top right) when fitting
+const FIT_PAD = () => NARROW() ? { paddingTopLeft: [30, 50], paddingBottomRight: [30, 70] } : { paddingTopLeft: [60, 60], paddingBottomRight: [60, 100] };
+function fitTo(di, animate) {
+  const b = boundsOf(di) || (di !== null ? boundsOf(null) : null); if (!b) return;
+  MAP.fitBounds(b, { ...FIT_PAD(), maxZoom: 13, animate: !!animate });
+}
+function focusDay(di, keepScroll) {
+  if (PLAY) stopPlay();
+  DAY = di; history.replaceState(history.state, '', `#trip=${encodeURIComponent(CUR.id)}${di !== null ? `&day=${di + 1}` : ''}`);
+  document.querySelectorAll('.day').forEach(el => el.classList.toggle('on', +el.dataset.dayCard === di));
+  document.querySelector('.days')?.classList.toggle('focus', di !== null);
+  document.querySelectorAll('#dock [data-day]').forEach(b => b.classList.toggle('on', b.dataset.day === (di === null ? 'all' : String(di))));
+  applyDayDim(); fitTo(di, true);
+  if (!keepScroll && di !== null && NARROW() && $('#stage').getBoundingClientRect().bottom < 120) $('#stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function itemPoints(di, ii) {
+  return PIN_MARKERS.filter(({ p }) => p.di === di && p.ii === ii);
+}
+function focusItem(di, ii) {
+  if (PLAY) stopPlay();
+  if (DAY !== null && DAY !== di) { DAY = di; document.querySelectorAll('.day').forEach(el => el.classList.toggle('on', +el.dataset.dayCard === di)); applyDayDim(); }
+  const pts = itemPoints(di, ii); if (!pts.length) return;
+  if (pts.length === 1) MAP.setView([pts[0].p.lat, pts[0].p.lon], Math.max(MAP.getZoom(), 12), { animate: true });
+  else MAP.fitBounds(L.latLngBounds(pts.map(({ p }) => [p.lat, p.lon])), { ...FIT_PAD(), maxZoom: 12, animate: true });
+  pts[0].m.openTooltip();
+  const li = document.querySelector(`.it[data-di="${di}"][data-ii="${ii}"]`); flash(li);
+  if (NARROW() && $('#stage').getBoundingClientRect().bottom < 120) $('#stage').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function hotItem(di, ii, on) {
+  itemPoints(di, ii).forEach(({ m }) => m.getElement()?.querySelector('.stop-pin')?.classList.toggle('hot', on));
+  SEG_LINES.filter(({ s }) => s.di === di && s.ii === ii).forEach(({ parts, w }) => parts[0].setStyle({ weight: on ? w + 3 : w }));
+}
+function flash(el) { if (!el) return; el.classList.add('hot'); setTimeout(() => el.classList.remove('hot'), 1200); }
+
+// ── Play the route: each leg in order, the day and the stop light up as it goes. Flights fly the 3D model of the
+// aircraft in the airline's livery (fleet3d.js, as on flights.html); other legs move a marker with the mode's icon ──
+const planAirline = it => { const m = /^\s*([A-Z0-9]{2})\s*\d/i.exec(it.no || ''); return m ? { iata: m[1].toUpperCase() } : null; };
+const planType = it => { const c = String(it.ac || '').trim().toUpperCase(); return window.Fleet3D?.has(c) ? c : 'A320'; };
+function startPlay() {
+  const { segs } = route(CUR); if (!segs.length) return;
+  DAY = null; applyDayDim(); document.querySelector('.days')?.classList.remove('focus'); document.querySelectorAll('.day').forEach(el => el.classList.remove('on'));
+  PLAY = { i: 0, segs, raf: 0, to: 0, marker: null, fly: null, stopped: false, f3d: null };
+  // the 3D library loads in the background; legs before it is ready use the plain marker
+  if (segs.some(x => x.mode === 'flight') && window.Fleet3D && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const P = PLAY; P.f3d = Fleet3D.load().then(ok => ok && !P.stopped).catch(() => false);
+  }
+  paintPlayBtn(); playLeg();
+}
+function paintPlayBtn() { const b = $('#btn-play'); if (b) b.innerHTML = `${PLAY ? IC.stop : IC.play}<span>${PLAY ? (zh() ? '停止' : 'Stop') : (zh() ? '播放轨迹' : 'Play')}</span>`; }
+function endFly(P) { if (P.fly) { P.fly.model.destroy(); P.fly.el.remove(); P.fly = null; } }
+async function playLeg() {
+  const P = PLAY; if (!P || P.stopped) return;
+  if (P.i >= P.segs.length) { P.marker?.remove(); endFly(P); PLAY = null; paintPlayBtn(); fitTo(null, true); document.querySelectorAll('.day').forEach(el => el.classList.remove('on')); return; }
+  const s = P.segs[P.i], c = dayColor(s.di), d = km(s.a, s.b), flight = s.mode === 'flight';
+  const path = (flight && window.Aviation?.greatCircle ? Aviation.greatCircle(s.a, s.b, 160) : segPath(s)).map(([a, b]) => L.latLng(a, b));
+  document.querySelectorAll('.day').forEach(el => el.classList.toggle('on', +el.dataset.dayCard === s.di));
+  const li = s.it ? document.querySelector(`.it[data-di="${s.di}"][data-ii="${s.ii}"]`) : document.querySelector(`[data-day-card="${s.di}"]`);
+  if (s.it) flash(li);
+  if (li && !NARROW()) panelTo(li);
+  document.querySelectorAll('#dock [data-day]').forEach(b => b.classList.toggle('on', b.dataset.day === String(s.di)));
+  MAP.fitBounds(L.latLngBounds(path), { ...FIT_PAD(), maxZoom: d < 30 ? 13 : 9, animate: true });
+  // a flight: the live model of its aircraft type in the airline's livery
+  let model = null;
+  if (flight && P.f3d && await P.f3d) {
+    const type = planType(s.it), airline = planAirline(s.it);
+    try { await Fleet3D.prepare(airline, type); if (!P.stopped) model = Fleet3D.flyer({ type, airline }, innerWidth < 720 ? 96 : 130); } catch (e) { model = null; }
+    if (P.stopped) { model?.destroy(); return; }
+  }
+  if (P.stopped) return;   // stopped while the model was loading
+  P.marker?.remove(); P.marker = null; endFly(P);
+  const S = model ? parseFloat(model.canvas.style.width) : 0;
+  if (model) { const el = document.createElement('div'); el.className = 'fly3d'; el.appendChild(model.canvas); MAP.getContainer().appendChild(el); P.fly = { el, model }; }
+  else {
+    const icon = s.mode !== 'link' ? L.divIcon({ className: '', html: `<div class="runner mode" style="--c:${c}">${IC[s.mode]}</div>`, iconSize: [28, 28], iconAnchor: [14, 14] }) : L.divIcon({ className: '', html: '<div class="runner"></div>', iconSize: [16, 16], iconAnchor: [8, 8] });
+    P.marker = L.marker(path[0], { icon, interactive: false, zIndexOffset: 2000 }).addTo(MAP);
+  }
+  const dur = model ? Math.min(7000, 2600 + d * 0.9) : Math.min(4200, 900 + 700 * Math.log10(1 + d));
+  // cumulative lengths along the path, so the traveller moves at an even pace
+  const cum = [0]; for (let k = 1; k < path.length; k++) cum.push(cum[k - 1] + path[k - 1].distanceTo(path[k]));
+  const total = cum[cum.length - 1] || 1, n = path.length - 1;
+  const at = want => { let k = 1; while (k < n && cum[k] < want) k++; const r = (want - cum[k - 1]) / (cum[k] - cum[k - 1] || 1), A = path[k - 1], B = path[k]; return { k, ll: L.latLng(A.lat + (B.lat - A.lat) * r, A.lng + (B.lng - A.lng) * r) }; };
+  let heading = null;
+  const place = (k, ll, f, now) => {
+    if (!model) { P.marker.setLatLng(ll); return; }
+    // heading from a stretch of the path around the plane, eased so it never twitches; climb, cruise, descend
+    const pa = MAP.latLngToContainerPoint(path[Math.max(0, k - 4)]), pb = MAP.latLngToContainerPoint(path[Math.min(n, k + 4)]), raw = Math.atan2(pb.y - pa.y, pb.x - pa.x);
+    if (heading === null) heading = raw; else { let dh = raw - heading; while (dh > Math.PI) dh -= 2 * Math.PI; while (dh < -Math.PI) dh += 2 * Math.PI; heading += dh * 0.15; }
+    const e = Math.min(1, Math.min(f, 1 - f) / 0.18), alt = e * e * (3 - 2 * e), p = MAP.latLngToContainerPoint(ll);
+    P.fly.el.style.transform = `translate3d(${(p.x - S / 2).toFixed(1)}px, ${(p.y - S / 2).toFixed(1)}px, 0)`;
+    // the shadow falls further away the higher it flies; a new filter means a repaint, so it changes in steps
+    const q = Math.round(alt * 8) / 8, sh = 4 + 14 * q;
+    if (P.fly.q !== q) { P.fly.q = q; P.fly.el.style.filter = `drop-shadow(${sh * 0.6}px ${sh}px ${3 + 5 * q}px rgba(0, 0, 0, ${0.32 - 0.12 * q}))`; }
+    model.draw(heading, alt, now);
+  };
+  place(1, path[0], 0, performance.now());
+  P.to = setTimeout(() => {
+    if (P.stopped) return; const t0 = performance.now();
+    const step = now => {
+      if (P.stopped) return;
+      const f = Math.min(1, (now - t0) / dur), e = f < 0.5 ? 2 * f * f : 1 - (-2 * f + 2) ** 2 / 2, { k, ll } = at(e * total);
+      place(k, ll, f, now);
+      if (f < 1) P.raf = requestAnimationFrame(step); else { P.i++; P.to = setTimeout(playLeg, model ? 450 : 250); }
+    };
+    P.raf = requestAnimationFrame(step);
+  }, 750);
+}
+function stopPlay() { if (!PLAY) return; const P = PLAY; P.stopped = true; cancelAnimationFrame(P.raf); clearTimeout(P.to); P.marker?.remove(); endFly(P); PLAY = null; paintPlayBtn(); }
+
+// ── Routing: #trip=<id>[&day=N] ──
+function fromHash() {
+  const q = new URLSearchParams(location.hash.slice(1)), id = q.get('trip'), d = parseInt(q.get('day'), 10);
+  const list = sortedPlans(), p = list.find(x => x.id === id) || list[0] || null;
+  if (p !== CUR) stopPlay();
+  CUR = p; DAY = p && d >= 1 && d <= p.days.length ? d - 1 : null;
+}
+function renderAll() { renderTitle(); fromHash(); renderTrips(); renderTrip(); }
+document.addEventListener('click', e => {
+  const a = e.target.closest('a.trip'); if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+  e.preventDefault(); if (location.hash !== a.getAttribute('href')) history.pushState(null, '', a.getAttribute('href'));
+  renderAll(); $('#panel').scrollTop = 0; if (NARROW()) window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+addEventListener('popstate', () => { if (DATA) renderAll(); });
+addEventListener('hashchange', () => { if (DATA) renderAll(); });
+
+// ── Language ──
+function applyLang(lang) {
+  LANG = lang; window.SiteLang?.set(lang);
+  document.querySelectorAll('#lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-en][data-zh]').forEach(el => { el.textContent = el.getAttribute('data-' + lang); });
+  document.querySelectorAll('[data-tip-en]').forEach(el => { el.title = el.getAttribute('data-tip-' + lang); });
+  document.title = lang === 'zh' ? '旅行规划' : 'Trip planner';
+  if (DATA) { stopPlay(); renderAll(); }
+}
+$('#lang-toggle').addEventListener('click', e => { const b = e.target.closest('.lang-btn'); if (b && b.dataset.lang !== LANG) applyLang(b.dataset.lang); });
+
+function showApp() {
+  document.body.classList.add('app-on');
+  renderAll(); setTimeout(() => { MAP?.invalidateSize(); fitTo(DAY); }, 60);
+}
+if (LANG !== 'en') applyLang(LANG);
+(async () => {
+  try { await loadPlans(); } catch (e) { DATA = { plans: [] }; PLANS = []; }
+  showApp();
+})();
+</script>
+<script>
+// Owner name for the back link and tab title (from content.json)
+fetch('content.json', { cache: 'no-cache' }).then(r => r.json()).then(c => {
+  const p = c.profile || {}; window.SITE_OWNER = { en: p.name_en || '', zh: p.name_zh || p.name_en || '' };
+  document.querySelectorAll('.site-owner').forEach(el => { el.textContent = p.name_en || ''; });
+  if (DATA) renderTitle();
+}).catch(() => {});
+</script>
+</body>
+</html>
