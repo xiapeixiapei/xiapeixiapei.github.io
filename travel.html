@@ -6,6 +6,7 @@
 <script src="site-fonts.js"></script>
 <script src="site-theme.js"></script>
 <script src="site-lang.js"></script>
+<script src="site-nav.js"></script>
 <script src="city-icons.js"></script>
 <script src="site-search.js" defer></script>
 <meta name="robots" content="noindex, nofollow">
@@ -93,6 +94,7 @@
   .hero h1 { font-family: var(--font-head); font-weight: 300; font-size: 2.6rem; line-height: 1.15; }
   body.zh .hero h1 { font-family: var(--font-head); font-weight: 300; }
   .hero h1 em { font-style: italic; color: var(--accent); }
+  .hero h1 strong { font-weight: 600; }
   .hero .intro { color: var(--muted); margin-top: 0.5rem; max-width: 620px; font-size: 1.05rem; }
   .stats { display: flex; gap: 2rem; }
   .stat { text-align: center; }
@@ -231,6 +233,7 @@
   /* Jump targets */
   .prov, .city, .sight { scroll-margin-top: 90px; }
   .prov.flash { border-left-color: var(--accent); background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.10), transparent 70%); transition: background 0.4s; }
+  .city.cur { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.18); }
   .city.flash { box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.35) !important; transition: box-shadow 0.3s; }
   .sight.flash { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.3); background: var(--highlight); }
   /* Popups: names are selectable text */
@@ -385,6 +388,9 @@
   .sights { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
   .sights-label { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ok); margin-right: 0.2rem; }
   .sights-label svg { width: 15px; height: 15px; }
+  .city-name .fl-plane-link { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 100px; color: var(--accent-light); background: var(--highlight); text-decoration: none; transition: background 0.2s, color 0.2s, transform 0.2s; }
+  .city-name .fl-plane-link svg { width: 15px; height: 15px; transform: rotate(45deg); }
+  .city-name .fl-plane-link:hover, .city-name .fl-plane-link:focus-visible { color: var(--on-accent); background: var(--accent); transform: translateY(-1px); }
   body.zh .sights-label { letter-spacing: 0.12em; }
   .sight { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 0.25rem 0.4rem; max-width: 100%; padding: 0.25rem 0.7rem 0.25rem 0.55rem; border: 1px solid var(--subtle); border-radius: 16px; background: var(--card-bg); font-size: 0.88rem; line-height: 1.35; color: var(--ink); text-decoration: none; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
   .sight .sg-name { min-width: 0; }
@@ -585,6 +591,77 @@
     .js-reveal .city { opacity: 1 !important; transform: none !important; transition: none !important; }
     .city-ic { transition: none; }
   }
+  /* ── phone collection: flag matrix, heritage modules, and full-screen pages for a country, a province or an index ── */
+  #mob { display: none; }
+  body.mob #mob { display: block; }
+  body.mob #list, body.mob #list-sort, body.mob #places-sub, body.mob #heritage { display: none !important; }
+  .mob-flags { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.65rem; }
+  .mob-flag { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.8rem 0.35rem 0.7rem; border: 1px solid var(--subtle); border-radius: 14px; background: var(--card-bg); color: var(--ink); text-decoration: none; text-align: center; box-shadow: 0 2px 8px rgba(13, 27, 42, 0.05); transition: transform 0.15s, box-shadow 0.15s; -webkit-tap-highlight-color: transparent; }
+  .mob-flag:active { transform: scale(0.97); }
+  .mf-img { display: grid; place-items: center; height: 46px; margin-bottom: 0.2rem; font-size: 2rem; }
+  .mf-img img { width: 66px; height: 44px; object-fit: cover; border-radius: 5px; box-shadow: 0 3px 8px rgba(13, 27, 42, 0.18), inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
+  .mf-name { font-weight: 600; font-size: 0.88rem; line-height: 1.2; overflow-wrap: anywhere; }
+  .mf-n { font-size: 0.72rem; color: var(--muted); }
+  .mf-star { position: absolute; top: 6px; right: 8px; color: #e0a100; font-size: 0.78rem; }
+  .mob-mods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; margin-top: 0.9rem; }
+  .mob-mod { position: relative; display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.85rem 0.8rem; border: 1px solid var(--subtle); border-radius: 14px; background: var(--card-bg); color: var(--ink); text-decoration: none; min-width: 0; -webkit-tap-highlight-color: transparent; }
+  .mob-mod:active { transform: scale(0.98); }
+  .mm-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--highlight); color: var(--accent); }
+  .mm-5a .mm-ic { background: var(--warn-bg); color: var(--warn); }
+  .mm-ic svg { width: 20px; height: 20px; }
+  .mm-t { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 0.1rem; }
+  .mm-t b { font-size: 1.45rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .mm-t b i { font-style: normal; font-size: 0.6em; color: var(--muted); font-weight: 500; margin-left: 0.2em; }
+  .mm-t span { font-size: 0.86rem; font-weight: 600; }
+  .mm-t small { font-size: 0.74rem; color: var(--muted); }
+  .mm-5a .hx-bar { margin-top: 0.3rem; }
+  .mm-go { position: absolute; right: 0.7rem; top: 0.6rem; color: var(--muted); font-size: 1.2rem; }
+  .mv { position: fixed; inset: 0; z-index: 60; background: var(--paper); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  .mv.enter { animation: mv-in 0.22s ease-out; }
+  @keyframes mv-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .mv.enter { animation: none; } }
+  .mv-top { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 16px; background: rgba(var(--paper-rgb), 0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--subtle); }
+  .mv-back { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--subtle); background: var(--card-bg); color: var(--ink); font-size: 1.1rem; cursor: pointer; }
+  .mv-crumb { min-width: 0; display: flex; flex-direction: column; flex: 1; }
+  .mv-top .mv-theme { flex: none; width: 38px; height: 38px; }
+  .mv-crumb small { font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .mv-crumb b { font-size: 1rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mv-body { padding: 1rem 16px 3rem; }
+  .mv-head { display: flex; align-items: center; gap: 0.9rem; margin: 0.2rem 0 1.1rem; }
+  .mv-head h2 { font-family: var(--font-head); font-weight: 400; font-size: 1.85rem; line-height: 1.15; }
+  .mv-head p { color: var(--muted); font-size: 0.86rem; margin-top: 0.2rem; }
+  .mv-head .hx-bar { margin-top: 0.4rem; max-width: 220px; }
+  .mv-lead { flex: none; display: grid; place-items: center; font-size: 2.4rem; }
+  .mv-lead img { width: 76px; height: 51px; object-fit: cover; border-radius: 6px; box-shadow: 0 4px 12px rgba(13, 27, 42, 0.2), inset 0 0 0 1px rgba(0, 0, 0, 0.06); }
+  .mh-ic { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--highlight); color: var(--accent); }
+  .mh-ic.mh-5a { background: var(--warn-bg); color: var(--warn); }
+  .mh-ic svg { width: 26px; height: 26px; }
+  .mob-provs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; }
+  .mob-prov { position: relative; aspect-ratio: 4 / 3; border-radius: 14px; overflow: hidden; display: flex; align-items: flex-end; color: #fff; text-decoration: none; background: linear-gradient(135deg, var(--accent), var(--accent-light)); -webkit-tap-highlight-color: transparent; }
+  .mob-prov:active { transform: scale(0.98); }
+  .mp-cover { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transition: opacity 0.5s; }
+  .mp-cover.ready { opacity: 1; }
+  .mob-prov::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.66)); }
+  .mp-txt { position: relative; z-index: 1; padding: 0.55rem 0.7rem 0.6rem; display: flex; flex-direction: column; line-height: 1.25; }
+  .mp-txt b { font-size: 1.05rem; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
+  .mp-txt small, .mp-n { font-size: 0.74rem; opacity: 0.9; }
+  .mob-prov .mf-star { z-index: 1; color: #ffd24a; }
+  .mv-cards .city:first-child { margin-top: 0; }
+  .mh-group { margin-top: 1.1rem; padding: 0.75rem 0.7rem 0.4rem; border: 1px solid var(--subtle); border-radius: 14px; background: var(--card-bg); }
+  .mh-gh { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem 0.5rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--subtle); }
+  .mh-gh b { font-size: 1rem; }
+  .mh-gh .mh-n { margin-left: auto; font-size: 0.85rem; color: var(--muted); }
+  .mh-gh .mh-n b { color: var(--ink); font-size: 0.95rem; }
+  .mh-gh .hx-bar { flex-basis: 100%; }
+  /* phones: the top bar must fit the narrowest screens (a too-wide bar widens the whole page in mobile Chrome) */
+  html, body { overflow-x: clip; }
+  @media (max-width: 520px) {
+    .top-bar-inner { gap: 0.5rem; }
+    .back-link { font-size: 1.35rem; }
+    .bar-right { gap: 0.4rem; }
+    .lang-btn { padding: 0.25rem 0.55rem; }
+  }
+  @media (max-width: 400px) { .back-link > span:not(.back-arrow) { display: none; } }
 </style>
 </head>
 <body>
@@ -595,6 +672,9 @@
     <div class="bar-right">
       <a class="icon-btn" href="flights.html" id="btn-flights" hidden data-tip-en="My Air Times: flight log" data-tip-zh="云间岁月：飞行记录" title="My Air Times: flight log" aria-label="Flight log">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
+      </a>
+      <a class="icon-btn" href="plan.html" id="btn-plan" hidden data-tip-en="Trip planner" data-tip-zh="旅行规划" title="Trip planner" aria-label="Trip planner">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8 18h7a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h7"/></svg>
       </a>
       <button class="icon-btn" id="btn-lock" hidden data-tip-en="Lock this page" data-tip-zh="锁定页面" title="Lock this page" aria-label="Lock">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
@@ -642,7 +722,6 @@
     <div id="map" role="region" aria-label="Map of visited places"></div>
     <div class="map-note">
       <span><span class="legend"><i></i> <span data-en="Visited country / province" data-zh="到访过的国家 / 省份">Visited country / province</span></span> &nbsp; <span class="legend"><b></b> <span data-en="City" data-zh="城市">City</span></span></span>
-      <span data-en="Click a province, city or sight to jump to its entry; names in the popup can be copied." data-zh="点击省份、城市或景点可跳到对应条目；弹出框里的地名可以复制。">Click a province, city or sight to jump to its entry; names in the popup can be copied.</span>
     </div>
     </div>
     <nav class="split-nav" id="fp-nav" aria-label="Places"></nav>
@@ -650,6 +729,7 @@
     <section class="hx" id="heritage" hidden></section>
     <div class="places">
       <h2 class="section-title"><span id="places-h"></span><small id="places-sub"></small><span class="sort-seg" id="list-sort" role="group"></span></h2>
+      <div id="mob"></div>
       <div id="list"></div>
     </div>
     </div>
@@ -954,12 +1034,14 @@ function renderHeader() {
   const nCountries = new Set(places.map(p => normCC(p.cc) || t(p.country))).size;
   const nPhotos = places.reduce((n, p) => n + (p.photos || []).length, 0);
   const title = t(DATA.title) || (PRIVATE ? (LANG === 'zh' ? '我的旅行足迹' : 'Places I have been') : (LANG === 'zh' ? '学术足迹' : 'Academic footprint'));
-  $('#title').innerHTML = esc(title).replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  $('#title').innerHTML = SiteLang.richTitle(title);
+  document.title = SiteLang.plainTitle(title) + (window.SITE_OWNER?.[LANG] ? ' | ' + window.SITE_OWNER[LANG] : '');
   $('#intro').textContent = t(DATA.intro) || '';
   $('#intro').hidden = !t(DATA.intro);
   // Highlights: how many World Heritage sites and 5A scenic areas appear in the visited sights
   const sights = places.flatMap(p => p.sights || []);
-  const nWH = new Set(sights.filter(x => x.whsite || (x.tags || []).some(k => k.startsWith('wh'))).map(x => x.whsite ? 'p' + x.whsite.id : 's' + x.id)).size, n5A = new Set(places.flatMap(p => (p.sights || []).filter(isFiveA).map(sg => a5Entry(sg, p).key)).filter(Boolean)).size, nNP = sights.filter(x => (x.tags || []).includes('national-park')).length;
+  const nWH = new Set(sights.filter(x => x.whsite || (x.tags || []).some(k => k.startsWith('wh'))).map(x => x.whsite ? 'p' + x.whsite.id : 's' + x.id)).size, n5A = new Set(places.flatMap(p => (p.sights || []).filter(isFiveA).map(sg => a5Entry(sg, p).key)).filter(Boolean)).size, nNP = new Set(sights.filter(x => (x.tags || []).includes('national-park')).map(npKey)).size;
+  if (!NAT_PARKS_PUB && sights.some(x => (x.tags || []).includes('national-park'))) loadNatParks().then(() => renderHeader());
   if (!FIVE_A_OFF && places.some(p => (p.sights || []).some(isFiveA))) loadFiveAOff().then(() => { renderHeader(); renderHeritage(); });
   if (!PROVINCE_CC.CN.data && places.some(p => normCC(p.cc) === 'CN')) loadProvinces().then(d => { if (d) { renderHeader(); renderHeritage(); } });
   const hl = [];
@@ -992,6 +1074,7 @@ function setCountryOpen(sec, on) {
 function toggleCountry(sec) { if (sec) setCountryOpen(sec, !sec.classList.contains('open')); }
 // Make a city card visible (open its country) and bring it into view
 function revealCity(pid, block = 'center') {
+  if (mobMode()) return mobGo('#pl=' + encodeURIComponent(pid));
   const el = document.querySelector(`.city[data-pid="${CSS.escape(pid)}"]`); if (!el) return;
   const sec = el.closest('.country'); if (sec && !sec.classList.contains('open') && !el.classList.contains('hl')) setCountryOpen(sec, true);
   requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block }));
@@ -1017,12 +1100,32 @@ function provinceGroups(c) {
   if (other.places.length) arr.push(other);
   return arr;
 }
+// Flights linked to a place (Site Manager → Footprints → Flights): one plane icon next to the dates. It opens the flight on
+// flights.html, or with several flights the place's own view there (#pl=<id>: map, stats and the flight list).
+const PLANE_SVG = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>';
+function placeFlights(p) {
+  if (!PRIVATE || !(p.flights || []).length) return [];
+  const ids = new Set((DATA.flights || []).map(f => f.id));
+  return p.flights.filter(id => ids.has(id));
+}
+function flightLink(p) {
+  const fs = placeFlights(p); if (!fs.length) return '';
+  const href = fs.length === 1 ? `flights.html#fl=${encodeURIComponent(fs[0])}` : `flights.html#pl=${encodeURIComponent(p.id)}`;
+  const tip = LANG === 'zh' ? `${fs.length} 个航班 · 在云间岁月中查看` : `${fs.length} flight${fs.length === 1 ? '' : 's'} · open in My Air Times`;
+  return `<a class="fl-plane-link" href="${esc(href)}" data-pid="${esc(p.id)}" title="${esc(tip)}" aria-label="${esc(tip)}">${PLANE_SVG}</a>`;
+}
+// Before leaving for the flights, this page's address becomes #pl=<place>, so coming back (back button, or a reload of
+// this history entry) lands on the same city again: its card and map on wide screens, its country or province page on phones
+document.addEventListener('click', e => {
+  const a = e.target.closest('a.fl-plane-link'); if (!a || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+  history.replaceState(history.state, '', '#pl=' + encodeURIComponent(a.dataset.pid));
+});
 function cityCard(p) {
   const photosLabel = n => LANG === 'zh' ? `${n} 张照片` : `${n} photo${n === 1 ? '' : 's'}`;
       const ph = p.photos || [];
       const strip = ph.length ? `<div class="strip" data-pid="${esc(p.id)}">${ph.slice(0, 6).map((x, i) => `<div class="ph" data-i="${i}" data-thumb="${esc(x.thumb)}"><img alt="${esc(t(x.caption))}">${i === 5 && ph.length > 6 ? `<div class="more">+${ph.length - 6}</div>` : ''}</div>`).join('')}</div>` : '';
       return `<div class="city${p.highlight ? ' hl' : ''}" data-pid="${esc(p.id)}">
-        <div><div class="city-name">${cityIcon(p)}<span class="city-title">${esc(t(p.city))}</span>${p.highlight ? `<svg class="hl-star" viewBox="0 0 24 24" fill="currentColor" aria-label="${LANG === 'zh' ? '精选' : 'Highlight'}"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>` : ''}${whenHtml(p.when)}${p.academic ? `<span class="role">${esc(kindLabel(p.kind || 'conference'))}</span>` : ''}${PRIVATE && p.trip ? `<span class="role trip trip-${esc(p.trip)}">${esc(tripLabel(p.trip))}</span>` : ''}</div>
+        <div><div class="city-name">${cityIcon(p)}<span class="city-title">${esc(t(p.city))}</span>${p.highlight ? `<svg class="hl-star" viewBox="0 0 24 24" fill="currentColor" aria-label="${LANG === 'zh' ? '精选' : 'Highlight'}"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></svg>` : ''}${whenHtml(p.when)}${p.academic ? `<span class="role">${esc(kindLabel(p.kind || 'conference'))}</span>` : ''}${PRIVATE && p.trip ? `<span class="role trip trip-${esc(p.trip)}">${esc(tripLabel(p.trip))}</span>` : ''}${flightLink(p)}</div>
           ${p.academic && t(p.event) ? `<div class="city-event">${esc(t(p.event))}</div>` : ''}${p.academic && (p.talk || p.talk_type) ? `<div class="city-talk">${p.talk_type ? `<span class="talk-type">${esc(talkLabel(p.talk_type))}</span>` : ''}${p.talk ? `“${esc(p.talk)}”` : ''}</div>` : ''}${t(p.note) ? `<div class="city-note">${esc(t(p.note))}</div>` : ''}${PRIVATE && t(p.pnote) ? `<div class="city-note">${esc(t(p.pnote))}</div>` : ''}</div>
         <div class="city-actions"><button class="small-btn ghost" data-map="${esc(p.id)}"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>${LANG === 'zh' ? '地图' : 'Map'}</button>
           ${ph.length ? `<button class="small-btn" data-gallery="${esc(p.id)}">${photosLabel(ph.length)}</button>` : ''}</div>
@@ -1056,19 +1159,24 @@ function renderList() {
   list.querySelectorAll('[data-ctoggle]').forEach(b => b.onclick = () => toggleCountry(b.closest('.country')));
   renderHeritage(); wireFollow(); wireNav();
   if ((DATA.places || []).some(p => normCC(p.cc) === 'CN') && !PROVINCE_CC.CN.data) loadProvinces().then(d => { if (d) renderList(); });
-  list.querySelectorAll('[data-map]').forEach(b => b.onclick = () => focusPlace(b.dataset.map));
-  list.querySelectorAll('[data-gallery]').forEach(b => b.onclick = () => openLightbox(b.dataset.gallery, 0));
-  list.querySelectorAll('.strip .ph').forEach(el => el.onclick = () => openLightbox(el.parentElement.dataset.pid, Number(el.dataset.i)));
+  wireCards(list);
+  renderMob();
+}
+// Buttons, photo strips (decrypted as they scroll into view), sight popovers and folds of city cards inside root
+function wireCards(root, animate = true) {
+  root.querySelectorAll('[data-map]').forEach(b => b.onclick = () => focusPlace(b.dataset.map));
+  root.querySelectorAll('[data-gallery]').forEach(b => b.onclick = () => openLightbox(b.dataset.gallery, 0));
+  root.querySelectorAll('.strip .ph').forEach(el => el.onclick = () => openLightbox(el.parentElement.dataset.pid, Number(el.dataset.i)));
   // Decrypt thumbnails as they scroll into view
   const io = new IntersectionObserver(entries => entries.forEach(async en => {
     if (!en.isIntersecting) return; io.unobserve(en.target);
     const img = en.target.querySelector('img');
     try { img.src = await photoUrl(en.target.dataset.thumb); img.onload = () => img.classList.add('ready'); } catch (e) { en.target.style.opacity = 0.4; }
   }), { rootMargin: '600px' });
-  list.querySelectorAll('.strip .ph').forEach(el => io.observe(el));
-  animateCards(list);
-  wireSightPopovers(list);
-  list.querySelectorAll('[data-more-btn]').forEach(b => b.onclick = () => {
+  root.querySelectorAll('.strip .ph').forEach(el => io.observe(el));
+  if (animate) animateCards(root); else root.querySelectorAll('.city').forEach(c => c.classList.add('in', 'settled'));
+  wireSightPopovers(root);
+  root.querySelectorAll('[data-more-btn]').forEach(b => b.onclick = () => {
     const box = b.parentElement, open = b.classList.toggle('open');
     box.querySelectorAll('[data-more]').forEach(el => { el.hidden = !open; });
     b.textContent = open ? (LANG === 'zh' ? '收起' : 'Show less') : (LANG === 'zh' ? `再显示 ${b.dataset.n} 个` : `+ ${b.dataset.n} more`);
@@ -1312,17 +1420,20 @@ function hotPins(ids, on) {
 // ── Map → list jumps, and copyable names in map popups ──
 function flashEl(el) { if (!el) return; el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1800); }
 function jumpToProvince(cc, zh) {
+  if (mobMode()) return mobGo(normCC(cc) === 'CN' ? '#v=pr:' + encodeURIComponent(zh) : '#v=cc:' + encodeURIComponent(cc));
   muteFollow(1800);
   const el = document.querySelector(`.prov[data-prov="${CSS.escape(zh)}"]`); if (!el) return jumpToCountry(cc);
   const sec = el.closest('.country'); if (sec && !sec.classList.contains('open')) setCountryOpen(sec, true);
   requestAnimationFrame(() => { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); flashEl(el); });
 }
 function jumpToCity(pid) {
+  if (mobMode()) return mobGo('#pl=' + encodeURIComponent(pid));
   muteFollow(1800);
   revealCity(pid, 'start');
   setTimeout(() => flashEl(document.querySelector(`.city[data-pid="${CSS.escape(pid)}"]`)), 120);
 }
 function jumpToSight(pid, sid) {
+  if (mobMode()) return mobGo('#pl=' + encodeURIComponent(pid), sid);
   muteFollow(1800);
   const card = document.querySelector(`.city[data-pid="${CSS.escape(pid)}"]`); if (!card) return;
   const sec = card.closest('.country'); if (sec && !sec.classList.contains('open') && !card.classList.contains('hl')) setCountryOpen(sec, true);
@@ -1373,11 +1484,11 @@ function wireFollow() {
   FOLLOW_IO?.disconnect(); FOLLOW_IO = null;
   if (!('IntersectionObserver' in window)) return;
   FOLLOW_IO = new IntersectionObserver(entries => {
-    if (!isWide() || !FOLLOW || !MAP || Date.now() < FOLLOW_MUTE) return;
+    if (!isWide() || !FOLLOW || !MAP || Date.now() < FOLLOW_MUTE || LIST_HOVER) return;
     const hit = entries.filter(e => e.isIntersecting).map(e => e.target)[0]; if (!hit) return;
     clearTimeout(FOLLOW_T);
     FOLLOW_T = setTimeout(() => {
-      if (Date.now() < FOLLOW_MUTE) return;
+      if (Date.now() < FOLLOW_MUTE || LIST_HOVER) return;
       const p = placeById(hit.dataset.pid); if (!p || typeof p.lat !== 'number') return;
       if (FOLLOW_CUR === p.id) return;
       markCurrent(p.id);
@@ -1474,7 +1585,7 @@ function r_navCenter() {
 }
 // The city in view: highlight it and open its country / province in the tree
 function setNavCurrent(pid, rerender = true) {
-  if (!pid || pid === NAV_CUR) return; NAV_CUR = pid;
+  if (!pid || pid === NAV_CUR) return; NAV_CUR = pid; markListCard(pid);
   const p = placeById(pid); if (!p) return;
   const key = normCC(p.cc) || t(p.country); NAV_AUTO = new Set(['c:' + key]);
   if (normCC(p.cc) === 'CN') { const pr = provinceOf(p); if (pr) NAV_AUTO.add('p:' + pr.zh); }
@@ -1485,10 +1596,46 @@ function wireNav() {
   renderNav();
   if (!('IntersectionObserver' in window)) return;
   NAV_IO = new IntersectionObserver(entries => {
-    if (!navVisible()) return;
+    if (!navVisible() || LIST_HOVER) return;
     const hit = entries.find(e => e.isIntersecting); if (hit) setNavCurrent(hit.target.dataset.pid);
   }, { rootMargin: '-35% 0px -55% 0px' });
   document.querySelectorAll('#list .city').forEach(c => NAV_IO.observe(c));
+  markListCard(NAV_CUR);
+}
+function markListCard(pid) {
+  document.querySelectorAll('#list .city.cur').forEach(c => c.classList.remove('cur'));
+  if (pid) document.querySelector(`#list .city[data-pid="${CSS.escape(pid)}"]`)?.classList.add('cur');
+}
+// Hovering a city card in the list makes it the current city everywhere:
+// the map moves to it and the navigator tree highlights and scrolls to it.
+let LIST_HOVER = '', LIST_HOVER_T = 0;
+function syncToCity(pid) {
+  const p = placeById(pid); if (!p) return;
+  setNavCurrent(pid);
+  if (!MAP || !FOLLOW || !isWide() || typeof p.lat !== 'number' || FOLLOW_CUR === pid) return;
+  markCurrent(pid);
+  const z = MAP.getZoom(), target = L.latLng(p.lat, p.lon);
+  if (MAP.getBounds().pad(-0.2).contains(target) && z >= 4) MAP.panTo(target, { animate: true, duration: 0.6 });
+  else MAP.flyTo(target, Math.max(z, 5), { duration: 0.8 });
+}
+(function wireListHover() {
+  const list = document.getElementById('list'); if (!list || !matchMedia('(hover: hover)').matches) return;
+  list.addEventListener('mouseover', e => {
+    const card = e.target.closest('.city[data-pid]'); if (!card || card.dataset.pid === LIST_HOVER) return;
+    LIST_HOVER = card.dataset.pid; clearTimeout(LIST_HOVER_T);
+    LIST_HOVER_T = setTimeout(() => { if (LIST_HOVER === card.dataset.pid && Date.now() >= FOLLOW_MUTE) syncToCity(LIST_HOVER); }, 180);
+  });
+  list.addEventListener('mouseleave', () => { clearTimeout(LIST_HOVER_T); LIST_HOVER = ''; });
+})();
+// ── National parks: one count per park (a park's parts, e.g. 扎陵湖 in 三江源, are the same park) ──
+let NAT_PARKS_PUB = null;
+function loadNatParks() { return loadNatParks.p ||= fetch('national-parks.json').then(r => r.json()).then(d => (NAT_PARKS_PUB = d)).catch(() => (NAT_PARKS_PUB = { cn: [] })); }
+const npRaw = x => String(x || '').toLowerCase().replace(/[\s·・,，。.()（）'’-]/g, '');
+function npKey(sg) {
+  const zh = npRaw(sg.name?.zh), en = npRaw(sg.name?.en);
+  for (const park of NAT_PARKS_PUB?.cn || [])
+    if ([park.zh, park.en, ...(park.aka || [])].some(n => { const r = npRaw(n); return r.length >= 2 && ((zh && zh.includes(r)) || (en && r.length >= 5 && en.includes(r))); })) return 'np:' + park.zh;
+  return 's:' + (sg.name?.zh || sg.name?.en || sg.id);
 }
 function placeById(id) { return (DATA.places || []).find(p => p.id === id); }
 function focusPlace(id) {
@@ -1499,6 +1646,7 @@ function focusPlace(id) {
   const m = MARKERS.get(id); if (m) setTimeout(() => m.openPopup(), 950);
 }
 function jumpToCountry(key) {
+  if (mobMode()) return mobGo('#v=cc:' + encodeURIComponent(key));
   const el = document.getElementById('c-' + key); if (!el) return;
   if (!el.classList.contains('open')) setCountryOpen(el, true);
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1722,6 +1870,120 @@ function closeLightbox() { LB = null; $('#lb-root').innerHTML = ''; document.bod
 document.addEventListener('keydown', e => { if (!LB) return; if (e.key === 'Escape') closeLightbox(); if (e.key === 'ArrowRight') stepLightbox(1); if (e.key === 'ArrowLeft') stepLightbox(-1); });
 
 // ── Language ──
+// ── Phone: a collection to browse. The long country list gives way to a matrix of flags and two modules (World Heritage,
+// 5A areas). A flag opens that country's page (China: a matrix of provinces first); a module opens its index. Pages are
+// hash routes (#v=cc:NL, #v=pr:广东, #v=wh, #v=5a, and #pl=<place id>), so the back gesture walks back through them.
+const MOB_MQ = matchMedia('(max-width: 760px)');
+const mobMode = () => PRIVATE && MOB_MQ.matches;
+let MOB_CUR = null, MOB_SID = '';
+const ckeyOf = c => c.cc || t(c.name);
+const cityCount = ps => new Set(ps.map(p => (p.city?.en || t(p.city) || p.id).toLowerCase())).size;
+const bigFlag = cc => /^[A-Z]{2}$/.test(cc || '') ? `<img src="https://flagcdn.com/w160/${cc.toLowerCase()}.png" alt="" loading="lazy" onerror="this.replaceWith(document.createTextNode('${flagEmoji(cc)}'))">` : '<span class="mf-pin">📍</span>';
+// a province tile's photo: the one chosen in the Site Manager (DATA.covers, province → photo id), else the first one
+const coverOf = (ps, pick) => { const all = ps.flatMap(p => p.photos || []).filter(ph => ph?.thumb); return ((pick && all.find(ph => ph.id === pick)) || all[0])?.thumb || ''; };
+function renderMob() {
+  document.body.classList.toggle('mob', mobMode());
+  const box = $('#mob'); if (!box || !mobMode() || !DATA) { if (box) box.innerHTML = ''; return; }
+  const zh = LANG === 'zh', groups = groupByCountry(DATA.places || []);
+  const all = heritageItems(), a5All = Object.values(A5_TOTAL).reduce((a, b) => a + b, 0), whC = new Set(all.wh.map(it => normCC(it.p0.cc))).size;
+  box.innerHTML = `<div class="mob-flags">${groups.map(c => { const n = cityCount(c.places);
+      return `<a class="mv-link mob-flag" href="#v=cc:${esc(encodeURIComponent(ckeyOf(c)))}"><span class="mf-img">${bigFlag(c.cc)}</span><span class="mf-name">${esc(t(c.name))}</span><span class="mf-n">${zh ? `${n} 座城市` : `${n} ${n === 1 ? 'city' : 'cities'}`}</span>${c.places.some(p => p.highlight) ? '<span class="mf-star" aria-hidden="true">★</span>' : ''}</a>`; }).join('')}</div>
+    ${all.wh.length || all['5a'].length ? `<div class="mob-mods">
+      ${all.wh.length ? `<a class="mv-link mob-mod mm-wh" href="#v=wh"><span class="mm-ic">${sightIcon(['wh-cultural'])[1]}</span><span class="mm-t"><b>${all.wh.length}</b><span>${zh ? '世界遗产' : 'World Heritage'}</span><small>${zh ? `${whC} 个国家` : `in ${whC} ${whC === 1 ? 'country' : 'countries'}`}</small></span><span class="mm-go">›</span></a>` : ''}
+      ${all['5a'].length ? `<a class="mv-link mob-mod mm-5a" href="#v=5a"><span class="mm-ic">${sightIcon(['5a'])[1]}</span><span class="mm-t"><b>${all['5a'].length}<i>/ ${a5All}</i></b><span>${zh ? '5A 级景区' : '5A scenic areas'}</span>${hxBar(all['5a'].length, a5All)}</span><span class="mm-go">›</span></a>` : ''}</div>` : ''}`;
+  if (document.getElementById('mv')) { MOB_CUR = null; routeMob(); }   // language or data changed under an open page
+}
+function closeMobView() { const el = document.getElementById('mv'); if (el) { el.remove(); document.body.style.overflow = ''; } }
+function mobGo(h, sid = '') { MOB_SID = sid; if (location.hash !== h) history.pushState({ mob: 1 }, '', h); MOB_CUR = null; routeMob(); }
+// opened straight from another page of the site (a flight's "on the travel map" link): back returns there
+const CAME_FROM_SITE = (() => { try { const r = new URL(document.referrer); return r.origin === location.origin && !/\/travel\.html$/.test(r.pathname) && !!location.hash; } catch (e) { return false; } })();
+function mobBack() { if (history.state?.mob || (CAME_FROM_SITE && history.length > 1)) history.back(); else { const up = /^#v=pr:/.test(location.hash) ? '#v=cc:CN' : ''; history.replaceState(null, '', up || location.pathname + location.search); MOB_CUR = null; routeMob(); } }
+function routeMob() {
+  if (!mobMode() || !DATA) { closeMobView(); MOB_CUR = null; return; }
+  const h = location.hash; if (h === MOB_CUR) return; MOB_CUR = h;
+  let m;
+  if ((m = /^#v=cc:(.+)$/.exec(h))) return mobCountry(decodeURIComponent(m[1]));
+  if ((m = /^#v=pr:(.+)$/.exec(h))) return mobProvince(decodeURIComponent(m[1]));
+  if (h === '#v=wh' || h === '#v=5a') return mobHeritage(h.slice(3));
+  if ((m = /^#pl=(.+)$/.exec(h))) return mobPlace(decodeURIComponent(m[1]));
+  closeMobView();
+}
+// the page frame: back, title, body; cards inside get their buttons, and the page keeps its own scroll
+function mobShell(kicker, title, body, cls = '') {
+  const keep = document.getElementById('mv'); closeMobView();
+  const el = document.createElement('div'); el.id = 'mv'; el.className = 'mv ' + cls; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+  el.innerHTML = `<div class="mv-top"><button type="button" class="mv-back" aria-label="${LANG === 'zh' ? '返回' : 'Back'}">←</button><div class="mv-crumb"><small>${esc(kicker)}</small><b>${esc(title)}</b></div><button type="button" class="icon-btn mv-theme" data-theme-toggle></button></div><div class="mv-body">${body}</div>`;
+  document.body.appendChild(el); document.body.style.overflow = 'hidden'; window.SiteTheme?.paintButtons();
+  if (!keep) el.classList.add('enter');
+  el.querySelector('.mv-back').onclick = mobBack;
+  wireCards(el, false); wireMobCards(el); lazyCovers(el);
+  el.querySelectorAll('[data-reveal]').forEach(b => b.onclick = () => mobGo('#pl=' + encodeURIComponent(b.dataset.reveal)));
+  el.querySelectorAll('[data-fly]').forEach(b => b.onclick = () => { const id = b.dataset.fly, la = parseFloat(b.dataset.lat), lo = parseFloat(b.dataset.lon); leaveMob(); setTimeout(() => flyToSight(id, la, lo), 60); });
+  return el;
+}
+// "Map" on a card: back to the page, then fly there
+function wireMobCards(root) { root.querySelectorAll('[data-map]').forEach(b => b.onclick = () => { const id = b.dataset.map; leaveMob(); setTimeout(() => focusPlace(id), 60); }); }
+function leaveMob() { history.pushState({ mob: 1 }, '', location.pathname + location.search); MOB_CUR = null; routeMob(); }
+// cover photos (decrypted thumbnails) on province tiles, loaded as they come into view
+function lazyCovers(root) {
+  const io = new IntersectionObserver(es => es.forEach(async en => { if (!en.isIntersecting) return; io.unobserve(en.target);
+    try { const u = await photoUrl(en.target.dataset.cover); en.target.style.backgroundImage = `url("${u}")`; en.target.classList.add('ready'); } catch (e) {} }), { rootMargin: '300px' });
+  root.querySelectorAll('[data-cover]').forEach(el => io.observe(el));
+}
+const mobHead = (lead, title, sub) => `<div class="mv-head">${lead ? `<span class="mv-lead">${lead}</span>` : ''}<div><h2>${esc(title)}</h2>${sub ? `<p>${sub}</p>` : ''}</div></div>`;
+const citiesWord = n => LANG === 'zh' ? `${n} 座城市` : `${n} ${n === 1 ? 'city' : 'cities'}`;
+function mobCountry(key, focus) {
+  const zh = LANG === 'zh', c = groupByCountry(DATA.places || []).find(g => ckeyOf(g) === key); if (!c) { closeMobView(); return; }
+  const provs = provinceGroups(c), nPh = c.places.reduce((n, p) => n + (p.photos || []).length, 0);
+  if (c.cc === 'CN' && !provs && !PROVINCE_CC.CN.data) loadProvinces().then(d => { if (d && location.hash === '#v=cc:' + encodeURIComponent(key)) { MOB_CUR = null; routeMob(); } });
+  const sub = [provs ? (zh ? `${provs.filter(g => g.zh !== '其他').length} 个省份` : `${provs.filter(g => g.zh !== '其他').length} provinces`) : '', citiesWord(cityCount(c.places)), nPh ? (zh ? `${nPh} 张照片` : `${nPh} photos`) : ''].filter(Boolean).join(' · ');
+  const body = mobHead(bigFlag(c.cc), t(c.name), esc(sub)) + (provs
+    ? `<div class="mob-provs">${provs.map(g => { const cv = coverOf(g.places, DATA.covers?.[g.zh]);
+        return `<a class="mv-link mob-prov${cv ? '' : ' nocover'}" href="#v=pr:${esc(encodeURIComponent(g.zh))}"><span class="mp-cover"${cv ? ` data-cover="${esc(cv)}"` : ''}></span><span class="mp-txt"><b>${esc(zh ? g.zh : g.en)}</b>${zh ? '' : `<small>${esc(g.zh)}</small>`}<span class="mp-n">${esc(citiesWord(cityCount(g.places)))}</span></span>${g.places.some(p => p.highlight) ? '<span class="mf-star" aria-hidden="true">★</span>' : ''}</a>`; }).join('')}</div>`
+    : `<div class="mv-cards">${c.places.map(cityCard).join('')}</div>`);
+  const el = mobShell(zh ? '国家和地区' : 'Country', t(c.name), body, provs ? 'mv-cn' : '');
+  mobFocus(el, focus);
+}
+function mobProvince(zh0, focus) {
+  const zh = LANG === 'zh', c = groupByCountry(DATA.places || []).find(g => g.cc === 'CN');
+  const g = c && provinceGroups(c)?.find(x => x.zh === zh0);
+  if (!g) { if (c && !PROVINCE_CC.CN.data) loadProvinces().then(() => { MOB_CUR = null; routeMob(); }); else closeMobView(); return; }
+  const nPh = g.places.reduce((n, p) => n + (p.photos || []).length, 0);
+  const el = mobShell(zh ? '中国 · 省份' : 'China · province', zh ? g.zh : g.en, mobHead('', zh ? g.zh : g.en, esc([zh ? '' : g.zh, citiesWord(cityCount(g.places)), nPh ? (zh ? `${nPh} 张照片` : `${nPh} photos`) : ''].filter(Boolean).join(' · '))) + `<div class="mv-cards">${g.places.map(cityCard).join('')}</div>`);
+  mobFocus(el, focus);
+}
+// a place deep link (#pl=…, a map popup, a heritage row): its country page, or its province page in China
+function mobPlace(pid) {
+  const p = placeById(pid); if (!p) { closeMobView(); return; }
+  const cc = normCC(p.cc), pr = cc === 'CN' ? provinceOf(p) : null;
+  if (cc === 'CN' && !PROVINCE_CC.CN.data) { loadProvinces().then(() => { MOB_CUR = null; routeMob(); }); return; }
+  if (pr) mobProvince(pr.zh, pid); else mobCountry(cc || t(p.country), pid);
+}
+function mobFocus(el, pid) {
+  if (!pid) return; const card = el.querySelector(`.city[data-pid="${CSS.escape(pid)}"]`); if (!card) return;
+  const sid = MOB_SID; MOB_SID = '';
+  const chip = sid ? card.querySelector(`.sight[data-sid="${CSS.escape(sid)}"]`) : null;
+  if (chip && chip.closest('[hidden]')) card.querySelector('[data-more-btn]:not(.open)')?.click();
+  requestAnimationFrame(() => { (chip || card).scrollIntoView({ block: 'center' }); flashEl(chip || card); });
+}
+function mobHeritage(tab) {
+  const zh = LANG === 'zh', all = heritageItems(), items = all[tab] || []; if (!items.length) { closeMobView(); return; }
+  const a5All = Object.values(A5_TOTAL).reduce((a, b) => a + b, 0);
+  const groups = heritageGroups(items, tab).map(g => { g.items.sort((a, b) => b.last.localeCompare(a.last)); return g; });
+  const title = tab === 'wh' ? (zh ? '世界遗产' : 'World Heritage') : (zh ? '5A 级景区' : '5A scenic areas');
+  const sub = tab === 'wh' ? (zh ? `${items.length} 处 · ${groups.length} 个国家` : `${items.length} sites in ${groups.length} ${groups.length === 1 ? 'country' : 'countries'}`)
+    : (zh ? `${items.length} / ${a5All} · ${groups.length} 个省份` : `${items.length} of ${a5All} · ${groups.length} ${groups.length === 1 ? 'province' : 'provinces'}`);
+  const body = mobHead(`<span class="mh-ic mh-${tab}">${sightIcon([tab === 'wh' ? 'wh-cultural' : '5a'])[1]}</span>`, title, esc(sub) + (tab === '5a' ? hxBar(items.length, a5All) : ''))
+    + groups.map(g => `<section class="mh-group"><div class="mh-gh">${g.cc ? `<span class="flag">${flag(g.cc)}</span>` : ''}<b>${esc(nm2(g.name))}</b><span class="mh-n">${hxFrac(g.items.length, g.total)}</span>${g.total ? hxBar(g.items.length, g.total) : ''}</div><ul class="hx-list">${g.items.map(hxRow).join('')}</ul></section>`).join('');
+  mobShell(zh ? '遗产索引' : 'Heritage', title, body, 'mv-hx hx-' + tab);
+}
+// links inside the collection keep a history entry, so back returns to the page they came from
+document.addEventListener('click', e => {
+  const a = e.target.closest('a.mv-link'); if (!a || !mobMode() || e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+  e.preventDefault(); mobGo(a.getAttribute('href'));
+});
+addEventListener('popstate', () => { if (mobMode()) { MOB_CUR = null; routeMob(); } });
+MOB_MQ.addEventListener('change', () => { if (!DATA || $('#app').hidden) return; renderMob(); MOB_CUR = null; routeMob(); });
 function applyLang(lang) {
   LANG = lang; window.SiteLang?.set(lang);
   document.querySelectorAll('#lang-toggle .lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
@@ -1735,9 +1997,16 @@ function applyLang(lang) {
 $('#lang-toggle').addEventListener('click', e => { const b = e.target.closest('.lang-btn'); if (b && b.dataset.lang !== LANG) applyLang(b.dataset.lang); });
 
 function showApp() {
-  $('#gate').hidden = true; $('#app').hidden = false; $('#btn-lock').hidden = !PRIVATE; $('#btn-flights').hidden = !PRIVATE;
-  renderHeader(); renderList(); renderMap();
+  $('#gate').hidden = true; $('#app').hidden = false; $('#btn-lock').hidden = !PRIVATE; $('#btn-flights').hidden = !PRIVATE; $('#btn-plan').hidden = !PRIVATE;
+  renderHeader(); renderList();
+  const ready = renderMap(), id = hashPlace();
+  if (mobMode()) routeMob();
+  else if (id) { jumpToCity(id); Promise.resolve(ready).then(() => { if (isWide()) focusPlace(id); }).catch(() => {}); }
 }
+// Deep link #pl=<place id> (from a flight on flights.html): open the place's card and, on wide screens, fly the map to it
+function hashPlace() { const m = /^#pl=(.+)$/.exec(location.hash || ''); if (!m || !DATA) return null; const id = decodeURIComponent(m[1]); return placeById(id) ? id : null; }
+function goToHashPlace() { const id = hashPlace(); if (!id) return; jumpToCity(id); if (MAP && isWide()) focusPlace(id); }
+addEventListener('hashchange', () => { if ($('#app').hidden) return; if (mobMode()) routeMob(); else goToHashPlace(); });
 if (LANG !== 'en') applyLang(LANG);   // open in the language remembered from the rest of the site
 (async () => {
   if (!PRIVATE) {
@@ -1758,6 +2027,7 @@ fetch('content.json', { cache: 'no-cache' }).then(r => r.json()).then(c => {
   document.querySelectorAll('.site-owner').forEach(el => { el.textContent = p.name_en || ''; });
   const lang = typeof LANG !== 'undefined' ? LANG : 'en', o = window.SITE_OWNER[lang];
   if (typeof PRIVATE !== 'undefined') document.title = (PRIVATE ? (lang === 'zh' ? '旅行足迹' : 'Travel') : (lang === 'zh' ? '学术足迹' : 'Academic footprint')) + (o ? ' | ' + o : '');
+  if (typeof DATA !== 'undefined' && DATA && !document.getElementById('app').hidden) renderHeader();   // the page's own title, with the name
 }).catch(() => {});
 </script>
 </body>

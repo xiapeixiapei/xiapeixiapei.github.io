@@ -152,7 +152,13 @@
       const rows = res.filter(r => r.g === g).slice(0, g === 'sight' ? 10 : 8); if (!rows.length) continue;
       html += `<div class="ss-h">${L(en, z)}</div>` + rows.map(r => { cur.push(r); return `<a class="ss-item" href="${esc(r.url)}" data-k="${cur.length - 1}"><div class="t">${mark(pick(r.title), terms)}</div>${pick(r.sub) ? `<div class="s">${mark(pick(r.sub), terms)}</div>` : ''}</a>`; }).join('');
     }
-    list.innerHTML = html || `<div class="ss-empty">${L('No results.', '没有找到结果。')}</div>`;
+    // a province with no public places: private trips are only searched on the travel page, after unlocking
+    let hint = '';
+    if (!html && !onTravel && PROV_DATA && PROV_DATA.length) {
+      const qn = norm(q).replace(/\s+|province$|省$/g, ''), f = PROV_DATA.find(x => norm(x.properties.en).replace(/\s+/g, '') === qn || x.properties.zh === q.replace(/省$/, ''));
+      if (f) hint = `<div class="ss-empty">${L(`No public places in ${f.properties.en}. Private trips can be searched on the travel page after unlocking it.`, `${f.properties.zh}没有公开的地点。私密旅行记录需要在旅行足迹页解锁后搜索。`)}</div>`;
+    }
+    list.innerHTML = html || hint || `<div class="ss-empty">${L('No results.', '没有找到结果。')}</div>`;
     sel = 0; highlight();
   }
   function highlight() { list.querySelectorAll('.ss-item').forEach(a => a.classList.toggle('on', Number(a.dataset.k) === sel)); list.querySelector('.ss-item.on')?.scrollIntoView({ block: 'nearest' }); }
