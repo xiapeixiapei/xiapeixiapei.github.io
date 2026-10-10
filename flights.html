@@ -211,6 +211,12 @@
   #map .leaflet-tile-pane { filter: var(--tile-filter); }
   .leaflet-container { font-family: var(--f-body); background: var(--map-bg); }
   .leaflet-bar a, .leaflet-bar a:hover { background: var(--panel-2); color: var(--cyan); border-bottom-color: var(--line); }
+  /* map lines: one per route (thick) or one per flight (thin), switched on the map */
+  .fl-lines { display: flex; padding: 2px; gap: 2px; background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 4px; box-shadow: 0 0 16px rgba(var(--cyan-rgb), 0.12); }
+  .fl-lines button { border: 0; background: none; color: var(--muted); font-family: var(--f-mono); font-size: 0.74rem; letter-spacing: 0.04em; padding: 0.28rem 0.6rem; border-radius: 3px; cursor: pointer; display: inline-flex; align-items: center; gap: 0.35rem; }
+  .fl-lines button:hover { color: var(--cyan); }
+  .fl-lines button.on { background: var(--cyan); color: var(--on-cyan); font-weight: 600; }
+  .fl-lines svg { width: 16px; height: 10px; }
   .leaflet-control-attribution { background: var(--glass) !important; color: var(--dim) !important; }
   .leaflet-control-attribution a { color: var(--muted) !important; }
   .leaflet-tooltip.fl-tip { background: var(--glass); border: 1px solid var(--line-2); color: var(--ink); box-shadow: 0 0 20px rgba(var(--cyan-rgb), 0.15); font-family: var(--f-body); border-radius: 4px; }
@@ -915,6 +921,29 @@ function initMap() {
   MAP = L.map('map', { worldCopyJump: true, minZoom: 2, maxZoom: 12, zoomControl: true, attributionControl: true, zoomSnap: 0.25 }).setView([35, 60], 2);
   MapBase.attach(MAP, LANG);
   LAYER = L.layerGroup().addTo(MAP);
+  const Lines = L.Control.extend({ options: { position: 'topright' }, onAdd() {
+    const d = L.DomUtil.create('div', 'fl-lines'); d.id = 'fl-lines'; d.setAttribute('role', 'group');
+    L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+    d.addEventListener('click', e => { const b = e.target.closest('[data-lines]'); if (!b || b.dataset.lines === LINES) return; LINES = b.dataset.lines; try { localStorage.setItem('fl-lines', LINES); } catch (x) {} renderMap(scoped()); });
+    return d; } });
+  new Lines().addTo(MAP);
+}
+// Map lines: 'route' draws one line per route, thicker the more often it was flown; 'flight' draws every flight as its own thin
+// line, the flights of one route fanned out side by side in date order. The choice is remembered in this browser.
+let LINES = (() => { try { return localStorage.getItem('fl-lines') === 'flight' ? 'flight' : 'route'; } catch (e) { return 'route'; } })();
+function paintLines() {
+  const d = document.getElementById('fl-lines'); if (!d) return; const zh = LANG === 'zh';
+  const ico = thin => `<svg viewBox="0 0 16 10" aria-hidden="true">${thin ? '<path d="M1 9Q8 -1 15 9M1 9Q8 2 15 9M1 9Q8 5 15 9" fill="none" stroke="currentColor" stroke-width="1"/>' : '<path d="M1 9Q8 0 15 9" fill="none" stroke="currentColor" stroke-width="3"/>'}</svg>`;
+  d.innerHTML = [['route', zh ? '航线' : 'Routes', zh ? '每条航线一条线，越常飞越粗' : 'One line per route, thicker the more often flown'], ['flight', zh ? '航班' : 'Flights', zh ? '每次飞行一条细线' : 'One thin line per flight']]
+    .map(([k, l, tip]) => `<button type="button" data-lines="${k}" class="${LINES === k ? 'on' : ''}" title="${esc(tip)}" aria-pressed="${LINES === k}">${ico(k === 'flight')}${esc(l)}</button>`).join('');
+}
+// The flights of one route side by side: the great circle bent sideways, in projected space, by off × the chord's length
+// (sin-shaped, so both ends stay on the airports); off = 0 is the plain great circle
+function fanPath(path, off) {
+  if (!off) return path;
+  const P = L.Projection.SphericalMercator, pts = path.map(ll => P.project(L.latLng(ll[0], ll[1]))), a = pts[0], b = pts[pts.length - 1];
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len, n = pts.length - 1;
+  return pts.map((p, i) => { const sh = Math.sin(Math.PI * i / n) * off * len, q = P.unproject(L.point(p.x + nx * sh, p.y + ny * sh)); return [q.lat, q.lng]; });
 }
 const mapColors = () => document.documentElement.dataset.theme === 'light'
   ? { route: '#0a7ea6', acad: '#c77700', flow: '#ffffff', dot: '#0a7ea6', dotFill: '#ffffff', trail: ['#06b6d4', '#7c3aed', '#db2777'] }
@@ -983,7 +1012,26 @@ function renderMap(list) {
     [f.from, f.to].forEach(ap => { const e = aps.get(ap.iata) || { ap, n: 0 }; e.n++; aps.set(ap.iata, e); });
   });
   const pts = [], animate = routes.size <= 60 && !matchMedia('(prefers-reduced-motion: reduce)').matches;
-  routes.forEach(r => {
+  paintLines();
+  if (LINES === 'flight') {
+    const byRoute = new Map(); list.forEach(f => { const k = routeKey(f); if (!byRoute.has(k)) byRoute.set(k, []); byRoute.get(k).push(f); });
+    const glide = list.length <= 150 && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    routes.forEach(r => {
+      const fs = byRoute.get(r.k).slice().sort((x, y) => String(x.date).localeCompare(String(y.date)) || String(x.no).localeCompare(String(y.no)));
+      const base = A.greatCircle(r.a, r.b, 96), n = fs.length, step = n > 1 ? Math.min(0.06, 0.34 / (n - 1)) : 0;
+      const on = !SEL || (SEL.kind === 'route' ? SEL.key === r.k : (r.a.iata === SEL.key || r.b.iata === SEL.key));
+      fs.forEach((f, i) => {
+        const path = fanPath(base, (i - (n - 1) / 2) * step), col = f.purpose === 'academic' ? C.acad : C.route, fwd = f.from.iata === r.a.iata;
+        const tip = `<b>${esc(f.from.iata)} → ${esc(f.to.iata)}</b> ${esc(f.no || '')}<br>${esc(f.date || '')} · ${esc(apName(f.from))} – ${esc(apName(f.to))}<br>${esc([A.airlineName(f.airline, LANG), f.ac ? acName(f) : ''].filter(Boolean).join(' · '))}${f.airline || f.ac ? '<br>' : ''}${nf(f.km)} km${n > 1 ? ` · ${LANG === 'zh' ? `这条航线第 ${i + 1} / ${n} 次` : `flight ${i + 1} of ${n} on this route`}` : ''}`;
+        // a faint wider line under each thin one is the hover / click target
+        L.polyline(path, { color: col, weight: 7, opacity: on ? 0.07 : 0.02 }).addTo(LAYER).bindTooltip(tip, { className: 'fl-tip', sticky: true })
+          .on('click', () => { SEL = SEL?.kind === 'route' && SEL.key === r.k ? null : { kind: 'route', key: r.k, label: `${r.a.iata} ⇄ ${r.b.iata}` }; renderAll(); if (SEL) flyRoute(f); });
+        L.polyline(path, { color: col, weight: 1.3, opacity: on ? 0.85 : 0.14, interactive: false }).addTo(LAYER);
+        if (glide) routeArrows(MAP, path, fwd ? 1 : 0, fwd ? 0 : 1, col, on);
+      });
+      pts.push([r.a.lat, r.a.lon], [r.b.lat, r.b.lon]);
+    });
+  } else routes.forEach(r => {
     const path = A.greatCircle(r.a, r.b), col = r.acad > r.n / 2 ? C.acad : C.route;
     const on = !SEL || (SEL.kind === 'route' ? SEL.key === r.k : (r.a.iata === SEL.key || r.b.iata === SEL.key));
     const w = Math.min(5, 1.6 + Math.log2(r.n + 1));
